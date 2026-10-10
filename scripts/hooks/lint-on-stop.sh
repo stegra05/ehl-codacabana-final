@@ -1,6 +1,7 @@
 #!/bin/sh
 # Stop: run lint; if it fails, hand the output back to Claude once (stop_hook_active prevents loops).
 [ "$(jq -r '.stop_hook_active // false')" = "true" ] && exit 0
+cd "$CLAUDE_PROJECT_DIR" || exit 0
 out=""
 if command -v ruff >/dev/null && [ -f pyproject.toml ]; then
   out="$out$(ruff check -q . 2>&1)"
