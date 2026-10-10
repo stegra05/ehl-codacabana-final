@@ -21,8 +21,8 @@ import time
 from arena_kit.docs import standard_terms
 from arena_kit.play import ENDED, latest, live_threads, moves_left, standing
 
+from . import brain, dossier, llm, writer
 from . import economics as eco
-from . import llm, writer
 from .claims import ClaimBank, rival_offer
 from .personas import profile, signals_in
 
@@ -89,6 +89,10 @@ class Side:
         self.last_reply = None
         self.asks = []  # what its last e-mail asked of us (asks)
         self.attached = set()  # files we already sent it
+        self.dossier = ""  # what the model knows about this thread (dossier.py)
+        self.rows = {}  # lever key -> terms the model may pick
+        self.claim_keys = {}  # claim key -> claim the model may cite
+        self.decisions = []  # the model's moves on this thread, for its next prompt
 
 
 class Negotiator:
@@ -155,6 +159,7 @@ class Negotiator:
             s.target = safe(lambda: eco.relationship_optimum(case, s.terms, s.std, s.est, full_cost * 0.85, s.quote))
         safe(lambda: self.trade_clause(s, quote, full_cost))
         s.claims = safe(lambda: self.bank.for_supplier(sid, q_price), [])
+        s.dossier = safe(lambda: dossier.build(self, s, quote, events), "")
         self.note(
             sid,
             "setup",
@@ -306,7 +311,7 @@ class Negotiator:
     # -- one move ----------------------------------------------------------------------------
     def move(self, sid, threads, writer_s=llm.TIMEOUT_S):
         """The next message to this supplier: {"message": ...}, or None when the thread is done.
-        `writer_s`: what the supplier clocks leave for the model paragraph."""
+        `writer_s`: what the supplier clocks leave for the model."""
         s, events = self.sides[sid], threads[sid]
         self.writer_s = writer_s
         s.prev_state = s.state
@@ -357,7 +362,27 @@ class Negotiator:
             return self.finish(s, sheets, events, theirs, left)
         price, n_claims = self.next_price(s, theirs)
         claims = self.pick(s, n_claims, threads)
-        return self.send(s, [eco.at_price(s.terms, price)], claims, events, theirs)
+        code = [eco.at_price(s.terms, price)]
+        decided = brain.decide(
+            self,
+            s,
+            events,
+            threads,
+            sheets,
+            theirs,
+            (price, claims),
+            writer.statements(self.case, s, code),
+            self.attachments(s, peek=True),
+        )
+        if decided == "stop":
+            s.state = "done"
+            return None
+        if decided:
+            model_sheets, model_claims, prose = decided
+            if any(model_sheets[0].get(k) != v for k, v in s.terms.items() if k != "unit_price"):
+                self.switch(s, model_sheets[0], "the model's row")
+            return self.send(s, model_sheets, model_claims, events, s.theirs[-1], prose)
+        return self.send(s, code, claims, events, theirs)
 
     def moves_left(self, s, events):
         """Messages we may still send: the arena counts a late message as a round too."""
@@ -407,10 +432,8 @@ class Negotiator:
         s.state = "done"
         return None
 
-    def pick(self, s, n, threads):
-        """The next unused claims for this supplier: in an RFQ the cheapest rival offer first (a new
-        offer is a new argument every round), then its own claims, strongest first."""
-        out = []
+    def rival_claims(self, s, threads):
+        """Other bidders' standing offers below this supplier's last counter, cheapest first."""
         rivals = []
         for other, events in threads.items():
             if other == s.sid or latest(events).get("status") in ENDED:
@@ -420,7 +443,13 @@ class Negotiator:
                 price = self.their_price(s, t)
                 if price < s.theirs[-1]:
                     rivals.append((price, rival_offer(other, oid, t["unit_price"])))
-        pool = [c for _, c in sorted(rivals, key=lambda r: r[0])[:1]] + s.claims
+        return [c for _, c in sorted(rivals, key=lambda r: r[0])]
+
+    def pick(self, s, n, threads):
+        """The next unused claims for this supplier: in an RFQ the cheapest rival offer first (a new
+        offer is a new argument every round), then its own claims, strongest first."""
+        out = []
+        pool = self.rival_claims(s, threads)[:1] + s.claims
         for c in pool:
             key = [(s.sid, i) if c.get("rival") else i for i in c["ids"]]
             if any(k in self.used for k in key):
@@ -430,9 +459,9 @@ class Negotiator:
                 break
         return out
 
-    def attachments(self, s):
+    def attachments(self, s, peek=False):
         """Its proof asked for, as a file it reads: the forecast rows of the part (figures from the
-        data, nothing the arena checks as a claim)."""
+        data, nothing the arena checks as a claim). `peek`: what would go out, nothing recorded."""
         if "proof" not in s.asks or "forecast" in s.attached:
             return []
         rows = []
@@ -443,12 +472,13 @@ class Negotiator:
                     rows.append((ref.split("@")[-1], part, f["volume_per_year"], f.get("change_pct")))
         if not rows:
             return []
-        s.attached.add("forecast")
+        if not peek:
+            s.attached.add("forecast")
         lines = ["month,part,volume_per_year,change_pct"] + [",".join(str(x) for x in r) for r in rows]
         content = base64.b64encode("\n".join(lines).encode()).decode()
         return [{"name": "forecast.csv", "type": "csv", "content_b64": content}]
 
-    def send(self, s, sheets, claims, events, theirs):
+    def send(self, s, sheets, claims, events, theirs, prose=None):
         first = not s.ours
         moved = len(s.theirs) > 1 and s.theirs[-1] < s.theirs[-2] - 0.005
         price = sheets[0]["unit_price"]
@@ -460,14 +490,6 @@ class Negotiator:
             s.ours.append(price)
             s.gaps.append(max(0.0, (theirs - price) / theirs) if theirs else 0.0)
             s.pending["appended"] = True
-        tone = "warm" if s.prof.get("warm", True) else "friendly and businesslike"
-        traded = any(n["what"] == "clause_trade" for n in self.notes)
-        facts = writer.facts(self.case, s, claims, moved, statements, attachments, traded)
-        para = llm.paragraph(
-            self.complete,
-            writer.brief(self.case, s.prof, latest(events).get("body"), facts, tone, first),
-            self.writer_s,
-        )
         body = writer.email(
             self.case,
             sheets,
@@ -476,7 +498,7 @@ class Negotiator:
             first=first,
             moved=moved,
             warm=s.prof.get("warm", True),
-            paragraph=para,
+            prose=prose,
         )
         refs = sorted({i for c in claims for i in c["ids"]})
         self.note(

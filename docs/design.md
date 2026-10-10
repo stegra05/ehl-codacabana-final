@@ -31,30 +31,32 @@ Supplier-equivalent values remain estimates, not observed acceptance thresholds.
 
 ## Principle
 
-Code owns every number and every binding decision; the model reads replies and writes e-mails.
-Score is total cost C, not price. Every step has a fallback that still sends a move within 60 s.
+The model negotiates; code guards and stands in. A small model on low effort (`gpt-6-luna`)
+decides each move from a dossier code assembles; code prices every sheet with `total_cost`,
+checks it with `must_haves_ok`, renders every figure and data ID, and plays the code policy above
+when the model is late, broken or out of bounds. Score is total cost C, not price. Every step has a
+fallback that still sends a move within 60 s.
 
-## A case
+## LLM-primary architecture (branch `steffen/llm-primary`)
 
-1. **Prepare** (before the first move, about 20 s): open the session, build a case brief: C_open,
-   C_alt, target, walk-away, the lever table (C of each allowed option), a view of each supplier,
-   and a claim bank of verified arguments. (Target, not built: a stance call proposes
-   per-supplier parameters and code clamps them; today the constants under Policy decide.)
-2. **Negotiate**, one thread negotiator per supplier, in parallel. Each round:
+Built in layers, each one tested on a working agent before the next.
 
-   ```
-   supplier reply
-     -> READ    (model, hard timeout)  offer, intent, objections, statements
-     -> CHECK   (code)  supplier statements against the data
-     -> PLAN    (code)  candidate sheets scored with total_cost, filtered by must_haves_ok
-     -> DECIDE  (code)  counter / accept / walk away, move size, claims
-     -> WRITE   (model, hard timeout; template if late)  figures and IDs injected by code
-     -> GUARD   (code)  every negotiable field, claim format, no leaks, no unplanned figures
-   ```
+| Layer | Where | What | Fallback |
+|---|---|---|---|
+| L0 model required | `cli.py`, `llm.py` | `play` and `run` refuse to start without `LLM_MODEL` and `LLM_API_KEY` (unless `--no-llm`) and make one pre-flight call; JSON calls with a strict schema | per move: the code policy |
+| L1 dossier | `dossier.py` | per supplier at setup: case terms and rates, C_open, C_alt, its quote and standard terms, our estimate (full cost, cost of money, overtime, relationship target), the lever table (allowed term rows, each at the price worth the same to the supplier, with C), its texts (notes, letters, news, quote remarks), signals, history, the claim bank by ID; a stable prefix the provider caches | none needed (pure code) |
+| L2 mover | `brain.py` | one call per supplier reply: the dossier, the playbook, the thread so far (prices at our terms), rival standing offers, the code policy's own move as a suggestion and the guard bounds; returns stop or 1 to 3 sheets (price, lever row), up to 3 claim IDs, the e-mail prose, what it read (asks, traits) and why. Reading, deciding and writing in one call keeps a move at about 3 s | the code policy's move |
+| L3 guard | `brain.py` | lever rows only from the table, `complete_offer`, `must_haves_ok`, C below C_alt; price at least our last at the same value to the supplier and below its counter (at or above it means agree: its sheet is mirrored), never under 75 % of its quote; claims only unused bank IDs; prose without digits (years allowed), data IDs or leaks. A price out of bounds is clamped, broken terms keep our current terms, failing prose falls back to the template paragraph | per field, as listed |
+| L4 strategist | `brain.py` | one call per supplier at case open, in parallel: anchor, terms row, relationship floor, which levers to trade and the round-1 claims; clamped like L3 | the code setup |
+| close | `policy.py` | the cheapest standing sheet by C that passes the accept gate; a walk-away only when none does (a deal below C_alt always scores at least the alternative) | none needed |
 
-3. **Close**: accept the best sheet that keeps every must-have and beats C_alt, or walk away;
-   at the latest 90 s before the wave's 8-minute cap.
-4. **Learn**: store the trace and what we learned per supplier for the next practice run.
+The code policy keeps its state in step with the model's moves (`Side.ours`, `theirs`, `terms`),
+so a fallback in any round continues the same path. Every model decision, its latency and each
+guard verdict go to `logs/runs/`.
+
+Evaluation: `arena-sim` for plumbing (tests use a scripted fake model), sandbox D01 and D02 for
+behaviour against `main` (0.99, 0.73), practice (at most 40 sessions tonight) only for a layer
+that holds on the sandbox.
 
 ## Modules
 

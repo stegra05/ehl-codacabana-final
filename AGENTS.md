@@ -60,8 +60,9 @@ supplier bots (LLM personas with hidden economics) and closes one term sheet per
 | `docs/learnings.md` | **read first**: what we know about the arena, suppliers and data, with evidence |
 | `docs/design.md` | the agent we are building: modules, data, policy, build order |
 | `docs/challenge.md`, `api.md`, `submission.md` | Tacto's brief, API and cost formula, hand-in (upstream copies) |
-| `buyer/policy.py`, `runner.py` | the price engine: per-thread policy and the supplier's asks; the loop that plays a case and the Live Final waves (`docs/design.md`, Implemented) |
-| `buyer/economics.py`, `claims.py`, `personas.py`, `writer.py`, `llm.py` | C and term planning, claim bank, persona signals, e-mail composition, model paragraph |
+| `buyer/policy.py`, `runner.py` | the code policy (the model's fallback and default): per-thread moves and the supplier's asks; the loop that plays a case and the Live Final waves (`docs/design.md`, Implemented) |
+| `buyer/brain.py`, `dossier.py`, `llm.py` | the model's move (playbook, move menu, guard), what it knows per supplier, model calls and prose check |
+| `buyer/economics.py`, `claims.py`, `personas.py`, `writer.py` | C and term planning, claim bank, persona signals, e-mail composition |
 | `buyer/cli.py` | `buyer play`, `buyer run`, `buyer pull`, `--agent naive` |
 | `tests/` | end to end against `arena-sim`, no network, no model |
 | `exports/` | Saturday probe sessions as CSV/JSONL; schema in `exports/README.md` |
@@ -90,9 +91,15 @@ uv run --with pandas python analysis/explore.py # data package -> analysis/out/
 
 ## Working on the negotiation agent
 
-- **Code owns numbers, the model owns words.** Every binding value (sheet, accept, walk away) is
-  computed or checked in code with `total_cost` and `must_haves_ok`; every figure in an e-mail
-  comes from code next to its data ID.
+- **The model negotiates, code guards and stands in.** The model (`LLM_MODEL`, required for the
+  final) decides each move: price, terms from the allowed options, claims from the bank, packages,
+  when to stop, and writes the e-mail prose. It decides from a dossier code assembles (case, quote,
+  lever table priced with `total_cost`, supplier texts, claim bank, the code policy's own move).
+  Code checks every binding value with `total_cost` and `must_haves_ok`, clamps what breaks a
+  guard, and plays the code policy when the model is late, broken or out of bounds. Every figure
+  and data ID in an e-mail is rendered by code; the model's prose carries none.
+- **Prompting and information decide the quality**, not model size (a small model on low
+  effort): put what moves the supplier into the dossier and what we learned into the playbook.
 - **Never accept** a sheet that breaks a must-have or costs more than the alternative. Price
   unstated fields at the supplier's standard terms (`arena_kit.docs.standard_terms`).
 - **Read the supplier.** What moves it is in the data (call notes, letters, news, quote remarks,
@@ -102,8 +109,8 @@ uv run --with pandas python analysis/explore.py # data package -> analysis/out/
 - **Generalise.** No logic keyed on case or supplier IDs; runtime knowledge from the data package
   is fine if it works for unseen suppliers.
 - **Don't leak** urgency, budget, a missing alternative or the target price.
-- **Every model call has a hard timeout** well under 60 s, and the move still goes out if it
-  fails. Measure latency per move.
+- **Every model call has a hard timeout** well under 60 s, and the move still goes out (the code
+  policy) if it fails. Measure latency per move.
 
 ## The learning loop
 

@@ -1,8 +1,9 @@
-"""The model writes one paragraph of each e-mail: it answers the supplier's last e-mail like a
-person would (its questions, its points, its situation). Code writes everything that binds or is
-checked: figures, data IDs, the proposal. A paragraph with any digit, data ID or leak is dropped
-and the template stands in. Hard timeout: the move goes out without the model if it is late."""
+"""The team's model over an OpenAI-compatible chat completions endpoint. It negotiates (`brain.py`):
+one JSON answer per move under a strict schema, with a hard timeout. A late call is abandoned, not
+interrupted: it finishes in the background (httpx timeout) while the move goes out from the code
+policy. Prose the model writes is checked here: no figure, data ID or leak reaches an e-mail."""
 
+import json
 import logging
 import os
 import re
@@ -12,49 +13,35 @@ from concurrent.futures import ThreadPoolExecutor
 import httpx
 
 log = logging.getLogger("buyer")
-TIMEOUT_S = 15.0
-MIN_S = 2.0  # less time than this left on the clocks: the template, no model call
-# A late call is abandoned, not interrupted: it finishes in the background (httpx timeout) while
-# the move goes out with the template.
-POOL = ThreadPoolExecutor(max_workers=32, thread_name_prefix="writer")
+TIMEOUT_S = 20.0
+MIN_S = 3.0  # less time than this left on the clocks: no model call, the code policy moves
+POOL = ThreadPoolExecutor(max_workers=32, thread_name_prefix="model")
 FORBIDDEN = re.compile(
-    r"\d|\b(?:idx|quote|offer|sc|qn|po|cost|fc|news|doc|ctr):|urgent|urgency|deadline|budget|no alternative|"
-    r"walk away|other options|last chance|desperate|must close|time pressure|target price",
+    r"\d|\b(?:idx|quote|offer|sc|qn|po|cost|fc|news|doc|ctr|sup|part):|urgent|urgency|deadline|budget|"
+    r"no alternative|walk away|other options|last chance|desperate|must close|time pressure|target price",
     re.I,
 )
-
-SYSTEM = """You are a senior buyer at Hollerau Pumpenwerke, a German pump maker, writing to a supplier.
-Write ONLY the middle paragraph of our reply e-mail: 2 to 4 sentences, plain text, no greeting, no
-sign-off, no lists.
-
-In it:
-- answer the supplier's last e-mail like a thoughtful person: respond to what it asked and to the
-  reasons it gave, using only the facts listed under WHAT WE CAN SAY;
-- acknowledge its situation where the notes give one (for example cash needs, full capacity, rising
-  costs, a long relationship), sincerely and briefly;
-- if it asks for something we cannot give, say so kindly and point to what we do offer;
-- ask one short question only if QUESTION ALLOWED is yes.
-
-Never write any number, price, percentage, date, quantity or data ID (code adds the figures). Never
-mention urgency, deadlines, a budget, our alternatives or the lack of them, a target price, or that
-we will walk away. Never invent facts, promises or commitments. Be polite, factual and warm unless the
-tone says firm."""
+YEAR = re.compile(r"\b(?:19|20)\d\d\b")  # "since 2022" is not a figure the arena checks
 
 
 def complete_from_env():
-    """(system, user) -> text with the team's model over an OpenAI-compatible chat completions
-    endpoint (`LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_EFFORT`), or None when not configured."""
+    """(system, user, schema) -> text with `LLM_MODEL` at `LLM_BASE_URL` (`LLM_API_KEY`,
+    `LLM_EFFORT`, default low), or None when not configured. With a schema the answer is JSON."""
     model, key = os.environ.get("LLM_MODEL"), os.environ.get("LLM_API_KEY")
     if not model or not key:
         return None
     base = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1").rstrip("/")
-    client = httpx.Client(timeout=TIMEOUT_S, headers={"Authorization": f"Bearer {key}"})
-
+    client = httpx.Client(timeout=TIMEOUT_S + 10, headers={"Authorization": f"Bearer {key}"})
     effort = os.environ.get("LLM_EFFORT", "low")
 
-    def complete(system, user):
+    def complete(system, user, schema=None):
         messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
         body = {"model": model, "messages": messages, "reasoning_effort": effort}
+        if schema:
+            body["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {"name": "answer", "strict": True, "schema": schema},
+            }
         r = client.post(f"{base}/chat/completions", json=body)
         r.raise_for_status()
         return r.json()["choices"][0]["message"]["content"]
@@ -62,23 +49,46 @@ def complete_from_env():
     return complete
 
 
-def paragraph(complete, brief, timeout=TIMEOUT_S):
-    """The model's paragraph for this brief within `timeout` seconds of wall clock, or None (no
-    model, no time, late, broken or unsafe)."""
+def call_json(complete, system, user, schema, timeout=TIMEOUT_S):
+    """The model's JSON answer within `timeout` seconds of wall clock, or None (no model, no time,
+    late, broken)."""
     if complete is None:
         return None
     if timeout < MIN_S:
-        log.warning("writer skipped: %.1fs left on the clocks", timeout)
+        log.warning("model skipped: %.1fs left on the clocks", timeout)
         return None
     t0 = time.monotonic()
     try:
-        text = (POOL.submit(complete, SYSTEM, brief).result(timeout=min(timeout, TIMEOUT_S)) or "").strip()
+        text = POOL.submit(complete, system, user, schema).result(timeout=min(timeout, TIMEOUT_S))
+        out = json.loads(text)
     except Exception as e:  # noqa: BLE001 - a slow or broken model must not cost the move
-        log.warning("writer model failed after %.1fs: %s", time.monotonic() - t0, e)
+        log.warning("model failed after %.1fs: %s", time.monotonic() - t0, e)
         return None
-    text = " ".join(text.split())
-    if not text or len(text) > 900 or FORBIDDEN.search(text):
-        log.warning("writer paragraph dropped: %r", text[:200])
+    log.info("model answered in %.1fs", time.monotonic() - t0)
+    return out if isinstance(out, dict) else None
+
+
+GREETING = re.compile(r"^(?:dear|hello|hi|guten tag)\b[^,\n]{0,60},\s*", re.I)
+SIGNOFF = re.compile(r"\s*(?:kind|best|warm)? ?regards\b.*$", re.I)
+
+
+def prose(text, limit=1200):
+    """The model's words for an e-mail without its own greeting or sign-off (code writes both), or
+    None when they carry a figure, a data ID or a leak."""
+    text = SIGNOFF.sub("", GREETING.sub("", " ".join((text or "").split())))
+    if not text or len(text) > limit or FORBIDDEN.search(YEAR.sub("", text)):
         return None
-    log.info("writer paragraph in %.1fs", time.monotonic() - t0)
     return text
+
+
+PING = {"type": "object", "properties": {"ok": {"type": "boolean"}}, "required": ["ok"], "additionalProperties": False}
+
+
+def preflight(complete):
+    """One small call before any case opens: the model is configured, reachable and answers JSON."""
+    if complete is None:
+        raise SystemExit("no model: set LLM_MODEL and LLM_API_KEY in .env (or pass --no-llm)")
+    t0 = time.monotonic()
+    if not (call_json(complete, "Answer with JSON.", 'Reply {"ok": true}.', PING) or {}).get("ok"):
+        raise SystemExit("the model did not answer the pre-flight call")
+    log.warning("model ready in %.1fs", time.monotonic() - t0)

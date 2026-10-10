@@ -42,26 +42,27 @@ def describe(case, sheet):
 ASK = "What would you need from us to move further on the price? We are open to discussing any term that helps you."
 
 
-def email(case, sheets, claims, statements=(), first=False, moved=False, warm=True, paragraph=None):
-    """The e-mail: our words (the model's paragraph, else the template's), then the code sentences
-    that answer its asks (figures without IDs), the data arguments and the proposal exactly as code
-    computed them."""
-    lines = ["Dear Sir or Madam,", ""]
+def template(first, moved, warm):
+    """Our words when the model's are missing."""
     if first:
-        lines.append("Thank you for your offer and for the time your team has put into it.")
+        thanks = "Thank you for your offer and for the time your team has put into it."
     elif moved:
-        lines.append("Thank you for your reply and for the step you have taken; we appreciate it.")
+        thanks = "Thank you for your reply and for the step you have taken; we appreciate it."
     else:
-        lines.append("Thank you for your reply.")
-    if paragraph:
-        lines.append(paragraph)
-    elif warm:
-        lines.append(
-            "We value our cooperation and we understand the cost pressure on your side; we want an agreement "
-            "that keeps our partnership healthy for both of us."
+        thanks = "Thank you for your reply."
+    if warm:
+        return (
+            f"{thanks} We value our cooperation and we understand the cost pressure on your side; we want an "
+            "agreement that keeps our partnership healthy for both of us."
         )
-    else:
-        lines.append("We want an agreement that works for both sides.")
+    return f"{thanks} We want an agreement that works for both sides."
+
+
+def email(case, sheets, claims, statements=(), first=False, moved=False, warm=True, prose=None):
+    """The e-mail: our words (the model's prose, else the template's), then the code sentences that
+    answer its asks (figures without IDs), the data arguments and the proposal exactly as code
+    computed them."""
+    lines = ["Dear Sir or Madam,", "", prose or template(first, moved, warm)]
     if statements:
         lines.append("")
         lines += list(statements)
@@ -74,7 +75,7 @@ def email(case, sheets, claims, statements=(), first=False, moved=False, warm=Tr
     else:
         lines.append("On this basis we propose one of these packages:")
         lines += [f"- Option {chr(65 + i)}: {describe(case, s)}" for i, s in enumerate(sheets)]
-    if first and not paragraph:
+    if first and not prose:
         lines += ["", ASK]
     lines += ["", "Kind regards,", "Hollerau Pumpenwerke, Purchasing"]
     return "\n".join(lines)
@@ -100,24 +101,6 @@ OWNERS = {
     "founder": "a small founder-run shop",
     "private": "a privately held company",
 }
-
-
-def brief(case, prof, last_body, facts, tone, question_allowed):
-    """What the model needs for the paragraph: who the supplier is, what it wrote, what we may say."""
-    who = OWNERS.get(prof.get("owner_type"), "a supplier")
-    if prof.get("country") and prof.get("country") != "DE":
-        who += f" based in {prof['country']}"
-    traits = [TRAITS[s] for s in prof.get("signals", []) if s in TRAITS]
-    out = [
-        f"CASE: {case.get('title')} (we are the buyer; goal: {case['buyer'].get('category_goal')})",
-        f"SUPPLIER: {who}." + (f" From our notes: {'; '.join(traits)}." if traits else ""),
-        f"ITS LAST E-MAIL:\n{(last_body or '')[:1800]}",
-        "WHAT WE CAN SAY:",
-        *[f"- {f}" for f in facts],
-        f"TONE: {tone}",
-        f"QUESTION ALLOWED: {'yes' if question_allowed else 'no'}",
-    ]
-    return "\n".join(out)
 
 
 def keepalive():
@@ -157,7 +140,7 @@ def facts(case, s, claims, moved, statements, attachments, traded):
             "instead of a fixed price we propose an index clause with a deadband on their main cost driver, "
             "so both sides share the material risk; in return the price basis reflects that"
         )
-    if any(c["kind"] == "forecast" for c in claims) or any(c["kind"] == "forecast" for c in s.claims):
+    if any(c["kind"] == "forecast" for c in claims):  # unbacked, it asks for the data (P18, P02)
         out.append("our demand forecast for this part is rising")
     if s.ours and len(s.ours) > 1 and s.ours[-1] > s.ours[-2]:
         out.append("our proposal moves toward them again")

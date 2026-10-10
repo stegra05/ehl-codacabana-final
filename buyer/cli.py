@@ -88,6 +88,8 @@ def main(argv=None):
     naive = args.agent == "naive"
     pkg = None if naive else load_package(args.data)
     complete = None if naive or args.no_llm else llm.complete_from_env()
+    if not (naive or args.no_llm):
+        llm.preflight(complete)  # no human in the final: a missing model must stop the start, not every move
     if args.cmd == "play":
         table = RemoteTable(client)
         try:

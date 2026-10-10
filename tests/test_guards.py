@@ -142,19 +142,28 @@ def test_writer_budget_leaves_time_for_every_live_clock():
     assert runner.writer_budget("a", replied, ["a", "b"], 10, now=0) == llm.TIMEOUT_S
 
 
-def test_paragraph_is_bounded_by_wall_clock():
+def test_model_call_is_bounded_by_wall_clock():
     calls = []
 
-    def slow(system, user):
+    def slow(system, user, schema=None):
         calls.append(1)
-        time.sleep(3)
-        return "A fine paragraph."
+        time.sleep(5)
+        return '{"ok": true}'
 
     t0 = time.monotonic()
-    assert llm.paragraph(slow, "brief", 2.2) is None
-    assert time.monotonic() - t0 < 2.8
-    assert llm.paragraph(slow, "brief", 1.0) is None  # no time: not even called
+    assert llm.call_json(slow, "s", "u", llm.PING, 3.2) is None
+    assert time.monotonic() - t0 < 3.8
+    assert llm.call_json(slow, "s", "u", llm.PING, 1.0) is None  # no time: not even called
     assert len(calls) == 1
+    assert llm.call_json(lambda *a: "not json", "s", "u", llm.PING) is None
+
+
+def test_prose_carries_no_figures_ids_or_leaks():
+    assert llm.prose("We value the partnership you showed since 2022.")
+    assert llm.prose("We can pay in 30 days.") is None
+    assert llm.prose("See sc:70270@2026Q3 for details.") is None
+    assert llm.prose("We have a tight budget.") is None
+    assert llm.prose("Dear Joanna, thank you. Best regards, Hollerau Pumpenwerke") == "thank you."
 
 
 def test_a_bundle_has_no_should_cost():
