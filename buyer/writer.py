@@ -1,6 +1,8 @@
 """E-mails from templates: every figure and ID comes from code, the wording stays polite and
 factual. Never mentions urgency, a budget, our alternative's absence or our target."""
 
+from arena_kit.play import latest
+
 FIELDS = {
     "payment_days": lambda v: f"payment {v} days net",
     "contract_months": lambda v: f"{v} months" if v else "a single order",
@@ -122,3 +124,72 @@ def keepalive():
         "Dear Sir or Madam,\n\nthank you for your offer, which we are reviewing internally. Could you confirm "
         "how long it remains valid?\n\nKind regards,\nHollerau Pumpenwerke, Purchasing"
     )
+
+
+def facts(case, s, claims, moved, statements, attachments, traded):
+    """Plain statements the model may use, true by construction; its asks come first so the
+    paragraph answers them (P11 froze at 45.50 after five unanswered asks for faster payment)."""
+    out = []
+    fixed = case.get("fixed_terms") or {}
+    payment_fixed = "payment_days" not in case["negotiable"] or fixed.get("payment_days")
+    if "payment" in s.asks:
+        if payment_fixed:
+            out.append(
+                "they asked for faster payment: payment terms are fixed in this agreement and cannot change, "
+                "say so plainly and kindly, and point to what we do give (we pay reliably on the due date, "
+                "our full volume, the contract term)"
+            )
+        else:
+            out.append("they asked for faster payment: our proposal below sets the payment term we can offer")
+    if "volume" in s.asks or statements:
+        out.append("they asked which volume we commit to: the binding volume figure stands right after this paragraph")
+    if attachments:
+        out.append("they asked for proof of our forecast: the forecast is attached to this e-mail as a file, say so")
+    if "volume_per_year" not in case["negotiable"] or fixed.get("volume_per_year"):
+        out.append("our order volume is fixed: it is our full demand for this part over the term, all with them")
+    if payment_fixed and "payment" not in s.asks:
+        out.append("payment terms are fixed for this agreement; we pay reliably on the due date")
+    if "contract_months" in case["negotiable"]:
+        out.append("we offer a long contract term, which gives them planning security")
+    if s.terms.get("index_clause") and traded:
+        out.append(
+            "instead of a fixed price we propose an index clause with a deadband on their main cost driver, "
+            "so both sides share the material risk; in return the price basis reflects that"
+        )
+    if any(c["kind"] == "forecast" for c in claims) or any(c["kind"] == "forecast" for c in s.claims):
+        out.append("our demand forecast for this part is rising")
+    if s.ours and len(s.ours) > 1 and s.ours[-1] > s.ours[-2]:
+        out.append("our proposal moves toward them again")
+    if moved:
+        out.append("they moved in their last reply and we appreciate it")
+    if claims:
+        out.append("the e-mail cites data right after this paragraph (do not repeat it)")
+    out.append("the proposal with all terms follows after the data (do not repeat it)")
+    return out
+
+
+def statements(case, s, sheets):
+    """Code sentences with figures that answer its asks: the binding volume, in round 1 and
+    whenever it asks ("Which volume can you commit to?" came 152 times; a figure was "taken
+    into account", a description was not)."""
+    if not ("volume" in s.asks or not s.ours):
+        return []
+    fixed = case.get("fixed_terms") or {}
+    sheet = sheets[0]
+    volume = sheet.get("volume_per_year") or fixed.get("volume_per_year") or case["buyer"]["need_per_year"]
+    months = sheet.get("contract_months") or fixed.get("contract_months")
+    term = f"for the {months}-month term" if months else "for this agreement"
+    full = " our full demand for this part," if volume >= case["buyer"]["need_per_year"] else ""
+    return [f"We confirm a binding volume of {volume} units a year {term},{full} all placed with you."]
+
+
+def reply_subject(events, case):
+    subject = latest(events).get("subject") or f"Re: {case['title']}"
+    if not subject.lower().startswith("re:"):
+        subject = f"Re: {subject}"
+    return subject[:300]
+
+
+def keepalive_message(events):
+    subject = latest(events).get("subject") or "Re: your offer"
+    return {"subject": subject[:300], "body": keepalive(), "term_sheets": []}
