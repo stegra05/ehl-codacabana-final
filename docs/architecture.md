@@ -6,30 +6,24 @@ The buyer tries to minimize total cost over the case horizon. Unit price is only
 
 ## System map
 
-The live loop follows the supplied diagram. Solid arrows are runtime data or actions. Dashed arrows are optional wording or later human changes.
+The supplied diagram shows the live negotiation and what happens after it. The runner owns the session and clocks; the negotiator owns decisions for one case. The model can help write a paragraph, while code sets the offer and closing action.
 
-```mermaid
-flowchart LR
-    DATA["Data package<br/>supplier facts and documents"] --> NEG["Negotiator<br/>one per case"]
-    COST["Cost engine<br/>score legal term options"] <--> NEG
-    NEG <--> SIDE["Side<br/>memory for each supplier"]
+![Simplified buyer system map, from supplier data and negotiation through arena results and human review](assets/system-map.png)
 
-    ARENA["Arena<br/>case, quotes, supplier replies"] --> RUN["Runner<br/>sessions, waves, 60 s clocks"]
-    RUN --> NEG
-    NEG --> WRITER["Writer<br/>terms, figures, claims"]
-    MODEL["Optional model<br/>email paragraph"] -.-> WRITER
-    WRITER --> ARENA
-    NEG --> CLOSE{"Close gate<br/>best valid standing offer?"}
-    CLOSE --> ARENA
+## Example: one supplier quote
 
-    RUN --> NOTES["Run notes"]
-    ARENA --> TRACE["Trace and back office"]
-    NOTES --> REVIEW["Human review and next experiment"]
-    TRACE --> REVIEW
-    REVIEW -.-> NEG
-```
+This is an **illustrative routine case**, not a recorded session. Suppose we need 1,000 units, the supplier quotes €100 per unit, the buyer's alternative costs €110,000, and the selected non-price terms stay the same as the quote. The supplier has no special signals that change the usual price path.
 
-### What each box does
+1. **Arena → Runner.** The arena opens the case with the supplier's email and quote. The runner fetches the quote, starts one `Negotiator` for the case, and watches the supplier's 60 second reply clock.
+2. **Data package → Side → Cost engine.** The negotiator reads supplier facts and quote terms. Its `Side` remembers this supplier's quote, profile and planned terms. The cost engine checks the allowed options and must-haves. In this simple example, the routine opening anchor is 82% of the comparable €100 quote, so the first sheet offers **€82 per unit**.
+3. **Writer → Arena.** Code puts €82 and the complete term sheet in the email, plus up to three verified claim sentences if the data supports them. The optional model may write a short paragraph; it cannot change the sheet or figures. The runner sends the message to the arena.
+4. **Supplier reply → Negotiator.** Suppose the supplier counters at **€95** with the same terms. `Side` records that counter. With no special rule triggered, the policy moves 30% of the €13 gap from our €82 offer toward €95: **€85.90**. The writer sends this next sheet, with at most one new claim.
+5. **Close gate → Arena.** Suppose the supplier later makes **€90** its standing final sheet. The buyer does not accept on price alone. If `total_cost` values that complete sheet at €98,000, it meets every must-have, and the alternative is €110,000, the close gate accepts it. If no standing sheet passes those checks, it walks away. With several suppliers, it chooses the cheapest valid standing sheet across them.
+6. **Trace → Human review.** The runner saves its decision notes; `buyer pull` collects the arena trace and official cost breakdown. The team compares the result with the best possible cost and tests the next change offline or in the sandbox.
+
+The runner sends one message at a time within a case and serves the supplier whose reply has waited longest. Cases run in parallel during a wave. It limits the optional model to 15 seconds, stops negotiating 90 seconds before a final wave cap, and rereads arena state after a send or close returns HTTP 409.
+
+## What each box does
 
 | Box | Plain-language role | Where it lives |
 |---|---|---|
@@ -44,17 +38,6 @@ flowchart LR
 | **Close gate** | Finds the cheapest acceptable *standing* supplier sheet or walks away. It checks must-haves and estimated cost against the alternative. | `Negotiator.best_offer`, `Negotiator.close`, `economics.deal_cost` |
 | **Trace and back office** | Hold the arena's full conversation, result and official cost breakdown after a session. | `buyer pull` in [`buyer/cli.py`](../buyer/cli.py) |
 | **Human review** | Compares decisions with the result, records a finding, changes code and tests again. This is outside the live agent. | [`learnings.md`](learnings.md), [`analysis/explore.py`](../analysis/explore.py) |
-
-## One case, from opening to close
-
-1. **Enter.** `buyer play` runs one case; `buyer run` runs a set. `cli.main` loads `.env`, one `ArenaClient`, one shared `DataPackage` ID index and an optional model client. `--agent naive` selects the kit baseline instead of this buyer.
-2. **Open.** `runner.play_case` opens a `RemoteTable` session and fetches opening quote attachments. Each case gets one `Negotiator`; each supplier thread gets one `Side`.
-3. **Plan.** `Negotiator.setup` reads the standing quote and standard terms, supplier signals and available cost evidence. `economics.plan_terms` tries the allowed non-price combinations, prices them at equal estimated supplier value, keeps must-haves, and chooses the lowest buyer cost. The policy sets an opening anchor and builds a ranked claim bank.
-4. **Pick a thread.** The runner serves the supplier whose reply has waited longest; opening quote price breaks a first-round tie. Calls within a session are serial. A finished bidder can receive a keepalive while other bidders continue. The optional model gets at most 15 seconds and can be skipped when another thread's 60 second clock is tight.
-5. **Read and decide.** `Negotiator.move` reads structured supplier sheets, detects volume, proof, payment and price questions by fixed patterns, and updates persona signals. It may adopt a complete, valid supplier package when it beats the current plan at equivalent supplier value. Otherwise `next_price` starts at the anchor and usually moves 30% of the gap toward the counter, with special patience and relationship-cost rules.
-6. **Write and send.** The policy selects up to three data-backed claims on the first move, then up to one per later move. Code writes all figures, claim IDs and term sheets. The model may add a paragraph; a late, empty, long or filtered paragraph falls back to a template. `RemoteTable.send` delivers the message and waits for the supplier's reply.
-7. **Recover or finish.** On a send 409, the policy rolls back its pending state and reads the arena's current reply. A terminal send result ends the case. Before a final wave's cap, the runner stops negotiating with 90 seconds left, refetches recent quote attachments and calls the close gate. A close 409 triggers another read and guarded choice, up to three tries. The final wave loop gives a crashed case one resume attempt.
-8. **Review later.** `runner.save` writes decision notes and the result under `logs/runs/`. `buyer pull` stores the full trace and back office under `logs/sessions/`. A teammate uses those records for the next experiment.
 
 ### What is binding
 
