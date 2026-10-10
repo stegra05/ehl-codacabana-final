@@ -1,9 +1,16 @@
 # docs
 
-Copied from [tacto-ai/negotiation-arena-kit](https://github.com/tacto-ai/negotiation-arena-kit)
+The three official reference documents below are copied from [tacto-ai/negotiation-arena-kit](https://github.com/tacto-ai/negotiation-arena-kit)
 `brief/` at commit `1b5516b` (CC BY 4.0, Tacto). The upstream repo is the source of truth; refresh
 these copies when it changes.
 
 - `challenge.md`: the participant brief (story, task, score, rules, timeline)
 - `api.md`: the HTTP API, message format, claim checks, the cost function C
 - `submission.md`: what to hand in on ehl.gg by Sunday 12:00, and the pitch
+
+## Team notes
+
+- [Local analysis process](local-analysis-process.md): company evidence, supplier
+  dossiers, calculations, validation and simulator experiments.
+- [Understanding anchor and gap](anchor-gap.md): local strategy labels, a worked
+  example and limits of the naive negotiation rule.
