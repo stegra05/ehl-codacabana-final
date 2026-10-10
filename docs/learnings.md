@@ -484,6 +484,18 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
 - 2026-10-10 **v10 to v12**: falling-driver claims (P08 0.670, P18 0.621), the clause trade (P02
   0.735), the held anchor after a job shop's deep drop (P05 0.828). Results under Agent
   experiments; mean 0.776.
+- 2026-10-10 **v14**, no quota spent: the rules with one supplier behind them were checked
+  against the nine unplayed case files (every case file through `Negotiator.setup` on
+  `arena-sim` with the package). Two of them met those rules: P14 (stabilise, copper, a supplier
+  whose letter says its material is bought forward) got the clause trade with a 48 % copper move,
+  a clause "worth" 24 % of the price to it and an anchor 11.6 % below the quote; P17 (stabilise
+  price increase, supplier at our should-cost) took the near-cost branch, which had no
+  relationship target and scored 0.48 on P02 over seven runs before the clause. Now: no clause
+  trade for a `hedged` supplier, the supplier's clause value capped at 8 % of the price
+  (`economics.CLAUSE_VALUE_MAX`, what Nordmark showed), and a near-cost supplier keeps its
+  relationship target so the closing rule stops us at the optimum instead of pushing on (P02 v1:
+  Nordmark withdrew). The ten hosted cases set up identically before and after (P02's anchor
+  sits on the floor in both). `tests/test_clause_trade.py`.
 
 ## Data package
 
@@ -582,7 +594,11 @@ shows evidence.
   rounds converge to the same price whatever the gap. v10 supports it (a first counter of 5.40
   gave 0.670); the record's counter is still unexplained.
 - Three sheets of equal C for us in round 1 reveal what each lever is worth to the supplier
-  (payment, lead time, ppm) and could lift P10 and P11.
+  (payment, lead time) and could lift P10. Not P11: a chargeback of 500 at 1500 or 2500 ppm and
+  45.00 would score 0.816, but the probe offered Kalwisz chargeback 500 twice (round 2 next to
+  300 ppm at the same price, round 3 at its own price) and it answered 300 ppm and 0 chargeback
+  both times; at its scorecard rate of about 2400 ppm the chargeback costs it 1.19 per unit,
+  more than the 0.50 it charges for 300 ppm (`exports/messages.jsonl`, P11).
 - Calibrating anchors between waves from the `c_best` each closed session reveals (Score and
   terms) would help; it needs a rules check first.
 - Persona-specific wording (cash need, partnership 2022, reference customer) moves the round-1
