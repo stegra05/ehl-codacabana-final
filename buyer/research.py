@@ -74,10 +74,9 @@ counter each round.
     + """
 
 Return JSON only:
-{"shift": number from -0.05 to 0, how much lower than usual we open, as a share of the quote.
-  Lower only with evidence of a deep floor (a large margin over should-cost, free capacity,
-  cheaper rivals). 0 when the evidence is thin or the supplier is touchy, near its cost, fully
-  booked or frozen on price.
+{"shift": number from 0 to 0.02, how much closer to the quote than usual we open, as a share of
+  the quote. Stay at 0 unless several independent facts support a firmer opening. Never recommend
+  more than 2 percentage points; avoid changing a price based on a single clue.
  "fraction": number from 0.2 to 0.3, the share of the gap we move per round. Low to hold out
   against a supplier that keeps conceding. Usual: 0.3.
  "claim_order": the kinds of argument this supplier will accept, strongest first, from: KINDS.
@@ -305,7 +304,7 @@ def clamp(raw):
         return [v for v in value if v in allowed] if isinstance(value, list) else []
 
     return {
-        "shift": round(number("shift", -0.05, 0.0, 0.0), 3),
+        "shift": round(number("shift", 0.0, 0.02, 0.0), 3),
         "fraction": round(number("fraction", 0.2, 0.3, 0.3), 2),
         "claim_order": listed("claim_order", CLAIM_KINDS),
         "tone": raw.get("tone") if raw.get("tone") in ("warm", "businesslike") else None,
@@ -334,7 +333,7 @@ def briefs(case, pkg, complete, budget_s=BUDGET_S):
                 system = SPECIALIST.format(name=group, scope=scope, goal=goal)
                 jobs[sid, group] = llm.submit(complete, system, f"{head}\n\nSUPPLIER {sid}\n{data}")
     stage = min(end, time.monotonic() + STAGE_S)
-    found = {key: llm.read_json(f, stage - time.monotonic()) for key, f in jobs.items()}
+    found = llm.read_many_json(jobs, stage - time.monotonic())
     lessons = memory.recall(case)
     second = {}
     for sid in suppliers:
@@ -356,18 +355,25 @@ def briefs(case, pkg, complete, budget_s=BUDGET_S):
                 ],
             )
         )
-        playbooks = [llm.submit(complete, SUPPLIER, user) for _ in range(PLAYBOOKS)]
-        second[sid] = (findings, llm.submit(complete, LEAD, user), playbooks)
+        playbooks = {f"{sid}:playbook:{i}": llm.submit(complete, SUPPLIER, user) for i in range(PLAYBOOKS)}
+        lead_key = f"{sid}:lead"
+        second[sid] = (findings, lead_key, list(playbooks))
+        jobs.update(playbooks)
+        jobs[lead_key] = llm.submit(complete, LEAD, user)
     stage = min(end, time.monotonic() + STAGE_S)
+    answers = llm.read_many_json(
+        {key: jobs[key] for _, lead, playbooks in second.values() for key in [lead, *playbooks]},
+        stage - time.monotonic(),
+    )
     out = {}
     for sid, (findings, lead, playbooks) in second.items():
-        strategy = llm.read_json(lead, stage - time.monotonic())
-        answers = [llm.read_json(f, stage - time.monotonic()) for f in playbooks]
+        strategy = answers.get(lead)
+        playbook_answers = [answers.get(key) for key in playbooks]
         if strategy is None:
             continue
         out[sid] = {
             **clamp(strategy),
-            "model": blend([clamp_model(a) for a in answers if a]),
+            "model": blend([clamp_model(a) for a in playbook_answers if a]),
             "findings": {g: f.get("findings") for g, f in findings.items() if f.get("findings")},
         }
     log.info("%s research in %.1fs: %s", case["case_id"], time.monotonic() - t0, json.dumps(out, ensure_ascii=False))

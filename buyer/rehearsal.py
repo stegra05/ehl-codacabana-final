@@ -6,10 +6,9 @@ policy's own price step. The strategy with the lowest demo deal price opens the 
 
 import statistics
 
-# The demo bidding may only hold lower and slower than the policy's defaults, never open higher or
-# move faster: the supplier agrees where our sheet meets its counter, so a higher opening (0.83
-# and 0.805 instead of 0.78) and a faster pace (0.4) each cost 3 % of the price on D02.
-SHIFTS = (-0.05, -0.025, 0.0)  # opening price against the policy's default, share of the quote
+# Keep the experiment narrow: at most 2 percentage points closer to the quote. A higher anchor is
+# only a candidate, not a rule; the demo must predict a better deal to select it.
+SHIFTS = (0.0, 0.01, 0.02)  # opening price against the policy's default, share of the quote
 FRACTIONS = (0.2, 0.3)  # share of the gap we move per round
 # The demo supplier, clamped: (low, high, default). Defaults are the typical practice supplier.
 MODEL = {
@@ -76,8 +75,8 @@ def bid(step, model, anchor, fraction, budget, rounds=10):
 
 def tune(step, model, ratio, budget, proposal=None, low=0.0, high=1.0):
     """The opening ratio and the fraction with the lowest demo deal price, among the grid around the
-    policy's default `ratio` and the lead researcher's `proposal` (shift, fraction). Ties go to the
-    default, which practice has proven. Returns (ratio, fraction, [(ratio, fraction, price, end)])."""
+    policy's default `ratio` and lead researcher's proposal. Ties go to the default to limit noise.
+    Returns (ratio, fraction, [(ratio, fraction, price, end)])."""
     grid = [(d, f) for d in SHIFTS for f in FRACTIONS]
     if proposal and proposal not in grid:
         grid.append(proposal)

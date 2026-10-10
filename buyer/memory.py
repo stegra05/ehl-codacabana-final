@@ -5,6 +5,7 @@ supplier ID, and code writes every figure in them."""
 
 import json
 import logging
+import statistics
 import threading
 from pathlib import Path
 
@@ -12,7 +13,7 @@ from . import llm
 
 log = logging.getLogger("buyer")
 LESSONS = Path(__file__).parent / "lessons.jsonl"  # committed: the final machine starts with them
-RECALL = 5
+MIN_RECALL = 3
 LOCK = threading.Lock()
 
 DEBRIEF = """You are the debrief analyst of the purchasing team of Hollerau Pumpenwerke. Below is how
@@ -83,8 +84,13 @@ def record(case, neg, result, complete):
     return row
 
 
-def recall(case, n=RECALL):
-    """The latest lessons of the most similar cases (same goal, then same case type), as lines."""
+def recall(case):
+    """Return one aggregate only after three distinct comparable observations.
+
+    Generated lesson prose is intentionally excluded: it is noisy, contradictory, and can turn a
+    single outcome into a strategy rule. Paths and scores are recorded facts; the aggregate is
+    context, not a supplier-specific instruction.
+    """
     if not LESSONS.is_file():
         return []
     rows = []
@@ -94,15 +100,28 @@ def recall(case, n=RECALL):
         except ValueError:
             continue
     goal, kind = case["buyer"].get("category_goal"), case.get("type")
-    ranked = sorted(enumerate(rows), key=lambda r: ((r[1].get("goal") == goal) + (r[1].get("type") == kind), r[0]))
-    out = []
-    for _, r in ranked[-n:]:
-        if r.get("goal") != goal and r.get("type") != kind:
-            continue
-        t = (r.get("threads") or [{}])[0]
-        out.append(
-            f"{r.get('goal')} {r.get('type')}, {r.get('bidders')} bidder(s), owner {'/'.join(r.get('owners') or [])}, "
-            f"traits {r.get('signals')}: opened at {t.get('opened')} of the quote, moved {t.get('fraction')} of "
-            f"the gap per round, its prices {t.get('theirs')}, score {r.get('score')}. {r.get('lesson') or ''}"
-        )
-    return out
+    comparable = [r for r in rows if r.get("goal") == goal and r.get("type") == kind]
+    # A rerun/debrief of the same recorded outcome is not independent evidence.
+    distinct = {}
+    for row in comparable:
+        signature = json.dumps((row.get("score"), row.get("threads")), sort_keys=True, separators=(",", ":"))
+        distinct[signature] = row
+    sample = list(distinct.values())
+    if len(sample) < MIN_RECALL:
+        return []
+
+    threads = [row.get("threads", [{}])[0] for row in sample if row.get("threads")]
+    opened = [t["opened"] for t in threads if isinstance(t.get("opened"), (int, float))]
+    fractions = [t["fraction"] for t in threads if isinstance(t.get("fraction"), (int, float))]
+    scores = [r["score"] for r in sample if isinstance(r.get("score"), (int, float))]
+    finals = [t["theirs"][-1] for t in threads if t.get("theirs")]
+    if not opened or not fractions or not scores:
+        return []
+    summary = (
+        f"Aggregate of {len(sample)} distinct {goal}/{kind} outcomes: median opening "
+        f"{statistics.median(opened):.3f} of quote, median concession fraction "
+        f"{statistics.median(fractions):.2f}, median score {statistics.median(scores):.3f}"
+    )
+    if finals:
+        summary += f", median supplier final counter {statistics.median(finals):.3f} of quote"
+    return [summary + ". Treat as weak context; do not copy a single path or lesson."]

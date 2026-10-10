@@ -51,15 +51,15 @@ result, trace ──> debrief ──> buyer/lessons.jsonl ───────�
 
 | Module | Job | May change |
 |---|---|---|
-| `buyer/research.py` | before the session opens (no supplier clock runs, 40 s cap, about 5 to 11 s seen): one specialist per data group of the table below (economics rows 1 to 3, persona 4 and 6, history 5 and 7, leverage 8 and 9) reads a digest that code collected for one supplier; the lead consolidates the findings and the recalled lessons | opening shift -0.05 to 0, fraction 0.2 to 0.3, order of the claim kinds, tone, notes for the writer |
-| `buyer/rehearsal.py` | the demo bidding: a supplier subagent states its playbook (floor, first drop, step, counters, patience, eager), three answers blended; code plays it against the policy's own price step over a grid of openings and fractions | picks opening and fraction, lower and slower than the default only, not in relationship goals; ties keep the default |
-| `buyer/analyst.py` | reads every supplier e-mail, the opening quote included (2 to 4 s, out of the writer's time) | its asks join the patterns'; mood `open` moves 0.7 of our step, `closing` brings our sheet within 1.5 % of its counter; notes for the writer |
-| `buyer/memory.py` | after a scored case: code writes the paths in shares of the quote, a debrief subagent one lesson; keyed on goal, case type, owner type and traits, never on IDs | what the next lead and supplier subagent read (5 most similar). The final writes none |
+| `buyer/research.py` | before the session opens (no supplier clock runs, 40 s cap, about 5 to 11 s seen): one specialist per data group of the table below (economics rows 1 to 3, persona 4 and 6, history 5 and 7, leverage 8 and 9) reads a digest that code collected for one supplier; the lead consolidates findings and aggregate history | opening shift 0 to +0.02, fraction 0.2 to 0.3, order of the claim kinds, tone, notes for the writer |
+| `buyer/rehearsal.py` | the demo bidding: a supplier subagent states its playbook (floor, first drop, step, counters, patience, eager), three answers blended; code plays it against the policy's own price step over a narrow opening and fraction grid | may select an opening up to 2 percentage points closer to the quote if simulated deal price improves; ties favor the default; relationship and raised anchors stay fixed |
+| `buyer/analyst.py` | reads every supplier e-mail, the opening quote included (2 to 4 s, out of the writer's time) | its asks join the patterns'; mood `open` moves 0.7 of our step, `closing` brings our sheet within 1.25 % of its counter; notes for the writer |
+| `buyer/memory.py` | after a scored case: code writes the path in shares of the quote and a debrief subagent may add an untrusted lesson; keyed on goal and case type, never on IDs | after three distinct comparable outcomes, the next lead sees one aggregate of factual paths and scores; generated lesson prose is excluded. The final writes none |
 
 What a model may not do: add a persona trait that moves an anchor or a rate (it added `price_frozen`
-and `capacity_full` to suppliers that are neither), open higher or move faster than the default
-(cost 3 % of the price on D02), open lower in a relationship goal (D01 0.979 against 0.987).
-Evidence in `learnings.md`, Agent experiments.
+and `capacity_full` to suppliers that are neither), move faster than the default, or open outside
+the small tested-by-simulation range. Relationship and raised anchors stay fixed. Evidence in
+`learnings.md`, Agent experiments.
 
 ## Principle
 

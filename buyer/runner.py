@@ -33,7 +33,7 @@ def writer_budget(sid, replied, live, send_s, now):
     every other live thread must still get a message once this send returns."""
     left = [CLOCK_S - MARGIN_S - (now - replied[sid])]
     left += [CLOCK_S - MARGIN_S - send_s - (now - replied[o]) for o in live if o != sid]
-    return min(llm.TIMEOUT_S, *left)
+    return max(0.0, min(llm.TIMEOUT_S, *left))
 
 
 def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True, learn=True):

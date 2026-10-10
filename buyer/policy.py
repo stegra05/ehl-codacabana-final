@@ -38,7 +38,7 @@ DEEP = 0.06  # a first concession this large (share of its quote) means a deep f
 MIN_MOVE = 0.002  # every sheet moves at least this share of the price
 FIRST_CLAIMS, LATER_CLAIMS = 3, 1
 OPEN_HOLD = 0.7  # its e-mail signals room to move: we move this share of our usual step
-CLOSING_GAP = 0.015  # its e-mail signals the end is near: our sheet comes this close to its counter
+CLOSING_GAP = 0.0125  # closing signal: move within 1.25% of its counter, without crossing it
 DONE = {"agreed", "final_offer"}
 
 # What the supplier's e-mail asks of us
@@ -155,7 +155,7 @@ class Negotiator:
             cap = current / q_price  # a price increase opens at today's price at most
         ratio = max(ANCHOR_MIN, min(ratio, cap))
         if brief:
-            ratio = self.apply(s, brief, ratio, ratio > ANCHOR.get(goal, 0.85))
+            ratio = min(cap, self.apply(s, brief, ratio, ratio > ANCHOR.get(goal, 0.85)))
         # terms planned at the price we open with: coverage pays off at a low price, not at the quote
         planned = safe(lambda: eco.plan_terms(case, s.std, s.est, quote, q_price * ratio))
         s.terms = planned[0] if planned else eco.complete_offer(case, eco.at_price(quote, q_price * ratio))
@@ -204,9 +204,13 @@ class Negotiator:
             # counters at 30 days' payment, 0.766 against 0.860
             pass
         elif brief.get("model"):
-            ratio, s.fraction, demo = rehearsal.tune(step, brief["model"], ratio, s.budget, proposal, ANCHOR_MIN, ratio)
+            ratio, s.fraction, demo = rehearsal.tune(
+                step, brief["model"], ratio, s.budget, proposal, ANCHOR_MIN, min(1.0, ratio + 0.02)
+            )
         else:
-            ratio, s.fraction = max(ANCHOR_MIN, ratio + proposal[0]), proposal[1]
+            # Without an independently blended supplier playbook, don't let one lead-model
+            # estimate move the opening. Research may still recommend a slower concession pace.
+            s.fraction = proposal[1]
         s.research = brief.get("notes") or ""
         if brief.get("tone"):
             s.prof["warm"] = brief["tone"] == "warm"
@@ -480,11 +484,17 @@ class Negotiator:
                 if price < s.theirs[-1]:
                     rivals.append((price, rival_offer(other, oid, t["unit_price"])))
         pool = [c for _, c in sorted(rivals, key=lambda r: r[0])[:1]] + s.claims
+        selected_kinds = set()
         for c in pool:
             key = [(s.sid, i) if c.get("rival") else i for i in c["ids"]]
             if any(k in self.used for k in key):
                 continue
+            # Bundle forecast IDs often express the same volume story. One forecast argument
+            # per message avoids duplicate claim checks while leaving other evidence available.
+            if c["kind"] == "forecast" and c["kind"] in selected_kinds:
+                continue
             out.append(c)
+            selected_kinds.add(c["kind"])
             if len(out) >= n:
                 break
         return out
@@ -512,8 +522,8 @@ class Negotiator:
         moved = len(s.theirs) > 1 and s.theirs[-1] < s.theirs[-2] - 0.005
         price = sheets[0]["unit_price"]
         keys = [(s.sid, i) if c.get("rival") else i for c in claims for i in c["ids"]]
-        s.pending = {"state": s.prev_state, "keys": keys}
-        statements = writer.statements(self.case, s, sheets)
+        s.pending = {"state": s.prev_state, "keys": keys, "asks": list(s.asks)}
+        statements = writer.statements(self.case, s, sheets, first=first)
         attachments = self.attachments(s)
         if s.state not in ("mirror",):
             s.ours.append(price)
@@ -566,22 +576,27 @@ class Negotiator:
         if not s or not s.ours or not s.terms:
             return {"message": writer.keepalive_message(events)}
         sheets = [eco.at_price(s.terms, s.ours[-1])]
-        body = writer.email(self.case, sheets, [], [], warm=s.prof.get("warm", True))
+        statements = writer.statements(self.case, s, sheets)
+        attachments = self.attachments(s)
+        s.pending = {"state": s.state, "keys": [], "asks": list(s.asks)}
+        body = writer.email(self.case, sheets, [], statements, warm=s.prof.get("warm", True))
         self.note(sid, "fallback", ours=s.ours[-1])
-        return {
-            "message": {
-                "subject": writer.reply_subject(events, self.case),
-                "body": body,
-                "term_sheets": [{"terms": t} for t in sheets],
-                "refs": [],
-            }
+        message = {
+            "subject": writer.reply_subject(events, self.case),
+            "body": body,
+            "term_sheets": [{"terms": t} for t in sheets],
+            "refs": [],
         }
+        if attachments:
+            message["attachments"] = attachments
+        return {"message": message}
 
     def commit(self, sid):
         """The message reached the supplier: its claims are spent."""
         s = self.sides[sid]
         if s.pending:
             self.used.update(s.pending["keys"])
+            s.asks = [ask for ask in s.asks if ask not in s.pending.get("asks", [])]
             s.pending = None
 
     def rollback(self, sid):
