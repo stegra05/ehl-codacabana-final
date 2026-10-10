@@ -7,7 +7,6 @@ without a figure, so the arena checks them against their own value."""
 
 import re
 
-ID_RE = re.compile(r"\b(?:idx|quote|offer|sc|qn|po|cost|fc|news|doc|ctr):[\w.:@#/-]*\w")
 SERIES_NAME = {
     "PPI-C2451": "Producer prices for iron castings",
     "PPI-C2452": "Producer prices for steel castings",
