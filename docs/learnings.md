@@ -324,6 +324,10 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
 - 2026-10-10 `arena` **Run tally against the stop rule** (my 24 practice runs since v8): the last
   mean gain above 0.01 came with v10 (runs 14 and 15: P08 +0.12, P18 +0.14); runs 16 to 24 since
   then brought P02 +0.065 (v11) and nothing else, +0.0065 on the mean. Team mean 0.776, rank 3.
+  Run 25 (P18 with the forecast claim in round 1 instead of the order prices,
+  `practice-v13-P18-forecast.log`): the same path 5.30, 5.20, 5.10, 0.621; Werdenfels' counters do
+  not depend on which verified claim stands next to the falling index. That makes ten practice
+  runs in a row under 0.01 on the mean: the stop rule of the night holds.
 - 2026-10-10 `arena` **After a job shop's deep first drop, hold the anchor (v12).** Dralveck
   (P05, 36.00 to 30.0 or 30.5 on its first counter) agreed at our second sheet in every run: at a
   held anchor 27.86 (0.828) and 27.92 (0.822, `practice-v12b-P05.log`), at 28.03 to 28.07 after an
