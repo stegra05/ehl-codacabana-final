@@ -247,6 +247,13 @@ def test_fixed_payment_and_a_cash_ask_get_an_honest_on_time_commitment():
     assert "pay reliably" not in body
 
 
+def test_the_cli_entry_points_take_the_negotiator_class():
+    import inspect
+
+    for fn in (runner.play_case, runner.play_all, runner.play_waves):
+        assert "negotiator" in inspect.signature(fn).parameters, fn.__name__
+
+
 # -- every case file through arena-sim with the reasoner and a fake model -------------------------------
 def all_cases():
     out = {}

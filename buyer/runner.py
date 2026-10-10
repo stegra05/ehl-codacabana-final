@@ -161,7 +161,7 @@ def save(session_id, case_id, neg, result):
     path.write_text(json.dumps(out, indent=1, default=str))
 
 
-def play_all(client, case_ids, pkg=None, parallel=8, complete=None):
+def play_all(client, case_ids, pkg=None, parallel=8, complete=None, negotiator=Negotiator):
     """Practice or sandbox: many cases at once. {case_id: result or the exception that stopped it}."""
     used_up = threading.Event()
 
@@ -169,7 +169,7 @@ def play_all(client, case_ids, pkg=None, parallel=8, complete=None):
         if used_up.is_set():
             return case_id, ArenaError(429, "not started: the practice quota is used up")
         try:
-            return case_id, play_case(RemoteTable(client), case_id, pkg, complete=complete)
+            return case_id, play_case(RemoteTable(client), case_id, pkg, complete=complete, negotiator=negotiator)
         except ArenaError as e:
             if quota_used_up(e):
                 used_up.set()
