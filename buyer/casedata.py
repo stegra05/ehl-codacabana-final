@@ -112,7 +112,7 @@ class CaseData:
                 vals = [self.facts[k]["ppm" if quality else "otd_pct"] for k in rows]
                 mean = sum(vals) / len(vals)
                 what = (
-                    f"your complaint rate averaged {mean:,.0f} ppm"
+                    f"your complaint rate averaged {mean:.0f} ppm"
                     if quality
                     else f"your on-time delivery averaged {mean:.1f} %"
                 )
@@ -143,10 +143,12 @@ class CaseData:
 
     def anchor(self, supplier_id, events):
         """Our opening price: the current price if the supplier asks for more, else 8 % below its
-        quote; never below 97 % of the should-cost."""
+        quote; not below 97 % of the should-cost, and always at least 3 % below its price.
+        Claim figures carry no thousands separator: the arena reads "2,637" as 2.637."""
         _, terms = standing(events)
         price = terms.get("unit_price") or 0
         current = self.case["buyer"].get("current_unit_price")
         a = current if current and current < price else price * 0.92
         sc = self.should_cost(supplier_id)
-        return round(max(a, 0.97 * sc) if sc else a, 2)
+        a = max(a, 0.97 * sc) if sc else a
+        return round(min(a, 0.97 * price), 2)  # never at or above its own price: it would agree
