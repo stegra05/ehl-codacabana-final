@@ -1,36 +1,92 @@
 # Learnings
 
 What we know about the arena, its supplier bots and the data package, and what it means for the
-agent. Basis, Saturday 10 October: 15 practice sessions covering all 10 hosted cases and 12
-suppliers, 17 sandbox sessions, the team's simulator and sandbox experiments, and the data
-package. Every euro figure and what-if score below was recomputed with `arena_kit.total_cost`. Evidence: `exports/` (every session, supplier thread,
+agent. Basis, Saturday 10 October: the probe (15 practice sessions covering all 10 hosted cases
+and 12 suppliers, 17 sandbox sessions), our agent's practice runs v1 to v13, the team's simulator
+and sandbox experiments, and the data package. Every euro figure and what-if score below was recomputed with `arena_kit.total_cost`. Evidence: `exports/` (every session, supplier thread,
 e-mail and claim; schema in `exports/README.md`) and `analysis/explore.py` (the data package).
 
-Add findings to the matching section, newest first: date, tag, the finding, its evidence (case,
+Add findings to the matching section: date, tag, the finding, its evidence (case,
 session or data ID) and what it means for the agent. Tags: `arena` seen in a session, `data` from
 the data package, `rules` from `docs/api.md` or the kit's code. Untested ideas go under
-Hypotheses. Correct or delete entries that turn out wrong.
+Hypotheses; agent changes go under Agent versions. Correct or delete entries that turn out wrong.
+
+## Relationship-target correction after hosted validation
+
+- 2026-10-10 `arena` PR18 `a1b7afb` ran all ten practice cases with the configured
+  writer: ten deals, mean 0.726577. The preceding execution per case averaged
+  0.703846, but those versions were not controlled. P01 lost 0.031484, P02 lost
+  0.231285 and P03 lost 0.007134. Logs and decision records are committed under
+  `logs/sessions/practice`, `logs/runs` and `logs/pr18-hosted-20261010-224230.json`.
+- 2026-10-10 `rules` P02 session `b3daba378f139d09` exposed a target-refresh bug:
+  setup calculated 361.67, but the opening quote's equivalent price clipped the
+  optimization interval and triggered a 344.50 closing proposal before citing
+  any claims. Official relationship cost was EUR 115,657.38. Refresh only after
+  changed package, standard terms or supplier estimate; retain a search range
+  containing the previous target. Opening messages use the planned anchor and
+  claims. Pure price concessions do not alter the economic optimum.
+- 2026-10-10 `arena` P01 `4f234bc3a5fee132` closed at 131.40 rather than the
+  previous 130.98 on identical terms, adding EUR 1,793.46. The 0.2% proximity
+  rule triggered closing above the calculated target and before the delivery
+  claim was used. Remove that tolerance. P03 `d0dbeb2b5fb4acb8` closed at 432.15
+  versus 431.85, adding EUR 2,405.98. Claim order and supplier responses differed;
+  this alone does not establish a defect or justify case-specific claim tuning.
+- 2026-10-10 `rules` Three new arbitrary-ID regression tests fail before the
+  correction and pass after; full suite 45 passes. Across 576 synthetic pairs,
+  568 tie and eight P01 variants revert to the main baseline, below PR18's
+  previous synthetic results. Zero exceptions or invalid accepted deals; the
+  same 52 preexisting invalid-proposal stress runs remain. This correction fixes
+  demonstrated state-machine behavior, not a claimed simulator score gain.
+
+## Complete-package evaluation, 10 October evening
+
+- 2026-10-10 `arena` Practice session `9b63768bad5febe5` offered a higher-price
+  alternative (5.40 with a 5% deadband) whose total cost was EUR 259,116.84,
+  below the 5.30 / zero-deadband standing quote at EUR 259,970.83. This is a
+  quoted-package comparison, not proof of an achievable later negotiation score.
+  Consequence: evaluate index alternatives together with every other quoted term.
+- 2026-10-10 `rules` `complete_offer` snaps values and can replace an explicit
+  allowed `None` with the first option. Mirroring must validate the quoted domain
+  directly and preserve the effective package, including fixed terms and defaults.
+- 2026-10-10 `rules` Local simulator comparison against main `3c02621`: 24 case
+  definitions, 12 scenarios, with and without package data, 576 paired runs.
+  Eight scores improved, 568 stayed equal, none worsened; simulated mean
+  0.661334 to 0.662484. All improvements were variants of P01. Another 48 pairs
+  renamed case IDs and preserved decisions. Both variants had 409 matrix deals,
+  zero exceptions and zero invalid accepted deals. Both still emitted invalid
+  proposals in 52 stress runs (48 impossible constraints, four payment floors).
+  These preexisting proposal failures remain unresolved. No hosted sessions or
+  model calls were used. This is regression evidence, not hosted score evidence
+  or proof against overfitting.
+- 2026-10-10 `rules` A rejected local candidate adopted any cheaper successive
+  counter even when it surrendered valuable non-price conditions. It worsened
+  225 of 576 simulations. The retained change requires the complete quoted
+  package to beat the current plan at supplier-equivalent value. No new anchors,
+  patience thresholds, case/supplier branches or hidden score targets were added.
 
 ## Takeaways for the agent
 
 1. **Stay below the supplier's counter until the end; it agrees the moment our sheet reaches the
    counter it would make.** D01: our 51.25 one cent under its 51.30 was agreed at once
-   (sandbox `14ea35524959126f`). Moving a share of the gap each round keeps it conceding: the
-   engine took the practice mean of best scores from 0.32 to 0.73.
+   (sandbox `14ea35524959126f`). Moving a share of the gap each round keeps it conceding: v1
+   (terms by C, goal anchors, 30 % of the gap, claims) took the practice mean of best scores from
+   0.32 to 0.66, the later versions to 0.776 (Agent versions).
 2. **Verified claims that it "took into account" lower where it stops, most of all in round 1.**
    D01 with the same price path: no claims 50.00, delivery record 49.60, notice 49.60, should-cost
    49.30, three claims spread over rounds 48.90 (score 0.998). Which types count differs by
    supplier (table under Arguments and claims).
-3. **Words move it too.** D01, identical sheets, no claims: plain 50.00, "firm" 49.90, warm and
+3. **Words move the sandbox bot, not the practice suppliers.** D01, identical sheets, no claims: plain 50.00, "firm" 49.90, warm and
    acknowledging its wage costs 49.60, "What would you need from us to move further on the
-   price?" 49.40 (0.987). But a question repeated every round backfires: practice suppliers
+   price?" 49.40 (0.987). In practice a fully model-written e-mail moved nothing beyond the spread
+   of identical runs (Agent experiments). A question repeated every round backfires: practice suppliers
    answered "volume!" where volume is fixed and stopped moving (P05, P18 v3). Answer what it
    asked; state a fixed volume as our full demand, with the figure.
-4. **Patience is a budget of about 40 % cumulative gap** (sum over rounds of our sheet's distance
+4. **Patience runs out at about 40 % cumulative gap** (sum over rounds of our sheet's distance
    to its counter, relative to its price): final offers at 41 to 42 % (D01 linear paths), 39 %
    (P07), 42 % (P08), 36 % (P18). Suppliers selling near our should-cost or with a pricing
    committee end much earlier: Nordmark walked away at 19 % (P02 v1), Ravensteiner gave its final
-   offer in round 1 at a 15 % gap (P10 v1).
+   offer in round 1 at a 15 % gap (P10 v1). A cap for every supplier lowered P08 and P18, so the
+   agent caps only these (`BUDGET` in `buyer/policy.py`: none for a typical supplier).
 5. **Choose terms by C at the supplier's own valuation**, including a contract beyond our horizon
    (free for us, security for it) and the overtime a fully booked supplier charges for faster
    delivery (about 0.5 % of the price per day: Hrvelec, Ravensteiner). This alone moved P10 from
@@ -41,33 +97,35 @@ Hypotheses. Correct or delete entries that turn out wrong.
 7. **Only a supplier's standing sheet can be accepted** (an alternative returns 422). A better
    alternative is sent back as our sheet; it agrees and becomes standing (P10).
 8. **Raw-material distributors refuse a fixed price beyond 12 months and refuse any deadband**
-   (P08, P18): take their clause and negotiate the price; insisting on a deadband stalled them.
-   But only when their sheet with the clause costs us less than their last one: Nordmark's copper
-   clause came alone and cost 1.8 % of spend, score 0 (P02 `680eb11405186b42`,
-   `d52ccdd3d2e07b3f`). That rule separates all 24 P02, P08 and P18 sessions correctly.
+   (P08, P18), but keeping our fixed-price sheet while they counter with their clause gets more
+   than taking it: from the same opening and first counter, P18 closed at 5.00 with the clause
+   (0.688, `e86f454a59ff98f0`) against 5.10 in four sessions that took it (0.621, `436cda73`,
+   `d7ef7720`, `9b63768b`, `e64ffdb4`); P08 at 5.25 (0.659, `22f82a186bc4fb08`) against 5.30 to
+   5.38 (0.515 to 0.604). One session each. Adopt a quoted package only when it costs less than
+   our plan at the same value to the supplier; a price cut alone does not pay for the clause.
 9. **RFQ: the arena answers one call per session at a time** and each thread's 60 s clock runs
    from its reply, so sends are serialized by deadline; the cheapest rival offer is a new,
    verified claim to every other bidder every round (P05 0.83, D02 0.73).
-10. **The ceiling is lower than 0.9.** Best per case over all teams averages 0.82 (`/v1/live`,
-    Saturday evening); practice C_best for P04 needs 4.93 against a frozen 4.94.
+10. **The ceiling is lower than 0.9.** Best per case over all teams averages 0.84 (Record column
+    below); practice C_best for P04 needs 4.93 against a frozen 4.94.
 
 ## Where we stand
 
-Best score per hosted case, Saturday 22:30: mean 0.727 (team rank about 4 of 21 on the practice
-board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in brackets).
+Best score per hosted case, Saturday 22:00: mean 0.776 (team rank 4 of 24 on the practice board;
+first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (house agent in brackets).
 
 | Case | Goal | Ours | Session | Deal | Record (house) | What limits us |
 |---|---|---|---|---|---|---|
 | P01 | stabilise | 0.974 | `4cc256188e1cd8af` | 130.18, Nov, 14 d | 0.995 (0.966) | agreed at our sheet in round 4 |
-| P02 | stabilise | 0.507 | `3ad1d67f26aac5e7` | 371.88, 90 d | 0.847 (0.740) | Nordmark settles near 371.9 after round 1 |
+| P02 | stabilise | 0.735 | `practice-v11-P02.log` | 361.67, 90 d, CU clause 5 % deadband | 0.847 (0.740) | agreed at once at our relationship optimum; the charge (not the price) caps the score |
 | P03 | stabilise | 0.923 | `c7fcc4c7ae8f4e9a` | 432.15, 90 d, 24 m | 0.936 (0.925) | price frozen |
 | P04 | routine | 0.860 | `81e9fd209c3fd659` | 4.94, 90 d, 36 m | 0.874 (0.860) | C_best needs 4.93 |
 | P05 | leverage RFQ | 0.828 | `917135b8156fb8a3` | Dralveck 27.86, 14 d, 35 d | 0.824 (0.555) | ours is the record |
 | P07 | routine | 0.751 | `cacd5028b34d30dc` | 5.35, 45 d, 36 m | 0.779 (0.782) | final offer in round 3 |
-| P08 | leverage | 0.549 | `7701b00c7a9a8b3e` | 5.35, AS-14404 clause | 0.732 (0.752) | final offer in round 2 to 4 |
+| P08 | leverage | 0.670 | `practice-v10.log` | 5.26, AS-14404 clause | 0.916 (0.752) | first counter 5.40 with the falling-driver claims; final offer in round 3 to 4 |
 | P10 | secure_supply | 0.679 | `7c4f1855794797d6` | 31.50, 56 d, 36 m | 0.702 (0.686) | fully booked, final early |
 | P11 | quality_first | 0.710 | `3ac9ee6cf673cf7c` | 45.50, 300 ppm | 0.807 (0.314) | wants faster payment, which is fixed |
-| P18 | leverage | 0.485 | `6a39d7511267e0ff` | 5.30, AS-14404 clause | 0.677 (0.386) | final offer in round 2 to 3 |
+| P18 | leverage | 0.621 | `practice-v10.log` | 5.10, AS-14404 clause | 0.677 (0.386) | first counter 5.30 with the falling-driver claims, path 5.20, 5.10 repeats exactly |
 
 ## Score and terms
 
@@ -88,8 +146,8 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
   and a relationship charge gives the supplier's true margin, i.e. its full cost.
 - 2026-10-10 `rules` **Uncovered need** costs `fallback_unit_price` plus `fallback_risk_pct` % of
   it; coverage is `min(volume, need) x min(months / 12, horizon)`. Committed volume above the need
-  is bought anyway; months beyond the horizon neither cost nor earn. Evidence and examples:
-  takeaway 2.
+  is bought anyway; months beyond the horizon neither cost nor earn. Example: P10's opening
+  covered 19,890 of 23,400 units a year; 24 months unlocked the full volume (Supplier behaviour).
 - 2026-10-10 `rules` **Index clause** cost: `spend x material_share x (|path| - deadband)`, signed
   like the case's `index_paths`, plus `index_risk_pct` % of `spend x material_share` whenever a
   clause exists. Only a falling path larger than the risk charge makes a clause pay.
@@ -112,6 +170,27 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
 - 2026-10-10 `rules` No alternative, so walking away scores 0: D01, P05, P06, P10, P14, P17.
 
 ## Supplier behaviour
+
+- 2026-10-10 `arena` **Nordmark picks the clause sheet, and the distributors price a deadband at
+  our cost.** Offered a fixed sheet and a clause sheet in one message, Nordmark picked the clause
+  (`91d2b5ad7501ce55`); from an anchor of 345 with the clause it countered 351.05, 349.85, 349.35,
+  349.05 and withdrew (`ea485d8c4db527aa`, score 0). Donautal prices the AS-14404 deadband at our
+  cost (5.45 at 0 % against 5.57 at 5 %); a 5 % clause sheet sent to the distributors got a first
+  counter 1.5 to 2 % above the 0 % clause they add themselves (P08 5.60 to 5.64, P18 5.50 against
+  5.40 and 5.30, six runs on `steffen/elicit`). → Trade a clause only where its value to the
+  supplier beats our cost (`economics.clause_trade`); against a distributor's own clause keep our fixed price (takeaway 8).
+- 2026-10-10 `arena` **How many counters a supplier gives depends on our path; how much it moves
+  per counter is its own.** 115 practice threads: Nordmark 1 to 6 counters, Donautal 2 to 6,
+  Werdenfels 2 to 6, Kalwisz 4 to 6. Its move as a share of our previous move (median, rounds 3
+  on): Brandlhuber 0.62, Donautal 0.44, Werdenfels 0.45, Leitner 0.36, Nordmark 0.15, Kalwisz
+  0.0, Selvbrunn and Wälzlager 0.0. A slow walk on P08 (12 % of the gap per round,
+  `50502ff781d898c6`) got five counters and 5.31; the standard walk four and 5.33 to 5.39:
+  the schedule shrinks to the same floor. Giving Donautal its clause in round 1, two clause
+  sheets, a fixed 24-month ask at 5.35 (refused: "cannot maintain a fixed price for a 24-month
+  term") and a forecast-volume statement all ended 5.36 to 5.39. Kalwisz's floor is 45.50 at 300
+  and at 800 ppm (`1f36a83c6e80e818`, `a74b89173c96c23c`). → An opponent model of the arena's
+  rules is identifiable from two replies, but on these suppliers it would reproduce the caps we
+  already feed; the gap on P08, P18 and P11 is not in the path.
 
 - 2026-10-10 `arena` **The round-1 counter is a cap plus claims, not a reaction to the anchor.**
   D01 (quote 52.90), 30 sandbox runs: anchors 44.0 to 48.5 without claims all got 51.30 (-3.0 %);
@@ -136,8 +215,8 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
   commit to a binding higher volume, our flexibility is exhausted". Kalwisz (P11): three steps
   of 0.50 then holds at 45.50 "for 300 ppm and 0 chargeback" (it priced 300 ppm at +0.50 over
   1500 ppm, `587fe8dcbf9f6c9c`). Ravensteiner (P10): 2 counters. → The round count, not the
-  gap, ends most threads: make every round count, move 25 to 35 % of the gap, never under 1 %
-  and never over 50 %.
+  gap, ends most threads: make every round count, move about 30 % of the gap (`FRACTION`), at
+  least 0.2 % of the price (`MIN_MOVE`) and never over 50 %.
 - 2026-10-10 `rules` **What C_best is made of** (price at which a term combination reaches
   C_best, relationship charge 0): P08 5.10 fixed at 90 days, 24 or 36 months (5.06 with the 5 %
   deadband clause, about 4.94 with the 0 % clause); P18 4.73 fixed (4.69 at 5 % deadband); P02
@@ -153,9 +232,28 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
   "Which figures is that based on? Please send us the data." 30. A volume confirmation in words
   registered: "We appreciate the confirmation of the full volume commitment, which allows us to
   review our pricing" (D02 `7e0d70250aee7673`), "please provide the binding volume figures so we
-  can properly account for this" (D01 `101f032a24f98a58`). → `buyer/reader.py` reads the asks;
+  can properly account for this" (D01 `101f032a24f98a58`). → `policy.asks` reads the asks;
   the e-mail states the binding volume with the figure, answers a fixed payment term plainly and
-  attaches the forecast rows when proof is asked (v8, effect to be measured).
+  attaches the forecast rows when proof is asked. v8 (P02 `8d3a77a03fe49730`, P11
+  `7a472625d72c63b2`): the words register ("We have factored your confirmed volume increase into
+  our calculation", "thanks for sending the forecast") but the prices did not move beyond the
+  usual spread (P02 372.45 against 371.88 to 373.88 before, P11 45.50 as always). Kalwisz read
+  our payment history: "You say you pay reliably, but we often see late payments".
+- 2026-10-10 `arena` **A shallower anchor gets the distributors' same first counter and buys a
+  round.** Anchor 0.85 of the quote (P18 5.18, P08 5.19, log `practice-v8b-anchor085.log`):
+  first counters 5.50 and 5.45, identical to anchor 0.787 in 13 runs; P08 then gave four counters
+  (5.45, 5.40, 5.36, 5.34, our best P08 at 0.571) instead of three, P18 three (5.50, 5.40, final)
+  as before. Kept at 0.78: the job shops of the RFQs drop 12 to 15 % on their first counter (P05
+  Dralveck 36.00 to 30.50, D02 J1 17.10 to 14.99) and an anchor above that counter is agreed at
+  once. → In a single-supplier leverage case the anchor depth between 0.78 and 0.85 does not
+  matter for the price; nothing is gained below 0.78.
+- 2026-10-10 `arena` **The reply signals tell the size of the shop, and the small shops concede
+  most.** `reply_delay_days` 4 to 5 and no validity: the founder-run job shops (Dralveck,
+  Fuchsreiter, DEMO-J1, Kalwisz, Hrvelec), which conceded up to 22 % of their quote; 2 to 3
+  days: family firms (Werdenfels, Brandlhuber, Ravensteiner, DEMO-F1), 1.6 to 13 %; 1 to 2 days:
+  groups (Nordmark, Donautal, Selvbrunn, Wälzlager), 0 to 12 %. 125 sessions. → For a supplier
+  the package does not know, a slow reply without a validity is the job-shop pattern (deep first
+  concession, hold low); the `DEEP` rule reads the same thing from its first counter.
 
 - 2026-10-10 `arena` **Pushing past a final offer ends the case.** D01: one more sheet 0.1 below
   its final 49.70 and the foundry walked away, no deal (sandbox `212404b7930bfc68`, "we have
@@ -181,10 +279,11 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
   office "My call: final_offer ... we withdraw". With small gaps (v2 on) it gives a final offer
   at about 372 in round 4 instead.
 
-- 2026-10-10 `arena` **Deterministic.** Nine D01 sandbox runs with identical sheets gave
-  identical prices (52.90, 52.00, 51.50, then `final_offer` 51.50); replays of P04 and P11
-  matched round for round. Only the wording varies. → Repeats measure wording, not behaviour;
-  the "stochastic bots" caveat in the PR #7 sandbox comparison does not apply.
+- 2026-10-10 `arena` **The sandbox is deterministic, practice is not.** Nine D01 sandbox runs
+  with identical sheets gave identical prices (52.90, 52.00, 51.50, then `final_offer` 51.50);
+  replays of P04 and P11 matched round for round. The distributors vary between identical runs
+  (P08 5.26 to 5.57 with the same code, v9; supplier-side noise of about 1 % per counter). →
+  Sandbox repeats measure wording; in practice treat single-run differences under 2 % as noise.
 - 2026-10-10 `arena` **`agreed` freezes the price.** 16 of 19 practice threads reached `agreed`,
   ten of them in round 1 or 2, because our probe opened near the supplier's price and then
   offered its own price with our levers. After that, claims, concessions and pushes all got "Our
@@ -291,7 +390,7 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
   P18 5.30, 5.10, 5.00), with its hedge note and the index fall over the last three months cited
   in round 1 (`c2de23b15eeeea44`, `cfb620d2e2f4a4b7`); on P18 its alternative with a 5 % deadband
   at 5.10 beat its sheet at 5.00 with none. This branch adopts the clause in round 2 and ends at
-  5.31 to 5.40. → Not in this branch: these sessions were played with a teammate's newer engine.
+  5.31 to 5.40. → (1) came with the merge of `main` (the clause trade); (2) is open here.
 
 - 2026-10-10 `arena` **The subagent team (research, demo bidding, live analyst, debrief) on the
   sandbox, no quota spent.** Same engine, same writer model (`gpt-5-mini`), with and without the
@@ -351,6 +450,79 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
   a 5 % deadband (refused). Run logs `logs/practice-v1.log` to `-v6.log`, decisions per move in
   `logs/runs/`.
 
+- 2026-10-10 `rules` **The Live Final per-case path ran on the sandbox** (Saturday 22:30): D01
+  through `RemoteTable(client, case)` with a wave deadline of 480 s, as `play_waves` calls it:
+  deal 49.70, score 0.988, 113 s. The wave loop itself is covered by `tests/test_waves.py`.
+- 2026-10-10 `arena` **P02's ceiling with the clause is the relationship charge.** The arena's C at
+  358.00 (2,251,140) and at 361.67 (2,248,062) with the same 5 % copper clause and 90 days give
+  Nordmark's cost of money as about 0 and its full cost as about 371.7; the C-minimising price is
+  then 361, where we are (0.735). Another payment term does not help: the charge does not move
+  with it and the payment term costs us 0.67 % per 30 days. The record 0.847 has a structure we
+  cannot derive from these two points.
+- 2026-10-10 `arena` **Run tally against the stop rule** (my 24 practice runs since v8): the last
+  mean gain above 0.01 came with v10 (runs 14 and 15: P08 +0.12, P18 +0.14); runs 16 to 24 since
+  then brought P02 +0.065 (v11) and nothing else, +0.0065 on the mean. Team mean 0.776, rank 3.
+  Run 25 (P18 with the forecast claim in round 1 instead of the order prices,
+  `practice-v13-P18-forecast.log`): the same path 5.30, 5.20, 5.10, 0.621; Werdenfels' counters do
+  not depend on which verified claim stands next to the falling index. That makes ten practice
+  runs in a row under 0.01 on the mean: the stop rule of the night holds.
+- 2026-10-10 `arena` **After a job shop's deep first drop, hold the anchor (v12).** Dralveck
+  (P05, 36.00 to 30.0 or 30.5 on its first counter) agreed at our second sheet in every run: at a
+  held anchor 27.86 (0.828) and 27.92 (0.822, `practice-v12b-P05.log`), at 28.03 to 28.07 after an
+  8 % step toward it (0.806, 0.81). A 3 % deeper anchor (26.79) got a lower first counter (30.0),
+  a second concession to 28.0 after the hold ("you only moved a few cents, but I want to keep our
+  machines running"), then a walk-away at a cumulative gap of 39 % (`practice-v12-P05.log`,
+  0.746 on Fuchsreiter). D02 with the hold: 0.735, as before. → `DEEP` share 0.0: the minimum move
+  only; the anchor stays at 0.78, the patience budget binds job shops too.
+- 2026-10-10 `arena` **A supplier values an index clause on its rising driver far above what it
+  costs us (v11).** Nordmark agreed at once to a CU-NOTATION clause with a 5 % deadband at
+  358.00 and 90 days, 4.3 % below its fixed price of 374.06 at 90 days (teammate's run
+  `P02_491006cd111217a3`, score 0.670); the clause costs us only the 4 % index risk on the copper
+  share (0.8 % of spend), the case's path (+5 %) sits inside the deadband. The deal scored 0.67
+  and not more because 358 is below the relationship optimum: the charge was 59.7k, which puts
+  Nordmark's full cost near 368 (our should-cost says 374.95, above its own quote). Model that
+  fits every clause we have seen: the supplier values a clause at `material_share x (its driver's
+  12-month change - deadband)` of the price (Nordmark 8.5 %, Donautal and Werdenfels 0.4 to 2.7 %,
+  which is exactly our cost of their clause, so no trade there); we pay `material_share x (path -
+  deadband) + the index risk`. → `economics.clause_trade`: offer the clause with the largest net
+  gain (ties: the widest deadband) from round 1 at the price worth the same to the supplier as
+  our anchor, in relationship goals no lower than the relationship optimum (P02: 361.71 with the
+  full cost capped at the quote less the sustainable margin). P14 (copper, stabilise) gains 21 %
+  of the price by this rule, P16 (PPI-C241, leverage) 2 %.
+- 2026-10-10 `arena` **A model-written e-mail (whole prose, figures and IDs guarded) changed no
+  outcome.** Tried on branch `steffen/elicit` (commit `086acb8`, not merged): the model wrote
+  the body from the greeting to the proposal, every figure had to be one code put on the table,
+  IDs and leaks were blocked, 2.2 to 2.8 s per call. Two runs each: P02 0.733 and P18 0.630 to the
+  cent as with the template, P11 45.50 again (floor), P08 0.60 and 0.57 against 0.56 with the
+  template (spread of identical runs 0.47 to 0.67). → Wording moves these bots within their
+  noise band only; the sheets, the claims and their caps decide. Not worth the code.
+- 2026-10-10 `arena` **Round-1 clause menu (branch `steffen/elicit`, not merged).** The planned
+  sheet plus the clause with the largest deadband at equal C for us, priced at the relationship
+  optimum, skipped where the supplier's letter proposes a clause. P02 0.733 at 362.02, agreed in
+  round 1 (`7196cc241752a806`, three identical runs), the same as `clause_trade` (0.735); sent to
+  the distributors as well, P18 0.630 at 5.20 (`7826bde84e0fd3e0`) and P08 0.56 at 5.46
+  (`8839210e24f47e37`), both inside their spread. → `clause_trade` kept: it reaches the same P02
+  deal and excludes the distributors by value, without a rule on the letter.
+- 2026-10-10 `arena` **A falling cost driver over the best window moves the first counter (v10).**
+  The claim bank only knew 12-month index changes, where the distributors' main driver AS-14404
+  rose 5.9 %; over the window the arena checks (any two months up to 12 apart, ending within the
+  last 12) it fell 5.5 % from 2026-06 to 2026-09 and PPI-C2431 2.3 % from June. Cited in round 1
+  (`practice-v10.log`): Donautal's first counter 5.40 (5.43 to 5.60 in 14 runs before), then
+  5.33, 5.28, 5.26 final, score 0.670; Werdenfels 5.30 (5.50 to 5.60 before), then 5.20, 5.10,
+  final 5.10, score 0.621 (was 0.485). Both gave four counters instead of three. A second run
+  repeated Werdenfels' path exactly (5.30, 5.20, 5.10) and Donautal's within noise (5.40, 5.35,
+  5.31, 5.30); with the hedge letter moved out of round 1 Donautal opened at 5.52 (one run), so
+  the letter stays first. Electricity (PPI-D351) fell 6.1 % from 2025-11 for P01, P05 and P11:
+  Kalwisz still stopped at 45.50, P05 closed at 0.81 (best 0.828). → Every driver's largest fall
+  within 12 months, ranked above order prices and forecasts.
+- 2026-10-10 `arena` **v8 and v9 on practice (12 runs: P08 x5, P18 x6, P02, P11).** No
+  mechanism moved the distributors' first counter (5.43 to 5.60 at anchors 0.787 and 0.85, with or
+  without claims) or Kalwisz's 45.50; a 40 % share of the gap in round 2 got the same 0.10
+  concession as 30 % (P18, two runs). The spread between identical runs decides the best score:
+  P08 ended 5.26 (0.648, our new best, `practice-v9.log`), 5.34, 5.42, 5.57 with the same code.
+  P02 words registered but the price stayed 372 to 373. → The round-1 counter and the two or
+  three capped concessions after it are the supplier's; what we control is to feed every cap
+  (about 30 % of the gap, never over 50 %) and never to lose a round.
 - 2026-10-10 `arena` **Julian's draft two** (`origin/julian/draft-two`, design in `design.md`)
   on the sandbox: D01 0.73 → 0.93 → 0.96, D02 0.37 → 0.54 over five runs. What moved it: a floor
   at the case's `sustainable_margin_pct` instead of a flat 8 % (D01 0.84 → 0.96); the first
@@ -372,8 +544,39 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
 - 2026-10-10 `arena` A quote PDF without a separate standard-terms section left the reference
   payment term empty and broke a D01 run (PR #7). → Fall back to the quote's explicit terms.
 
+## Agent versions
+
+- 2026-10-10 **v1 to v6** (47 practice sessions, run logs `logs/practice-v1.log` to `-v6.log`,
+  decisions per move in `logs/runs/`): v1 (terms by C, goal anchors, 30 % path, claims) took the
+  mean of best scores from 0.32 to 0.66; v2 to v6 added mirroring alternatives, overtime
+  valuation, the RFQ scheduler, rival offers every round and a model-written paragraph (0.73).
+  What did not help: a patience budget for every supplier (P08, P18 fell), a milder anchor for
+  suppliers with a pricing committee (P07, P18 fell), currency claims (irrelevant), switching a
+  required index clause to a 5 % deadband (refused).
+- 2026-10-10 **v8**, no quota spent: all 21 case files and both sandbox cases play through
+  `arena-sim` with no guarded error (`tests/test_cases.py`). Every move and setup is guarded (a
+  failed move resends our last sheet, a third failure closes the thread on the best standing
+  sheet), the final's poll loop never raises, a crashed case resumes with its path rebuilt from
+  the thread (`Negotiator.restore`), the Sunday release's letters and news reach the persona
+  profile, supplier e-mails are scanned for the same traits, prices per 100 or 1000 are compared
+  per piece, and the cost-breakdown question (answered "we do not share" 12 of 12 times) is gone.
+- 2026-10-10 **v10 to v12**: falling-driver claims (P08 0.670, P18 0.621), the clause trade (P02
+  0.735), the held anchor after a job shop's deep drop (P05 0.828). Results under Agent
+  experiments; mean 0.776.
+
 ## Data package
 
+- 2026-10-10 `rules` **The Sunday release reaches the ID index, not SQL.** `DataPackage` finds
+  `data/release-sunday/` next to the package, merges its `facts.json` (new IDs only) and puts its
+  `data/*.csv` rows into the ID index for `lookup`, `ids` and `document`, never into SQLite
+  (`arena_kit/data.py`, `_ids`). Letters and news reach the persona profile; the SQL reads miss
+  release rows: owner type and cash discount (`suppliers`, `supplier_intel`), quote remarks,
+  should-cost (`policy.full_cost`), order prices and cost drivers in the claim bank. → Check the
+  release's CSV schema at 08:00.
+- 2026-10-10 `data` **Most suppliers have no text.** Of 447 suppliers, 46 have documents, 31 news,
+  18 quote remarks; the other 401 get the neutral profile (rate 7 %, no signals). A new supplier
+  in the final is one of them or unknown to the package: its own e-mails and the release are the
+  only persona source.
 - 2026-10-10 `data` Size: 447 suppliers, 46 with a detailed profile (`supplier_intel`), 60 parts,
   33 index series (2021-01 to 2026-09), 300 negotiation events, 1,033 quality notifications.
 - 2026-10-10 `data` Owner types of the 46 profiled suppliers, with the brief's persona: family 22
@@ -404,11 +607,11 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
   70120, 70130, 70160, 70550, `negotiation_history`).
 - 2026-10-10 `data` Each persona trait is written in one or two fixed phrases across call notes,
   meeting notes, quote remarks and news, so plain patterns classify every note (`SIGNALS` in
-  `analysis/explore.py`). Holiday, ISO, contact-person, packaging and trade-fair mails are noise.
+  `buyer/personas.py`). Holiday, ISO, contact-person, packaging and trade-fair mails are noise.
 
 ## Persona signals
 
-Phrases from `SIGNALS` in `analysis/explore.py`; levers are hypotheses until the arena column
+Phrases from `SIGNALS` in `buyer/personas.py`; levers are hypotheses until the arena column
 shows evidence.
 
 | Trait | Phrase in the data | Lever | Seen in the arena |
@@ -439,6 +642,16 @@ shows evidence.
 - 2026-10-10 `rules` In an RFQ every thread's 60-second clock runs while we work on another.
   A waiting thread needs a message, e.g. a short question about validity, or it collects
   timeouts; our probe kept waiting threads alive this way (D02, P05).
+- 2026-10-10 `rules` **Four bidders or more time out.** The arena answers one call per session at
+  a time. Supplier replies took 19 s median, 28 s p90 (121 moves in `logs/runs/`); our writer 1.8 s
+  median, 6.3 s max. A thread waits about (N - 1) x 21 s for its next message against a 60 s
+  limit: 2 bidders 23 s, 3 bidders 44 s (66 s at p90, late; P05 had one late move in v5), 4
+  bidders 65 s. No case file has more than 3 bidders. → With 4 or more, stop sending to the
+  clearly worst bidders after round 1.
+- 2026-10-10 `rules` **Structures only in unplayed cases** (case files): `tooling_eur` negotiable
+  and lead time at most 84 days (P06), chargeback in the alternative (P12), index series PPI-C241
+  in a clause (P16), fixed payment in a quality case (P12), a 3-part bundle (P15). Only `incoterm`
+  (D02) lies outside the fields the planner knows.
 - 2026-10-10 `rules` `arena-sim` plays a scripted supplier: good for plumbing and timing, not
   for tactics.
 
@@ -451,20 +664,20 @@ shows evidence.
 
 - Records on P02 (0.85) and P08 (0.73) come from a lower round-1 counter, not from later rounds:
   our later rounds converge to the same price whatever the gap (P02 371.9 in v4 to v6).
+- The P08 record (0.92) comes from a lower round-1 counter, not from later rounds: our later
+  rounds converge to the same price whatever the gap. v10 supports it (a first counter of 5.40
+  gave 0.670); the record's counter is still unexplained.
 - Three sheets of equal C for us in round 1 reveal what each lever is worth to the supplier
   (payment, lead time, ppm) and could lift P10 and P11.
-- The close response of a final case carries `c_best`; calibrating anchors between waves from it
-  is possible but needs a rules check first.
-- Persona-specific wording beyond the generic paragraph (cash need, partnership 2022, reference
-  customer) moves the round-1 counter.
-- Prices fall much further when every sheet stays below the supplier's price and concessions
-  are slow (house agent 0.75 on P08, ours 0.11 after agreeing in round 2).
+- Calibrating anchors between waves from the `c_best` each closed session reveals (Score and
+  terms) would help; it needs a rules check first.
+- Persona-specific wording (cash need, partnership 2022, reference customer) moves the round-1
+  counter; generic wording does not (Supplier behaviour, round-1 counter).
 - Cash-short suppliers give more price for 14 to 30 days payment than the 0.67 % per 30 days it
   costs us.
-- Citing the best rival offer moves RFQ bidders; our probe never cited offers.
 - Suppliers with "approval above 2 %" notes move at most 2 % per round.
-- Stale-costing suppliers concede after a verified falling-index claim; hedged suppliers answer
-  index claims with "not our reality" until the hedge ends.
+- Hedged suppliers answer index claims with "not our reality" until the hedge ends
+  (stale-costing P01 did concede, Persona signals).
 - The cost floor is full cost; the five that once sold below full cost may go lower.
 - A faster payment package beats a deeper price anchor for cash-short suppliers; test 20 / 30 %
   openings against standard / early payment as a 2x2, several runs per credit stratum.

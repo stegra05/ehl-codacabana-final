@@ -1,0 +1,155 @@
+{
+ "case": "case:P18",
+ "session": "e86f454a59ff98f0",
+ "notes": [
+  {
+   "t": 1791665061.4,
+   "supplier": "sup:70740",
+   "what": "setup",
+   "quote": {
+    "unit_price": 6.1,
+    "payment_days": 30,
+    "index_clause": null,
+    "contract_months": 12
+   },
+   "std": {
+    "ppm_commitment": 70,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": "family",
+    "country": "DE",
+    "category": "raw material",
+    "signals": [
+     "approval_2pct",
+     "deprioritising_us",
+     "open_book",
+     "spare_capacity"
+    ],
+    "rate": 0.075,
+    "warm": true
+   },
+   "full_cost": null,
+   "near_cost": false,
+   "terms": {
+    "unit_price": 4.77,
+    "index_clause": null,
+    "payment_days": 45,
+    "contract_months": 36
+   },
+   "quote_at_terms": 6.12,
+   "anchor": 4.77,
+   "target": null,
+   "budget": 1.0,
+   "claims": [
+    "The 1.4404 alloy surcharge changed -5.5% from 2026-06 to 2026-09 (idx:AS-14404@2026-06, idx:AS-14404@2026-09).",
+    "Producer prices for cold-drawn bars changed -2.3% from 2026-06 to 2026-08 (idx:PPI-C2431@2026-06, idx:PPI-C2431@2026-08).",
+    "Our last 3 orders for this part were at EUR 5.84 (po:4500014427-10, po:4500014355-10, po:4500014292-10).",
+    "In our call of 2026-09-04 (doc:20260904-70740-M1) you offered to walk us through your calculation; we would welcome that now.",
+    "Our forecast for this part is up 1.9% (fc:370010@2026-09).",
+    "Your on-time delivery was 81.0% in 2026Q3 (sc:70740@2026Q3)."
+   ]
+  },
+  {
+   "t": 1791665063.2,
+   "supplier": "sup:70740",
+   "what": "send",
+   "state": "open",
+   "theirs": 6.12,
+   "ours": 4.77,
+   "claims": [
+    "index",
+    "index",
+    "order_history"
+   ],
+   "asks": [],
+   "attached": []
+  },
+  {
+   "t": 1791665093.0,
+   "supplier": "sup:70740",
+   "what": "send",
+   "state": "open",
+   "theirs": 5.44,
+   "ours": 4.97,
+   "claims": [
+    "open_book"
+   ],
+   "asks": [],
+   "attached": []
+  },
+  {
+   "t": 1791665115.8,
+   "supplier": "sup:70740",
+   "what": "send",
+   "state": "open",
+   "theirs": 5.24,
+   "ours": 5.05,
+   "claims": [
+    "forecast"
+   ],
+   "asks": [
+    "proof"
+   ],
+   "attached": [
+    "forecast.csv"
+   ]
+  },
+  {
+   "t": 1791665138.3,
+   "supplier": "sup:70740",
+   "what": "send",
+   "state": "open",
+   "theirs": 5.13,
+   "ours": 5.07,
+   "claims": [
+    "scorecard"
+   ],
+   "asks": [
+    "volume"
+   ],
+   "attached": []
+  },
+  {
+   "t": 1791665157.9,
+   "supplier": "sup:70740",
+   "what": "signals",
+   "new": [
+    "spare_capacity"
+   ]
+  },
+  {
+   "t": 1791665158.1,
+   "supplier": "sup:70740",
+   "what": "accept",
+   "c": 245255.5,
+   "offer": "offer:70740-4"
+  }
+ ],
+ "result": {
+  "deal": true,
+  "supplier_id": "sup:70740",
+  "terms": {
+   "payment_days": 45,
+   "lead_time_days": 14,
+   "volume_per_year": 23700,
+   "contract_months": 36,
+   "effective_date": "2027-01-01",
+   "index_clause": {
+    "series": "AS-14404",
+    "material_share": 0.45,
+    "deadband_pct": 0.0,
+    "base_month": "2026-08"
+   },
+   "incoterm": "DAP",
+   "tooling_eur": 0.0,
+   "ppm_commitment": 70,
+   "chargeback_eur_per_complaint": 0.0,
+   "unit_price": 5.0
+  },
+  "c_open": 295173.23,
+  "c_deal": 245255.5,
+  "c_best": 222651.27,
+  "score": 0.6883119264840607
+ }
+}

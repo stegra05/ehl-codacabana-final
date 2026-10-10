@@ -8,7 +8,7 @@ import secrets
 
 from arena_kit import ArenaClient, RemoteTable
 from arena_kit.sim import load_cases
-from test_buyer import reply, sim_url  # noqa: F401 - the arena-sim fixture
+from test_buyer import reply
 
 from buyer import analyst, memory, rehearsal, research, runner
 from buyer.policy import CLOSING_GAP, Negotiator, step
@@ -105,7 +105,7 @@ def test_analyst_answers_from_its_lists_only():
     assert analyst.read(broken, leverage_case(), "hello", [], []) is None
 
 
-def test_case_plays_with_the_team_and_leaves_a_lesson(sim_url, tmp_path, monkeypatch):  # noqa: F811
+def test_case_plays_with_the_team_and_leaves_a_lesson(sim_url, tmp_path, monkeypatch):
     key = ArenaClient(sim_url).register(f"test-{secrets.token_hex(3)}", "sim")["api_key"]
     client = ArenaClient(sim_url, key, rate=1000)
     monkeypatch.setattr(runner, "RUNS", tmp_path)

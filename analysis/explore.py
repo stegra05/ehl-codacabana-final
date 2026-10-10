@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from buyer.personas import SIGNALS
+
 PKG = Path(sys.argv[1] if len(sys.argv) > 1 else "data/package")
 OUT = Path(__file__).parent / "out"
 OUT.mkdir(exist_ok=True)
@@ -22,25 +24,6 @@ def q(sql):
     return pd.read_sql_query(sql, db)
 
 
-# Persona signals in call notes, meeting notes and e-mails. The generator writes each trait with
-# one or two fixed phrasings, so plain patterns classify every note.
-SIGNALS = {
-    "cash_need": r"pay earlier|bank is watching|cash and the banks|within 10 days|under pressure"
-    r"|restructures|short-time work|lowers rating",
-    "spare_capacity": r"second shift has been on hold|take additional parts|looks for new customers",
-    "capacity_full": r"order intake is very strong|binding 12-month commitment"
-    r"|cannot confirm your full forecast|fully booked|allocates volumes",
-    "open_book": r"walk us through their calculation",
-    "stale_costing": r"not followed his material|own spreadsheet",
-    "partnership_2022": r"kept supplying at the old price",
-    "reference_customer": r"important reference customer",
-    "approval_2pct": r"above 2 % need the approval",
-    "deprioritising_us": r"reviewing small accounts|not strategic|reorganising our range"
-    r"|supply from stock only|sharpens its focus",
-    "price_frozen": r"no room on price|not discounted|price list applies to all|discounts not possible",
-    "hedged": r"bought their \w+ forward|covered at fixed prices|material covered until|secures power prices",
-    "complains_late_pay": r"invoices are overdue",
-}
 LEVER = {
     "cash_need": "pay faster (14-30 days) for price; it values cash over list price",
     "spare_capacity": "offer volume / extra parts; idle capacity makes a lower price cheap for it",

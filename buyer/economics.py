@@ -5,9 +5,7 @@ Nothing here calls a model; every figure that reaches a term sheet comes from he
 import itertools
 import math
 
-from arena_kit.cost import closing_terms, complete_offer, must_haves_ok, supplier_value, total_cost
-
-RELATIONSHIP_GOALS = {"stabilise", "secure_supply"}
+from arena_kit.cost import RELATIONSHIP_GOALS, closing_terms, complete_offer, must_haves_ok, supplier_value, total_cost
 
 
 def cost(case, terms, std=None, est=None):
@@ -38,6 +36,23 @@ def deal_cost(case, terms, std, est=None):
     return c if c < c_alt(case) else None
 
 
+def quoted_offer(case, terms, std=None):
+    """An outgoing sheet with exactly the quoted effective package, never snapped terms."""
+    effective = closing_terms(case, terms, std)
+    if any(effective.get(k) != v for k, v in case.get("fixed_terms", {}).items()):
+        return None
+    offer = {k: effective.get(k) for k in case["negotiable"]}
+    price = offer.get("unit_price")
+    if not isinstance(price, (int, float)) or not math.isfinite(price) or price <= 0:
+        return None
+    opts = case.get("term_options", {})
+    if any(opts.get(k) and v not in opts[k] for k, v in offer.items()):
+        return None
+    if closing_terms(case, offer, std) != effective:
+        return None
+    return offer if must_haves_ok(case, offer, std) else None
+
+
 def known_incoterm(case, terms):
     """`terms` with an Incoterm the case prices; an unknown one (a hidden case's quote) would be a
     KeyError in the kit, so it falls back to the costliest, as `closing_terms` does for a gap."""
@@ -56,14 +71,58 @@ def estimate(case, std, rate, full_cost=None, ppm=None, lead=None, overtime=0.0)
         est["ppm"] = ppm
     if full_cost:
         est["full_cost"] = full_cost
+    est["index_moves"] = {}  # series -> its change over the last 12 months (share), what the supplier expects on
     return est
+
+
+def clause_value(terms, est):
+    """What an index clause is worth to the supplier per unit: it expects its driver to move on as
+    it did over the last twelve months (what it cites in its quote), and the clause pays it that
+    share beyond the deadband. Nordmark agreed at once to a copper clause 4 % below its fixed
+    price (P02); the distributors priced the AS-14404 deadband at exactly this (P08, P18)."""
+    clause = terms.get("index_clause")
+    if not clause:
+        return 0.0
+    move = est.get("index_moves", {}).get(clause.get("series"))
+    if move is None:
+        return 0.0
+    exposed = max(0.0, move - (clause.get("deadband_pct") or 0) / 100)
+    return (clause.get("material_share") or 0) * exposed * (terms.get("unit_price") or 0)
+
+
+def clause_cost_share(case, clause):
+    """Our cost of a clause as a share of the spend: the case's path beyond the deadband plus the
+    index risk charge."""
+    b = case["buyer"]
+    share, deadband = clause.get("material_share") or 0, (clause.get("deadband_pct") or 0) / 100
+    path = abs(b.get("index_paths", {}).get(clause.get("series"), 0.0))
+    return share * max(0.0, path - deadband) + share * b.get("index_risk_pct", 0) / 100
+
+
+def clause_trade(case, est, min_gain=0.02):
+    """The index clause worth trading: the supplier's value less our cost, as a share of the price,
+    above `min_gain`; among equal gains the widest deadband (least risk). None when no clause pays
+    (P08, P18: the supplier's value equals our cost) or the case has none to offer."""
+    best = None
+    for clause in case.get("term_options", {}).get("index_clause") or []:
+        if not clause:
+            continue
+        move = est.get("index_moves", {}).get(clause.get("series"))
+        if move is None:
+            continue
+        theirs = (clause.get("material_share") or 0) * max(0.0, move - (clause.get("deadband_pct") or 0) / 100)
+        gain = theirs - clause_cost_share(case, clause)
+        key = (round(gain, 4), clause.get("deadband_pct") or 0)
+        if gain >= min_gain and (best is None or key > best[0]):
+            best = (key, clause)
+    return best[1] if best else None
 
 
 def value(case, terms, est):
     """What a sheet is worth to the supplier per unit, in cash at its standard terms, less the
     overtime a faster delivery than it quoted costs it (fully booked suppliers: about 0.5 % of
     the price per day, P05 and P10)."""
-    v = supplier_value(case, known_incoterm(case, terms), est)
+    v = supplier_value(case, known_incoterm(case, terms), est) + clause_value(terms, est)
     lead, quoted = terms.get("lead_time_days"), est.get("lead")
     if est.get("overtime") and lead is not None and quoted and lead < quoted:
         v -= est["overtime"] * terms["unit_price"] * (quoted - lead)
@@ -127,7 +186,7 @@ def plan_terms(case, std, est, ref_terms, ref_price):
     return terms, c
 
 
-def at_price(case, terms, price):
+def at_price(terms, price):
     return {**terms, "unit_price": round(price, 2)}
 
 
@@ -140,7 +199,7 @@ def relationship_optimum(case, terms, std, est, lo, hi):
     steps = 200
     for i in range(steps + 1):
         p = lo + (hi - lo) * i / steps
-        c = cost(case, at_price(case, terms, p), std, est)
+        c = cost(case, at_price(terms, p), std, est)
         if c < best_c - 1e-6:
             best_p, best_c = p, c
     return round(best_p, 2)

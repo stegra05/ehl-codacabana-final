@@ -1,0 +1,52 @@
+22:03:08 HTTP Request: GET https://arena.tacto.ai/v1/cases?set=practice "HTTP/1.1 200 OK"
+22:03:08 HTTP Request: POST https://arena.tacto.ai/v1/sessions "HTTP/1.1 200 OK"
+22:03:08 session 50df279785b1178f
+22:03:08 HTTP Request: GET https://arena.tacto.ai/v1/sessions/50df279785b1178f/attachments/att:70210-0-quote "HTTP/1.1 200 OK"
+22:03:08 HTTP Request: GET https://arena.tacto.ai/v1/sessions/50df279785b1178f/attachments/att:70240-0-quote "HTTP/1.1 200 OK"
+22:03:09 HTTP Request: GET https://arena.tacto.ai/v1/sessions/50df279785b1178f/attachments/att:70250-0-quote "HTTP/1.1 200 OK"
+22:03:09 case:P05 sup:70210 {'t': 1791662589.1, 'supplier': 'sup:70210', 'what': 'setup', 'quote': {'unit_price': 36.0}, 'full_cost': 36.87, 'near_cost': False, 'terms': {'unit_price': 27.86, 'payment_days': 14, 'lead_time_days': 35}, 'quote_at_terms': 35.71, 'anchor': 27.86, 'target': None, 'budget': 1.0}
+22:03:09 case:P05 sup:70240 {'t': 1791662589.1, 'supplier': 'sup:70240', 'what': 'setup', 'quote': {'unit_price': 31.5, 'lead_time_days': 52}, 'full_cost': 36.87, 'near_cost': False, 'terms': {'unit_price': 30.51, 'payment_days': 14, 'lead_time_days': 42}, 'quote_at_terms': 32.8, 'anchor': 30.51, 'target': None, 'budget': 0.16}
+22:03:09 case:P05 sup:70250 {'t': 1791662589.2, 'supplier': 'sup:70250', 'what': 'setup', 'quote': {'unit_price': 38.5}, 'full_cost': 36.87, 'near_cost': False, 'terms': {'unit_price': 29.8, 'payment_days': 14, 'lead_time_days': 35}, 'quote_at_terms': 38.21, 'anchor': 29.8, 'target': None, 'budget': 1.0}
+22:03:11 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+22:03:11 writer paragraph in 2.0s
+22:03:11 case:P05 sup:70240 {'t': 1791662591.2, 'supplier': 'sup:70240', 'what': 'send', 'state': 'open', 'theirs': 32.8, 'ours': 30.51, 'asks': [], 'attached': []}
+22:03:29 HTTP Request: POST https://arena.tacto.ai/v1/sessions/50df279785b1178f/threads/sup:70240/messages "HTTP/1.1 200 OK"
+22:03:31 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+22:03:31 writer paragraph in 2.1s
+22:03:31 case:P05 sup:70210 {'t': 1791662611.5, 'supplier': 'sup:70210', 'what': 'send', 'state': 'open', 'theirs': 36.0, 'ours': 27.86, 'asks': [], 'attached': []}
+22:03:45 HTTP Request: POST https://arena.tacto.ai/v1/sessions/50df279785b1178f/threads/sup:70210/messages "HTTP/1.1 200 OK"
+22:03:46 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+22:03:46 writer paragraph in 1.7s
+22:03:46 case:P05 sup:70250 {'t': 1791662627.0, 'supplier': 'sup:70250', 'what': 'send', 'state': 'open', 'theirs': 38.5, 'ours': 29.8, 'asks': [], 'attached': []}
+22:04:05 HTTP Request: POST https://arena.tacto.ai/v1/sessions/50df279785b1178f/threads/sup:70250/messages "HTTP/1.1 200 OK"
+22:04:06 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+22:04:06 writer paragraph in 1.6s
+22:04:06 case:P05 sup:70240 {'t': 1791662646.8, 'supplier': 'sup:70240', 'what': 'send', 'state': 'open', 'theirs': 31.0, 'ours': 30.66, 'asks': ['volume'], 'attached': []}
+22:04:28 HTTP Request: POST https://arena.tacto.ai/v1/sessions/50df279785b1178f/threads/sup:70240/messages "HTTP/1.1 200 OK"
+22:04:30 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+22:04:30 writer paragraph in 2.2s
+22:04:30 case:P05 sup:70210 {'t': 1791662670.9, 'supplier': 'sup:70210', 'what': 'send', 'state': 'open', 'theirs': 30.0, 'ours': 27.92, 'asks': ['volume'], 'attached': []}
+22:04:48 HTTP Request: POST https://arena.tacto.ai/v1/sessions/50df279785b1178f/threads/sup:70210/messages "HTTP/1.1 200 OK"
+22:04:50 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+22:04:50 writer paragraph in 2.0s
+22:04:50 case:P05 sup:70250 {'t': 1791662690.7, 'supplier': 'sup:70250', 'what': 'send', 'state': 'open', 'theirs': 30.5, 'ours': 29.86, 'asks': ['volume'], 'attached': []}
+22:05:09 HTTP Request: POST https://arena.tacto.ai/v1/sessions/50df279785b1178f/threads/sup:70250/messages "HTTP/1.1 200 OK"
+22:05:12 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+22:05:12 writer paragraph in 3.2s
+22:05:12 case:P05 sup:70240 {'t': 1791662712.6, 'supplier': 'sup:70240', 'what': 'send', 'state': 'open', 'theirs': 31.0, 'ours': 30.76, 'asks': [], 'attached': []}
+22:05:32 HTTP Request: POST https://arena.tacto.ai/v1/sessions/50df279785b1178f/threads/sup:70240/messages "HTTP/1.1 200 OK"
+22:05:33 HTTP Request: POST https://arena.tacto.ai/v1/sessions/50df279785b1178f/threads/sup:70210/messages "HTTP/1.1 200 OK"
+22:05:33 HTTP Request: GET https://arena.tacto.ai/v1/sessions/50df279785b1178f/attachments/att:70210-3-quote "HTTP/1.1 200 OK"
+22:05:33 HTTP Request: GET https://arena.tacto.ai/v1/sessions/50df279785b1178f/attachments/att:70240-3-quote "HTTP/1.1 200 OK"
+22:05:33 HTTP Request: GET https://arena.tacto.ai/v1/sessions/50df279785b1178f/attachments/att:70250-2-quote "HTTP/1.1 200 OK"
+22:05:33 case:P05 sup:70210 {'t': 1791662733.6, 'supplier': 'sup:70210', 'what': 'accept', 'c': 238054.36, 'offer': 'offer:70210-3'}
+22:05:33 HTTP Request: POST https://arena.tacto.ai/v1/sessions/50df279785b1178f/threads/sup:70210/messages "HTTP/1.1 200 OK"
+22:05:33 HTTP Request: GET https://arena.tacto.ai/v1/sessions?set=practice "HTTP/1.1 200 OK"
+22:05:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/d06ab078790f873d "HTTP/1.1 200 OK"
+22:05:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/d06ab078790f873d/backoffice "HTTP/1.1 200 OK"
+22:05:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/50df279785b1178f "HTTP/1.1 200 OK"
+22:05:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/50df279785b1178f/backoffice "HTTP/1.1 200 OK"
+case:P05 {'deal': True, 'supplier_id': 'sup:70210', 'terms': {'payment_days': 14, 'lead_time_days': 35, 'volume_per_year': 4200, 'contract_months': 24, 'effective_date': '2027-01-01', 'index_clause': None, 'incoterm': 'DAP', 'tooling_eur': 0.0, 'ppm_commitment': 1200, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 27.92}, 'c_open': 305544.96, 'c_deal': 238054.36, 'c_best': 223424.17, 'score': 0.8218454790802674}
+mean score: 82.2 over 1 cases
+2 new sessions in logs/sessions/practice
+practice sessions left today: 323

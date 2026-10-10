@@ -5,10 +5,10 @@ notes for the e-mail writer; the policy decides what each of them changes. Trait
 anchors or rates stay with the patterns in `personas.py`: a model's guess there costs too much."""
 
 from . import llm
-from .reader import ASKS
 
 TIMEOUT_S = 6.0
 MOODS = ("open", "firm", "closing")
+ASKS = ("volume", "proof", "payment", "target")  # the kinds `policy.asks` reads
 
 SYSTEM = (
     """You are the analyst next to our buyer at Hollerau Pumpenwerke during a price negotiation.

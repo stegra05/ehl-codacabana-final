@@ -7,7 +7,6 @@ without a figure, so the arena checks them against their own value."""
 
 import re
 
-ID_RE = re.compile(r"\b(?:idx|quote|offer|sc|qn|po|cost|fc|news|doc|ctr):[\w.:@#/-]*\w")
 SERIES_NAME = {
     "PPI-C2451": "Producer prices for iron castings",
     "PPI-C2452": "Producer prices for steel castings",
@@ -127,7 +126,7 @@ class ClaimBank:
             text = f"Our last orders for this part were at {listed}{each} ({', '.join(ids)})."
         return {"kind": "order_history", "ids": ids, "text": text, "strength": 4}
 
-    def notice(self, sid):
+    def notice(self):
         doc = self.case.get("trigger_doc")
         f = self.fact(doc) if doc else None
         if not f or f.get("days") is None:
@@ -141,24 +140,47 @@ class ClaimBank:
         )
         return {"kind": "notice", "ids": [doc, ctr], "text": text, "strength": 5}
 
-    def index_change(self, series):
+    def move12(self, series):
+        """The series' change over the last twelve months as a share (what suppliers cite), or None."""
         ids = self.ids(f"idx:{series}@")
         if not ids:
             return None
         m2 = ids[-1].split("@")[-1]
-        m1 = months_back(m2, 12)
-        a, b = self.fact(f"idx:{series}@{m1}"), self.fact(f"idx:{series}@{m2}")
-        if not a or not b or not a.get("value"):
+        a, b = self.fact(f"idx:{series}@{months_back(m2, 12)}"), self.fact(ids[-1])
+        if not a or not b or not a.get("value") or not b.get("value"):
             return None
-        pct = (b["value"] / a["value"] - 1) * 100
-        if pct > -0.5:
+        return b["value"] / a["value"] - 1
+
+    def index_change(self, series):
+        """The largest fall of a series over any window of up to 12 months ending at its latest
+        month (the window the arena checks). AS-14404 rose 5.9 % in twelve months but fell 5.5 %
+        from June to September 2026: the second is the argument the distributors "take into
+        account", the first would argue their case."""
+        ids = self.ids(f"idx:{series}@")
+        if not ids:
+            return None
+        m2 = ids[-1].split("@")[-1]
+        b = self.fact(ids[-1])
+        if not b or not b.get("value"):
+            return None
+        best = None
+        for back in range(1, 13):
+            m1 = months_back(m2, back)
+            a = self.fact(f"idx:{series}@{m1}")
+            if not a or not a.get("value"):
+                continue
+            pct = (b["value"] / a["value"] - 1) * 100
+            if best is None or pct < best[0]:
+                best = (pct, m1)
+        if best is None or best[0] > -0.5:
             return None  # a rising driver confirms the supplier's case
+        pct, m1 = best
         name = SERIES_NAME.get(series, f"The index {series}")
         return {
             "kind": "index",
             "ids": [f"idx:{series}@{m1}", f"idx:{series}@{m2}"],
             "text": f"{name} changed {pct:.1f}% from {m1} to {m2} (idx:{series}@{m1}, idx:{series}@{m2}).",
-            "strength": 3 + min(3.0, abs(pct) / 3),
+            "strength": 4 + min(3.0, abs(pct) / 2),  # a falling driver outranks notes and orders
         }
 
     def drivers(self, part):
@@ -200,8 +222,10 @@ class ClaimBank:
         for d in self.query(
             "SELECT id, date, kind, file FROM documents WHERE supplier_id = ? ORDER BY date DESC", (sid,)
         ):
-            path = self.pkg.root / (d.get("file") or "") if self.pkg else None
-            text = path.read_text(encoding="utf-8", errors="replace") if path and path.is_file() else ""
+            try:
+                text = self.pkg.document(d["id"])
+            except (FileNotFoundError, UnicodeDecodeError):
+                text = ""
             if re.search(r"covered at fixed prices|bought their \w+ forward|material covered until", text, re.I):
                 out.append(
                     {
@@ -281,7 +305,7 @@ class ClaimBank:
             out += self.rival_quote(part, sid, quote)
             if c := self.forecast(part):
                 out.append(c)
-        if c := self.notice(sid):
+        if c := self.notice():
             out.append(c)
         out += self.signal_notes(sid)
         if c := self.scorecard(sid, quality):

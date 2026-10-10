@@ -1,0 +1,142 @@
+{
+ "case": "case:P02",
+ "session": "9967581058e2ee01",
+ "notes": [
+  {
+   "t": 1791660663.9,
+   "supplier": "sup:70510",
+   "what": "setup",
+   "quote": {
+    "unit_price": 370.96,
+    "payment_days": 30,
+    "index_clause": null
+   },
+   "std": {
+    "ppm_commitment": 250,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": "group",
+    "country": "DE",
+    "category": "electrical",
+    "signals": [
+     "approval_2pct"
+    ],
+    "rate": 0.05,
+    "warm": false
+   },
+   "full_cost": 374.95,
+   "near_cost": true,
+   "terms": {
+    "unit_price": 351.23,
+    "payment_days": 90,
+    "index_clause": null
+   },
+   "quote_at_terms": 374.06,
+   "anchor": 351.23,
+   "target": null,
+   "budget": 0.14,
+   "claims": [
+    "Our last 3 orders for this part were at EUR 348.32 (po:4500014474-10, po:4500014413-10, po:4500014350-20).",
+    "Our forecast for this part is up 11.9% (fc:350011@2026-09)."
+   ]
+  },
+  {
+   "t": 1791660665.7,
+   "supplier": "sup:70510",
+   "what": "send",
+   "state": "open",
+   "theirs": 374.06,
+   "ours": 351.23,
+   "claims": [
+    "order_history",
+    "forecast"
+   ],
+   "asks": [],
+   "attached": []
+  },
+  {
+   "t": 1791660685.2,
+   "supplier": "sup:70510",
+   "what": "send",
+   "state": "open",
+   "theirs": 373.88,
+   "ours": 368.27,
+   "claims": [],
+   "asks": [
+    "volume"
+   ],
+   "attached": []
+  },
+  {
+   "t": 1791660709.5,
+   "supplier": "sup:70510",
+   "what": "send",
+   "state": "open",
+   "theirs": 373.46,
+   "ours": 369.83,
+   "claims": [],
+   "asks": [
+    "volume",
+    "proof"
+   ],
+   "attached": [
+    "forecast.csv"
+   ]
+  },
+  {
+   "t": 1791660737.7,
+   "supplier": "sup:70510",
+   "what": "send",
+   "state": "open",
+   "theirs": 373.06,
+   "ours": 370.8,
+   "claims": [],
+   "asks": [
+    "volume"
+   ],
+   "attached": []
+  },
+  {
+   "t": 1791660773.1,
+   "supplier": "sup:70510",
+   "what": "send",
+   "state": "open",
+   "theirs": 372.65,
+   "ours": 371.54,
+   "claims": [],
+   "asks": [
+    "volume"
+   ],
+   "attached": []
+  },
+  {
+   "t": 1791660795.6,
+   "supplier": "sup:70510",
+   "what": "accept",
+   "c": 2269132.13,
+   "offer": "offer:70510-5"
+  }
+ ],
+ "result": {
+  "deal": true,
+  "supplier_id": "sup:70510",
+  "terms": {
+   "payment_days": 90,
+   "lead_time_days": 35,
+   "volume_per_year": 6110,
+   "contract_months": 12,
+   "effective_date": "2027-01-01",
+   "index_clause": null,
+   "incoterm": "DAP",
+   "tooling_eur": 0.0,
+   "ppm_commitment": 250,
+   "chargeback_eur_per_complaint": 0.0,
+   "unit_price": 372.25
+  },
+  "c_open": 2282867.49,
+  "c_deal": 2260865.16,
+  "c_best": 2235514.05,
+  "score": 0.4646405836619237
+ }
+}

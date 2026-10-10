@@ -1,0 +1,251 @@
+{
+  "session_id": "b3daba378f139d09",
+  "case_id": "case:P02",
+  "status": "ended",
+  "end_reason": "accepted",
+  "rounds": 2,
+  "set": "practice",
+  "opening": {
+    "sup:70510": {
+      "offer_id": "offer:70510-0",
+      "round": 0,
+      "status": "open",
+      "terms": {
+        "unit_price": 370.96,
+        "payment_days": 30,
+        "index_clause": null
+      },
+      "alternatives": [],
+      "missing_fields": [],
+      "claims": [
+        {
+          "type": "index_change",
+          "refs": [
+            "idx:CU-NOTATION@2025-09",
+            "idx:CU-NOTATION@2026-09"
+          ],
+          "asserted": {
+            "change_pct": 47.7
+          }
+        },
+        {
+          "type": "index_change",
+          "refs": [
+            "idx:LCI-C@2025-06",
+            "idx:LCI-C@2026-06"
+          ],
+          "asserted": {
+            "change_pct": 2.7
+          }
+        },
+        {
+          "type": "index_change",
+          "refs": [
+            "idx:PPI-C241@2025-08",
+            "idx:PPI-C241@2026-08"
+          ],
+          "asserted": {
+            "change_pct": 6.5
+          }
+        }
+      ],
+      "claim_results": [],
+      "signals": {
+        "reply_delay_days": 1,
+        "validity_days": 30
+      },
+      "text": "Dear Sir or Madam,\n\nThank you for your enquiry. Please find our Angebot below.\n\nWe offer a price of \u20ac370.96 per unit, Zahlungsziel 30 days net, no Preisgleitklausel. \n\nRegarding our cost structure, CU-NOTATION rose 47.7 % in twelve months and is 20 % of our cost. LCI-C rose 2.7 % in twelve months and is 20 % of our cost. PPI-C241 rose 6.5 % in twelve months and is 14 % of our cost.\n\nPlease note that this offer remains valid for 30 days.\n\nMit freundlichen Gr\u00fc\u00dfen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG"
+    }
+  },
+  "threads": {
+    "sup:70510": {
+      "offer_id": "offer:70510-1",
+      "status": "agreed",
+      "offers": 2,
+      "closed": null,
+      "seconds_left": null
+    }
+  },
+  "moves": [],
+  "result": {
+    "ended": true,
+    "deal": true,
+    "supplier_id": "sup:70510",
+    "offer_id": "offer:70510-1",
+    "terms": {
+      "payment_days": 90,
+      "lead_time_days": 35,
+      "volume_per_year": 6110,
+      "contract_months": 12,
+      "effective_date": "2027-01-01",
+      "index_clause": {
+        "series": "CU-NOTATION",
+        "material_share": 0.2,
+        "deadband_pct": 5.0,
+        "base_month": "2026-08"
+      },
+      "incoterm": "DAP",
+      "tooling_eur": 0.0,
+      "ppm_commitment": 250,
+      "chargeback_eur_per_complaint": 0.0,
+      "unit_price": 351.9
+    },
+    "c_open": 2282867.49,
+    "c_deal": 2269824.65,
+    "c_alt": 2604227.78,
+    "c_best": 2235514.05,
+    "score": 0.27543595565602425,
+    "must_haves_ok": true,
+    "cost_breakdown": {
+      "price": 2150109.0,
+      "uncovered_need": 0.0,
+      "fallback_risk": 0.0,
+      "payment_terms": -14334.06,
+      "freight": 0.0,
+      "late_delivery": 0.0,
+      "quality": 1191.45,
+      "tooling": 0.0,
+      "index_clause": 0.0,
+      "index_risk": 17200.87,
+      "relationship": 115657.38
+    },
+    "trace": [
+      {
+        "round": 0,
+        "actor": "sup:70510",
+        "move": {
+          "offer_id": "offer:70510-0",
+          "round": 0,
+          "status": "open",
+          "terms": {
+            "unit_price": 370.96,
+            "payment_days": 30,
+            "index_clause": null
+          },
+          "alternatives": [],
+          "missing_fields": [],
+          "claims": [
+            {
+              "type": "index_change",
+              "refs": [
+                "idx:CU-NOTATION@2025-09",
+                "idx:CU-NOTATION@2026-09"
+              ],
+              "asserted": {
+                "change_pct": 47.7
+              }
+            },
+            {
+              "type": "index_change",
+              "refs": [
+                "idx:LCI-C@2025-06",
+                "idx:LCI-C@2026-06"
+              ],
+              "asserted": {
+                "change_pct": 2.7
+              }
+            },
+            {
+              "type": "index_change",
+              "refs": [
+                "idx:PPI-C241@2025-08",
+                "idx:PPI-C241@2026-08"
+              ],
+              "asserted": {
+                "change_pct": 6.5
+              }
+            }
+          ],
+          "claim_results": [],
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "text": "Dear Sir or Madam,\nThank you for your enquiry. Please find our Angebot below.\nOur terms: a price of \u20ac370.96 per unit, Zahlungsziel 30 days net, no Preisgleitklausel.\nPlease note:\nCU-NOTATION rose 47.7 % in twelve months and is 20 % of our cost.\nLCI-C rose 2.7 % in twelve months and is 20 % of our cost.\nPPI-C241 rose 6.5 % in twelve months and is 14 % of our cost.\nThis offer is subject to our general terms of sale.\nMit freundlichen Gr\u00fc\u00dfen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG"
+        },
+        "reasons": [
+          "CU-NOTATION rose \u2026 in twelve months and is \u2026 of our cost.",
+          "LCI-C rose \u2026 in twelve months and is \u2026 of our cost.",
+          "PPI-C241 rose \u2026 in twelve months and is \u2026 of our cost."
+        ]
+      },
+      {
+        "round": 1,
+        "actor": "buyer",
+        "move": {
+          "type": "message",
+          "message_id": null,
+          "subject": "Re: Quote from Antriebstechnik Nordmark AG: Nordmark passes on copper for the 7.5 kW motor",
+          "body": "Dear Sir or Madam,\n\nThank you for your offer and for the time your team has put into it.\nWe can confirm that the binding volume is our full demand for this part over the term, placed entirely with Nordmark. We appreciate the pressure from rising copper costs; rather than a fixed price, we propose an index clause with a deadband on your main cost driver, sharing the material risk while reflecting that in the price basis. Would this approach work for you?\n\nWe confirm a binding volume of 6110 units a year for the 12-month term, our full demand for this part, all placed with you.\n\nOn this basis we propose: EUR 344.50 per unit, payment 90 days net, price follows CU-NOTATION on 20% of the price, deadband 5%, for our full demand of 6110 units a year over 12 months.\n\nKind regards,\nHollerau Pumpenwerke, Purchasing",
+          "refs": [],
+          "term_sheets": [
+            {
+              "term_sheet_id": null,
+              "terms": {
+                "unit_price": 344.5,
+                "payment_days": 90,
+                "index_clause": {
+                  "series": "CU-NOTATION",
+                  "material_share": 0.2,
+                  "deadband_pct": 5,
+                  "base_month": "2026-08"
+                }
+              }
+            }
+          ],
+          "interpreted": {
+            "claims": []
+          },
+          "supplier_id": "sup:70510"
+        },
+        "reasons": []
+      },
+      {
+        "round": 1,
+        "actor": "sup:70510",
+        "move": {
+          "offer_id": "offer:70510-1",
+          "round": 1,
+          "status": "open",
+          "terms": {
+            "unit_price": 351.9,
+            "payment_days": 90,
+            "index_clause": {
+              "series": "CU-NOTATION",
+              "material_share": 0.2,
+              "deadband_pct": 5.0,
+              "base_month": "2026-08"
+            }
+          },
+          "alternatives": [],
+          "missing_fields": [],
+          "claims": [],
+          "claim_results": [],
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "text": "Dear Sir or Madam,\nThank you for your message.\nWe have reviewed your offer and can adjust our Angebot as follows.\nOur terms: a price of \u20ac351.90 per unit, Zahlungsziel 90 days net, a Preisgleitklausel on CU-NOTATION.\nPlease note:\nWe acknowledge your confirmation of the binding volume and agree to implement the CU-NOTATION index clause to manage material risk.\nWe are prepared to accept the extended payment terms of 90 days net as requested.\nTo accommodate these terms, we propose a unit price of EUR 351.90.\nWhich figures is that based on? Please send us the data.\nOur price reflects our costs; our calculation stays internal.\nShould you require further information, please let us know.\nMit freundlichen Gr\u00fc\u00dfen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG"
+        },
+        "reasons": [
+          "We acknowledge your confirmation of the binding volume and agree to implement the CU-NOTATION index clause to manage material risk.",
+          "We are prepared to accept the extended payment terms of \u2026 days net as requested.",
+          "To accommodate these terms, we propose a unit price of EUR \u2026.",
+          "Which figures is that based on? Please send us the data.",
+          "Our price reflects our costs; our calculation stays internal."
+        ]
+      },
+      {
+        "round": 1,
+        "actor": "buyer",
+        "move": {
+          "type": "accept",
+          "offer_id": "offer:70510-1",
+          "supplier_id": "sup:70510"
+        },
+        "reasons": []
+      }
+    ]
+  },
+  "replay_url": "/replay/b3daba378f139d09"
+}
