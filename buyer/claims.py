@@ -126,7 +126,7 @@ class ClaimBank:
             text = f"Our last orders for this part were at {listed}{each} ({', '.join(ids)})."
         return {"kind": "order_history", "ids": ids, "text": text, "strength": 4}
 
-    def notice(self, sid):
+    def notice(self):
         doc = self.case.get("trigger_doc")
         f = self.fact(doc) if doc else None
         if not f or f.get("days") is None:
@@ -222,8 +222,10 @@ class ClaimBank:
         for d in self.query(
             "SELECT id, date, kind, file FROM documents WHERE supplier_id = ? ORDER BY date DESC", (sid,)
         ):
-            path = self.pkg.root / (d.get("file") or "") if self.pkg else None
-            text = path.read_text(encoding="utf-8", errors="replace") if path and path.is_file() else ""
+            try:
+                text = self.pkg.document(d["id"])
+            except (FileNotFoundError, UnicodeDecodeError):
+                text = ""
             if re.search(r"covered at fixed prices|bought their \w+ forward|material covered until", text, re.I):
                 out.append(
                     {
@@ -303,7 +305,7 @@ class ClaimBank:
             out += self.rival_quote(part, sid, quote)
             if c := self.forecast(part):
                 out.append(c)
-        if c := self.notice(sid):
+        if c := self.notice():
             out.append(c)
         out += self.signal_notes(sid)
         if c := self.scorecard(sid, quality):
