@@ -39,6 +39,8 @@ uv run buyer run --set final --parallel 10 -v     # the Live Final: start before
 Code owns every number: `buyer/policy.py` plans terms and prices with `total_cost`, cites data
 by ID and refuses bad accepts; the model writes one paragraph of each e-mail (`buyer/llm.py`).
 `buyer/runner.py` plays the cases. Design in `docs/design.md`, findings in `docs/learnings.md`.
+The running module map is in `docs/architecture.md`; current review findings are in
+`docs/system-review.md`.
 
 ## Develop
 

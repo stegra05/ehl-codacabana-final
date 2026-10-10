@@ -2,8 +2,10 @@
 
 Ours:
 
+- `architecture.md`: the running system, module and function inventory, data contracts, clocks and learning loop.
+- `system-review.md`: strengths, current risks, review questions and a small improvement sequence.
 - `learnings.md`: what we know about the arena, its suppliers and the data package, with evidence.
-- `design.md`: the agent we are building. `how-it-works.pdf` holds its architecture diagram.
+- `design.md`: the target design, including planned components. `how-it-works.pdf` holds its architecture diagram.
 - `generalisation.md`: how well the agent should carry over to the Live Final's unseen suppliers and case types.
 - `negotiation-research.md`: negotiation strategies from the literature, checked against our traces, with an experiment plan.
 
