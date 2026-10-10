@@ -179,10 +179,20 @@ def friendliness(terms):
     return tuple(FRIENDLY[f] * (terms.get(f) or 0) for f in FRIENDLY if f in terms)
 
 
+# Our estimate of the supplier's cost of money is a guess (groups 4 to 7 %, family firms 7 to 8.5 %,
+# job shops 12 to 17 %, the distributors 0): among packages whose planned C lies within this share
+# of the best and differ from it only in payment days, the longest payment term is asked for.
+# Werdenfels priced payment at zero where the planner guessed 7.5 % and asked for 45 days (P18);
+# the records on P05 and P18 sit at 90 days. If the supplier minds, it counters with its own
+# package and `adopt` takes it when cheaper. Other terms keep the planner's choice.
+PLAN_TOLERANCE = 0.015
+
+
 def plan_terms(case, std, est, ref_terms, ref_price):
     """The non-price terms that cost us least once the supplier prices them at its own valuation:
     for every allowed combination, the price worth the same to it as `ref_price` at `ref_terms`,
-    then C at that price; among equal C, the supplier's favourite. Returns (terms with that price, C)."""
+    then C at that price; within `PLAN_TOLERANCE` of the lowest C the package cheapest for us at
+    `ref_price` itself, among equal ones the supplier's favourite. Returns (terms with that price, C)."""
     target = value(case, {**ref_terms, "unit_price": ref_price}, est)
     rows = []
     for combo in options(case) or [{}]:
@@ -196,6 +206,14 @@ def plan_terms(case, std, est, ref_terms, ref_price):
     low = min(c for c, _ in rows)
     ties = [(c, t) for c, t in rows if c <= low + max(1.0, abs(low) * 1e-5)]
     c, terms = max(ties, key=lambda r: friendliness(r[1]))
+    if "payment_days" in terms:
+        band = [
+            (bc, bt)
+            for bc, bt in rows
+            if bc <= low + max(1.0, abs(low) * PLAN_TOLERANCE)
+            and all(bt.get(k) == v for k, v in terms.items() if k not in ("unit_price", "payment_days"))
+        ]
+        c, terms = max(band, key=lambda r: (r[1]["payment_days"] or 0, -r[0]))
     return terms, c
 
 

@@ -6,6 +6,7 @@ the model endpoint.
 
   uv run python analysis/bench_sim.py            # code policy, reasoner with a fake model
   uv run python analysis/bench_sim.py --model    # plus the reasoner with the configured model
+  uv run python analysis/bench_sim.py --grid out.json   # nine supplier scripts (floor x final round), code policy
 """
 
 import argparse
@@ -18,6 +19,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import arena_kit.sim as simmod
 from arena_kit import ArenaClient, RemoteTable
 from arena_kit.cli import load_env
 from arena_kit.sim import Sim
@@ -59,7 +61,10 @@ def play(client, cases, negotiator, complete, parallel=8):
     def one(case_id):
         t0 = time.monotonic()
         try:
-            result = runner.play_case(RemoteTable(client), case_id, None, None, complete, negotiator)
+            if negotiator is Negotiator:  # also runs against a `buyer` without the negotiator parameter (main)
+                result = runner.play_case(RemoteTable(client), case_id, None, None, complete)
+            else:
+                result = runner.play_case(RemoteTable(client), case_id, None, None, complete, negotiator)
             return case_id, result.get("score"), result.get("deal"), time.monotonic() - t0
         except Exception as e:  # noqa: BLE001 - the bench reports the failure
             return case_id, None, f"error: {e}", time.monotonic() - t0
@@ -70,14 +75,39 @@ def play(client, cases, negotiator, complete, parallel=8):
     return runs
 
 
+GRID = [(floor, final) for floor in (0.85, 0.90, 0.95) for final in (3, 5, 8)]
+
+
+def grid(cases, parallel, out):
+    """The code policy against nine supplier scripts: cost floor as a share of the opening x the
+    round of its final offer. Writes {scenario: {case: score}} to `out` for a diff between branches."""
+    results = {}
+    for floor, final in GRID:
+        simmod.FLOOR, simmod.FINAL_ROUND = floor, final
+        with serve(Sim(cases, clock=lambda: 1_000_000.0)) as url:
+            key = ArenaClient(url).register(f"grid-{secrets.token_hex(3)}", "sim")["api_key"]
+            runs = play(ArenaClient(url, key, rate=1000), cases, Negotiator, None, parallel)
+        name = f"floor {floor:.2f} final r{final}"
+        results[name] = {c: s for c, (s, _, _) in runs.items()}
+        scores = [s for s in results[name].values() if s is not None]
+        deals = sum(1 for s in scores if s)
+        print(f"{name}: mean {statistics.mean(scores):.3f}, deals {deals}/{len(cases)}", file=sys.stderr)
+    Path(out).write_text(json.dumps(results, indent=1))
+    means = [statistics.mean(s for s in r.values() if s is not None) for r in results.values()]
+    print(f"grid mean over {len(GRID)} scenarios x {len(cases)} cases: {statistics.mean(means):.4f} -> {out}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", action="store_true", help="also run the reasoner with the configured model")
+    ap.add_argument("--grid", metavar="OUT_JSON", help="nine supplier scripts, code policy only, results to this file")
     ap.add_argument("--parallel", type=int, default=8)
     args = ap.parse_args()
     load_env()
     logging.basicConfig(level=logging.WARNING)
     cases = all_cases()
+    if args.grid:
+        return grid(cases, args.parallel, args.grid)
     columns = [("code policy", Negotiator, None), ("reasoner, fake model", Reasoner, fake_model)]
     if args.model:
         complete = llm.complete_from_env()

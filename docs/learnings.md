@@ -371,6 +371,35 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
 
 ## Agent experiments
 
+- 2026-10-11 `arena` **What moves a counter, over all 1,627 supplier replies we hold** (every
+  practice and sandbox session, the reply's concession against its previous standing price):
+
+  | Our message before the reply | Replies | Median concession | Share that moved |
+  |---|---|---|---|
+  | cited data the supplier said it "took into account" | 462 | 2.68 % | 90 % |
+  | cited data, all of it "does not change our calculation" | 116 | 0.72 % | 66 % |
+  | cited data, no verdict words | 206 | 1.35 % | 80 % |
+  | cited no data at all | 847 | 0.20 % | 55 % |
+  | our price moved 2 to 5 % of its price | 265 | 1.44 % | 87 % |
+  | our price moved under 0.5 % | 463 | 0.02 % | 50 % |
+
+  Half our messages carried no data ID (P02 69 %, P03 66 %, P11 61 %, P04 57 %, P05 46 %): the
+  bank was empty after round 2. → Every round a counted claim while the supplier still moves (the
+  widened bank: scorecard quarters, quality notifications; the in-session re-ranking), and no price
+  creep under 0.5 %: hold or close instead.
+- 2026-10-11 `rules` **Payment days in the planner.** `plan_terms` priced payment at the supplier's
+  guessed cost of money and asked for 45 days (P18) or 14 (P05, P01) where the records sit at 90.
+  Now, among packages within 1.5 % of the best planned C that differ only in payment days, the
+  longest; the supplier counters with its own package if it minds. Scoped to payment days: a
+  first version that preferred our side on every term picked a chargeback Kalwisz refuses (P11)
+  and, in a relationship goal, 30 days (the charge grows when the supplier waits). Simulator grid,
+  nine supplier scripts x 21 case files: 0.608 against main's 0.600, no scenario worse but D01
+  (-0.011, the sim prices nothing but the price).
+- 2026-10-11 `arena` **Correction to the review's P02 claim.** Under the arena-implied full cost
+  (371.7) the clause deal at 361.67 sits at that structure's optimum (0.76 predicted, 0.735
+  recorded); a fixed price beats it only below 369, and Nordmark's fixed-price final offers were
+  about 372 in every run. The full-cost cap in `setup` stays; the record (0.85, about 368.5
+  fixed) needs a path we have not found.
 - 2026-10-11 `rules` **The reasoner (branch `julian/reasoner`, `--agent reasoner`), simulator only, no
   quota spent.** The code policy with the model reading each reply into a schema (asks, levers,
   refused terms, counted and dismissed claim kinds; `buyer/reader.py`, patterns as the fallback)

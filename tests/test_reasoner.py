@@ -114,6 +114,21 @@ def test_lever_trades_find_surplus_where_the_supplier_values_a_term_more_than_it
     assert all(r["surplus"] > 0 for r in rows if r["value"] > 60)
 
 
+def test_planner_asks_for_the_payment_term_cheaper_for_us_when_the_supplier_valuation_is_a_guess():
+    """P18: the planner guessed 7.5 % a year for a family firm and asked for 45 days where Werdenfels
+    priced payment at zero. Packages within the tolerance of the best C that differ only in payment
+    days: the longest term; every other term keeps the planner's choice."""
+    case, _ = s01()
+    case["term_options"]["payment_days"] = [14, 30, 45, 60, 90]
+    quote = complete_offer(case, {"unit_price": 15.0, "payment_days": 30})
+    est = eco.estimate(case, {"payment_days": 30, "incoterm": "DAP"}, 0.075)
+    terms, _ = eco.plan_terms(case, {}, est, quote, 15.0 * 0.8)
+    assert terms["payment_days"] == 90
+    dear = eco.estimate(case, {"payment_days": 30, "incoterm": "DAP"}, 0.40)  # cash worth 40 % a year to it
+    terms, _ = eco.plan_terms(case, {}, dear, quote, 15.0 * 0.8)
+    assert terms["payment_days"] < 60  # outside the tolerance the supplier's valuation decides
+
+
 # -- the menu and the choice ------------------------------------------------------------------------
 def reply(terms, body="Our offer.", status="open", offer="offer:S-1"):
     return {
