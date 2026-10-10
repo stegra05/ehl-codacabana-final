@@ -99,8 +99,9 @@ OWNERS = {
 }
 
 
-def brief(case, prof, last_body, facts, tone, question_allowed):
-    """What the model needs for the paragraph: who the supplier is, what it wrote, what we may say."""
+def brief(case, prof, last_body, facts, tone, question_allowed, insight=()):
+    """What the model needs for the paragraph: who the supplier is, what it wrote, what we may say.
+    `insight`: the research team's and the live analyst's notes on this supplier."""
     who = OWNERS.get(prof.get("owner_type"), "a supplier")
     if prof.get("country") and prof.get("country") != "DE":
         who += f" based in {prof['country']}"
@@ -108,6 +109,7 @@ def brief(case, prof, last_body, facts, tone, question_allowed):
     out = [
         f"CASE: {case.get('title')} (we are the buyer; goal: {case['buyer'].get('category_goal')})",
         f"SUPPLIER: {who}." + (f" From our notes: {'; '.join(traits)}." if traits else ""),
+        *[f"OUR TEAM'S READING OF THEM (background, never quote it): {note}" for note in insight if note],
         f"ITS LAST E-MAIL:\n{(last_body or '')[:1800]}",
         "WHAT WE CAN SAY:",
         *[f"- {f}" for f in facts],

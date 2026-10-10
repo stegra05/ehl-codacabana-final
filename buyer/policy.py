@@ -20,8 +20,8 @@ import time
 from arena_kit.docs import standard_terms
 from arena_kit.play import latest, moves_left, standing
 
+from . import analyst, llm, reader, rehearsal, writer
 from . import economics as eco
-from . import llm, reader, writer
 from .claims import ClaimBank, rival_offer
 from .personas import profile, signals_in
 
@@ -36,6 +36,8 @@ BUDGET = 1.0  # patience: the cumulative relative gap we show (no cap for a typi
 DEEP = 0.06  # a first concession this large (share of its quote) means a deep floor
 MIN_MOVE = 0.002  # every sheet moves at least this share of the price
 FIRST_CLAIMS, LATER_CLAIMS = 3, 1
+OPEN_HOLD = 0.7  # its e-mail signals room to move: we move this share of our usual step
+CLOSING_GAP = 0.015  # its e-mail signals the end is near: our sheet comes this close to its counter
 DONE = {"agreed", "final_offer"}
 ENDED = {"walked_away", "no_bid"}
 
@@ -67,11 +69,17 @@ class Side:
         self.last_reply = None
         self.asks = []  # what its last e-mail asked of us (reader.asks)
         self.attached = set()  # files we already sent it
+        self.fraction = FRACTION  # share of the gap we move per round (the research team may tune it)
+        self.research = ""  # the lead researcher's notes for the e-mail writer
+        self.live = ""  # the live analyst's notes on its last e-mail
+        self.mood = None  # the live analyst's reading of its last e-mail: open | firm | closing
 
 
 class Negotiator:
-    def __init__(self, case, pkg=None, complete=None):
-        self.case, self.pkg, self.complete = case, pkg, complete
+    def __init__(self, case, pkg=None, complete=None, briefs=None):
+        """`briefs`: the research team's brief per supplier (`research.briefs`); None plays the
+        plain price engine, without the research strategy and without the live analyst."""
+        self.case, self.pkg, self.complete, self.briefs = case, pkg, complete, briefs
         self.bank = ClaimBank(pkg, case)
         self.sides = {}
         self.used = set()  # claim IDs cited in this case (a rival quote: per supplier)
@@ -85,6 +93,7 @@ class Negotiator:
         sheet_id, quote = standing(events)
         s.prof = safe(lambda: profile(self.pkg, sid), profile(None, sid))
         self.read_signals(s, latest(events).get("body"))
+        brief = (self.briefs or {}).get(sid) or {}
         self.sides[sid] = s
         if not sheet_id or quote.get("unit_price") is None:
             s.state = "ended"
@@ -113,9 +122,12 @@ class Negotiator:
         if near_cost:
             ratio, s.budget = max(ratio, 0.97), min(s.budget, 0.14)
         current = case["buyer"].get("current_unit_price")
+        cap = 0.99
         if case.get("type") == "price_increase" and current:
-            ratio = min(ratio, current / q_price)  # a price increase opens at today's price at most
-        ratio = max(ANCHOR_MIN, ratio)
+            cap = current / q_price  # a price increase opens at today's price at most
+        ratio = max(ANCHOR_MIN, min(ratio, cap))
+        if brief:
+            ratio = self.apply(s, brief, ratio, ratio > ANCHOR.get(goal, 0.85))
         # terms planned at the price we open with: coverage pays off at a low price, not at the quote
         planned = safe(lambda: eco.plan_terms(case, s.std, s.est, quote, q_price * ratio))
         s.terms = planned[0] if planned else eco.complete_offer(case, eco.at_price(case, quote, q_price * ratio))
@@ -126,6 +138,8 @@ class Negotiator:
         if full_cost and not near_cost:
             s.target = safe(lambda: eco.relationship_optimum(case, s.terms, s.std, s.est, full_cost * 0.85, s.quote))
         s.claims = safe(lambda: self.bank.for_supplier(sid, q_price), [])
+        order = brief.get("claim_order") or []  # the arguments the lead expects this supplier to accept, first
+        s.claims.sort(key=lambda c: order.index(c["kind"]) if c["kind"] in order else len(order))
         self.note(
             sid,
             "setup",
@@ -139,9 +153,45 @@ class Negotiator:
             anchor=s.anchor,
             target=s.target,
             budget=s.budget,
+            fraction=s.fraction,
             claims=[c["text"] for c in s.claims],
         )
         return s
+
+    def apply(self, s, brief, ratio, raised):
+        """The research team's brief on this thread: the demo bidding picks the opening ratio and
+        the fraction around the policy's `ratio` (without a playbook the lead's proposal stands);
+        its notes and tone go to the e-mail writer. Returns the opening ratio."""
+        default = ratio
+        proposal = (brief["shift"], brief["fraction"])
+        demo = []
+        if self.case["buyer"].get("category_goal") in eco.RELATIONSHIP_GOALS or raised:
+            # relationship goals: the cheapest deal is not the lowest price (the demo bidding opened
+            # 5 points lower on D01, got 48.60 instead of 49.40 and scored 0.979 against 0.987).
+            # `raised`: the data says a deep cut only costs patience (frozen prices, fully booked,
+            # near its cost); opening P04 at 0.90 instead of 0.95 ended in a final offer after two
+            # counters at 30 days' payment, 0.766 against 0.860
+            pass
+        elif brief.get("model"):
+            ratio, s.fraction, demo = rehearsal.tune(step, brief["model"], ratio, s.budget, proposal, ANCHOR_MIN, ratio)
+        else:
+            ratio, s.fraction = max(ANCHOR_MIN, ratio + proposal[0]), proposal[1]
+        s.research = brief.get("notes") or ""
+        if brief.get("tone"):
+            s.prof["warm"] = brief["tone"] == "warm"
+        self.note(
+            s.sid,
+            "research",
+            default=default,
+            ratio=ratio,
+            fraction=s.fraction,
+            proposal=proposal,
+            reason=brief.get("reason"),
+            playbook=brief.get("model"),
+            demo=sorted(demo, key=lambda r: r[2])[:3],
+            findings=brief.get("findings"),
+        )
+        return ratio
 
     def full_cost(self, part, sid):
         """(should-cost of the part, whether it models this supplier's own plant): full cost
@@ -204,6 +254,20 @@ class Negotiator:
             if s.est:
                 s.est["interest_rate"] = s.prof["rate"]
         self.note(s.sid, "signals", new=new)
+
+    def listen(self, s, body):
+        """The live analyst on its latest e-mail: its asks join what the patterns found, the
+        mood paces our next price, the notes go to the e-mail writer. Its time comes out of the
+        writer's; late or off, the move goes on with the patterns alone."""
+        t0 = time.monotonic()
+        seen = analyst.read(self.complete, self.case, body, s.ours, s.theirs, self.writer_s / 2)
+        self.writer_s -= time.monotonic() - t0
+        if seen is None:
+            s.mood = None
+            return
+        s.asks = [k for k in reader.ASKS if k in s.asks or k in seen["asks"]]
+        s.mood, s.live = seen["mood"], seen["notes"]
+        self.note(s.sid, "analyst", seconds=round(time.monotonic() - t0, 1), **seen)
 
     def their_price(self, s, terms):
         """Its sheet as a price at our planned terms (same value to it)."""
@@ -291,6 +355,8 @@ class Negotiator:
             s.last_reply = last
             s.asks = reader.asks(last.get("body"))
             self.read_signals(s, last.get("body"))
+            if self.briefs is not None and status not in DONE:
+                self.listen(s, last.get("body"))
         theirs = s.theirs[-1]
         if s.state in ("mirror", "closing"):  # we sent its own sheet or our target: done
             s.state = "done"
@@ -318,20 +384,11 @@ class Negotiator:
         if not s.ours:
             return s.anchor, FIRST_CLAIMS
         last = s.ours[-1]
-        gap = (theirs - last) / theirs
         conceded = (s.theirs[-2] - theirs) / s.theirs[-2] if len(s.theirs) > 1 else 0.0
-        share = FRACTION
-        if len(s.ours) == 1 and conceded >= DEEP and not s.term_change:
-            # a deep floor: a pure price drop this large means it moves fast on its own (job shops,
-            # P05, D02); a drop that came with terms it added (an index clause, P08, P18) is not one
-            share = 0.08
-        left = max(0.0, s.budget - sum(s.gaps))
-        new_gap = min(gap * (1 - share), left / 2)
-        if s.budget < 0.2:  # a touchy supplier: small, steady gaps
-            new_gap = min(new_gap, 0.015)
-        price = theirs * (1 - new_gap)
-        price = max(price, last * (1 + MIN_MOVE))
-        price = min(price, theirs * 0.998)
+        fraction = s.fraction * (OPEN_HOLD if s.mood == "open" else 1.0)
+        price = step(last, theirs, conceded, len(s.ours) == 1, fraction, s.budget, sum(s.gaps), s.term_change)
+        if s.mood == "closing":
+            price = min(max(price, theirs * (1 - CLOSING_GAP)), theirs * 0.998)
         return round(max(price, last), 2), LATER_CLAIMS
 
     def finish(self, s, sheets, events, theirs, left):
@@ -463,7 +520,7 @@ class Negotiator:
         facts = self.facts(s, sheets, claims, moved, statements, attachments)
         para = llm.paragraph(
             self.complete,
-            writer.brief(self.case, s.prof, latest(events).get("body"), facts, tone, first),
+            writer.brief(self.case, s.prof, latest(events).get("body"), facts, tone, first, [s.research, s.live]),
             self.writer_s,
         )
         body = writer.email(
@@ -572,6 +629,26 @@ class Negotiator:
             sid,
             {k: v for k, v in entry.items() if k not in ("claims", "std", "profile")},
         )
+
+
+def step(last, theirs, conceded, first, fraction, budget, used, term_change=False):
+    """Our next price after `last` against its counter `theirs`: we close `fraction` of the gap,
+    hold low after a large first concession, and stay within the patience budget (`used` of it is
+    spent). The real bidding and the demo bidding (`rehearsal.py`) both step with this."""
+    gap = (theirs - last) / theirs
+    share = fraction
+    if first and conceded >= DEEP and not term_change:
+        # a deep floor: a pure price drop this large means it moves fast on its own (job shops,
+        # P05, D02); a drop that came with terms it added (an index clause, P08, P18) is not one
+        share = 0.08
+    left = max(0.0, budget - used)
+    new_gap = min(gap * (1 - share), left / 2)
+    if budget < 0.2:  # a touchy supplier: small, steady gaps
+        new_gap = min(new_gap, 0.015)
+    price = theirs * (1 - new_gap)
+    price = max(price, last * (1 + MIN_MOVE))
+    price = min(price, theirs * 0.998)
+    return max(price, last)
 
 
 def safe(fn, default=None):

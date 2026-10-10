@@ -272,6 +272,65 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
 
 ## Agent experiments
 
+- 2026-10-10 `arena` **Best of many is not what one run scores.** All 213 scored practice sessions
+  of the team (`logs/sessions/practice/`, 23:50): the mean of the best per case is 0.830, the
+  mean of the medians per case is 0.72 (P01 0.93, P02 0.507, P03 0.923, P04 0.86, P05 0.81, P07
+  0.744, P08 0.549, P10 0.679, P11 0.71, P18 0.485). One batch with the subagent team scored
+  0.706 (0.716 without the P04 mistake, since fixed): a median run, tying the best on P03, P05,
+  P10 and P11. The same engine scored 0.898 to 0.999 on P01 and 0.71 to 0.794 on P11 from wording
+  alone. → The final is one run per case: judge a change by the median over several runs, not
+  by a new best.
+- 2026-10-10 `arena` **Two levers separate the best sessions from the median, both repeatable.**
+  (1) P02, 0.735 in five sessions against a median of 0.507: round 1 proposes an index clause
+  with a 5 % deadband on the driver the supplier's letter leans on (CU-NOTATION, 20 % share) at
+  361.67; Nordmark agrees at once, "which removes the material risk premium and allows for a
+  substantial reduction in the base price" (`f683e8b925c5b914`). The deal still carries a
+  relationship charge of 34,134, so the best price there is higher than 361.67. (2) P08 and P18,
+  0.69 to 0.70 against medians of 0.55 and 0.49: every sheet of ours stays at a fixed price while
+  the distributor counters with its clause, and it keeps conceding (P08 5.40, 5.29, 5.23, 5.21;
+  P18 5.30, 5.10, 5.00), with its hedge note and the index fall over the last three months cited
+  in round 1 (`c2de23b15eeeea44`, `cfb620d2e2f4a4b7`); on P18 its alternative with a 5 % deadband
+  at 5.10 beat its sheet at 5.00 with none. This branch adopts the clause in round 2 and ends at
+  5.31 to 5.40. → Not in this branch: these sessions were played with a teammate's newer engine.
+
+- 2026-10-10 `arena` **The subagent team (research, demo bidding, live analyst, debrief) on the
+  sandbox, no quota spent.** Same engine, same writer model (`gpt-5-mini`), with and without the
+  team (`--no-team`), sessions in `logs/sessions/sandbox/` from 22:09 to 22:35:
+
+  | Case | Plain engine | Team, final configuration | Team, first configurations |
+  |---|---|---|---|
+  | D01 | 0.9870, 0.9875 | 0.9905, 0.9915, 0.9903, 0.9903 | 0.979 (demo bidding opened 5 points lower) |
+  | D02 | 0.672 x5 (J1 at 13.90) | 0.714 x4 (J1 at 13.70) | 0.697 (J1 at the default), 0.630, 0.629 (J1 opened at 0.83 and 0.805, pace 0.4) |
+
+  Two more D02 runs (one plain 0.514, one team 0.581) lost the cheaper bidder: the arena took
+  63 s to answer the other thread while seven of our sessions ran at once, and J1's clock ran
+  out. That is the serialized RFQ loop under load, not the team; it is not in the table.
+  What moved the score: the live analyst's mood (`open` holds our step at 0.7) and the notes the
+  writer gets; J1's first counter came at 14.89 instead of 14.99 and it ended at 13.70 instead
+  of 13.90. What did not: the demo bidding. A model-written supplier playbook varies from call
+  to call (floor 0.76 to 0.84, first drop 0.03 to 0.12, eager yes and no for the same input),
+  and when it was allowed to open higher or move faster the supplier agreed at our higher sheet
+  (J1 14.10 and 14.30). Limited to lower and slower, it returned the default opening and
+  fraction in all five later D02 runs. The lead researcher's first proposals were cautious
+  again (open 2 points higher on D01), as with Julian's stance call.
+  → The team is on by default with that limit. Gain on the sandbox: +0.003 on D01, about +0.04
+  on D02, both from words and pacing. The sandbox's demo world is not in our data package, so
+  the four data specialists had nothing to read there: their effect on a real case is untested.
+  One practice batch (10 sessions) with the team against our bests (mean 0.776, rank 3 of 22 at
+  22:00) is the next test.
+- 2026-10-10 `data` **A model must not add persona traits that move numbers.** Dry run of the
+  research team on six practice case files (free, no session): the lead added `price_frozen` to
+  Donautal (P08, a distributor that gave 8 to 10 % in 13 runs), `capacity_full` to Kalwisz (P11)
+  and Nordmark (P02); each would have lifted the opening to 0.93 or 0.95 of the quote. The
+  supplier playbooks put the floor at 0.92 to 0.965 for job shops that dropped 15 % in play.
+  → Traits that set anchors and rates stay with the patterns in `personas.py`; the lead's view
+  reaches the writer as notes only.
+- 2026-10-10 `data` **Debrief lessons are a model's opinion, the paths next to them are facts.**
+  Backfilled from 16 practice sessions already played (worst and best run per case,
+  `buyer/lessons.jsonl`): several lessons advise what we measured as useless ("open much lower"
+  for P18). The lead may only shift within the limits above, so a bad lesson costs little; read
+  the `threads` figures, not the sentence, when tuning by hand.
+
 - 2026-10-10 `rules` **v8 (robustness and the reader), no quota spent.** All 21 case files
   (the nine never hosted included) and both sandbox cases play through `arena-sim` with the
   agent and no guarded error (`tests/test_cases.py`). New: every move and setup is guarded (a
@@ -384,6 +443,11 @@ shows evidence.
   for tactics.
 
 ## Hypotheses (untested in the arena)
+
+- The data specialists (economics, persona, history, leverage) lift practice cases through the
+  writer's notes and the claim order; the sandbox cannot show it (no data on its suppliers).
+- A demo supplier fitted to the recorded paths of similar cases (`buyer/lessons.jsonl`: first
+  drop, steps, counters) instead of a model's guess makes the demo bidding worth its opening.
 
 - Records on P02 (0.85) and P08 (0.73) come from a lower round-1 counter, not from later rounds:
   our later rounds converge to the same price whatever the gap (P02 371.9 in v4 to v6).

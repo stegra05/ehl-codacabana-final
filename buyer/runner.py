@@ -15,7 +15,7 @@ from pathlib import Path
 from arena_kit.client import ArenaError
 from arena_kit.play import ENDED, RemoteTable, fetch_documents, latest, moves_left, quota_used_up
 
-from . import llm
+from . import llm, memory, research
 from .policy import Negotiator, Side, deadline_near, keepalive_message
 
 log = logging.getLogger("buyer")
@@ -35,7 +35,13 @@ def writer_budget(sid, replied, live, send_s, now):
     return min(llm.TIMEOUT_S, *left)
 
 
-def play_case(table, case_id, pkg=None, deadline=None, complete=None):
+def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True, learn=True):
+    """`team`: the research team briefs the bidder before the session opens (it needs the case file
+    on `table.case`) and the live analyst reads every reply; off, the plain price engine plays.
+    `learn`: the debrief writes this case's lesson for the next ones."""
+    briefs = None
+    if team and complete:
+        briefs = safe_briefs(table.case, pkg, complete)
     opened = time.monotonic()  # the supplier clocks run from their first e-mail, before our setup
     case, threads = table.open(case_id)
     if getattr(table, "done", None):  # resumed a case that had already ended
@@ -43,7 +49,7 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
     for events in threads.values():
         for m in events:
             fetch_documents(table, m)
-    neg = Negotiator(case, pkg, complete)
+    neg = Negotiator(case, pkg, complete, briefs)
     for sid, events in threads.items():
         try:
             neg.setup(sid, events)
@@ -128,7 +134,24 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
                     log.warning("%s: document not fetched: %s", case_id, e)
         result = close(table, case_id, neg, threads)
     save(table.session_id, case_id, neg, result)
+    if learn and briefs is not None:
+        try:
+            memory.record(case, neg, result, complete)
+        except Exception:  # the case is closed: a failed debrief costs nothing
+            log.exception("%s: debrief failed", case_id)
     return result
+
+
+def safe_briefs(case, pkg, complete):
+    """The research team's briefs, or {} (no case file before the open, or the team failed): the
+    live analyst still reads the replies."""
+    if not case:
+        return {}
+    try:
+        return research.briefs(case, pkg, complete)
+    except Exception:  # the team must never cost the case
+        log.exception("%s: research failed", case.get("case_id"))
+        return {}
 
 
 def close(table, case_id, neg, threads):
@@ -159,15 +182,17 @@ def save(session_id, case_id, neg, result):
     path.write_text(json.dumps(out, indent=1, default=str))
 
 
-def play_all(client, case_ids, pkg=None, parallel=8, complete=None):
-    """Practice or sandbox: many cases at once. {case_id: result or the exception that stopped it}."""
+def play_all(client, cases, pkg=None, parallel=8, complete=None, team=True):
+    """Practice or sandbox: many case files at once. {case_id: result or the exception that stopped it}."""
     used_up = threading.Event()
+    files = {c["case_id"]: c for c in cases}
 
     def one(case_id):
         if used_up.is_set():
             return case_id, ArenaError(429, "not started: the practice quota is used up")
         try:
-            return case_id, play_case(RemoteTable(client), case_id, pkg, complete=complete)
+            table = PracticeTable(client, files[case_id])
+            return case_id, play_case(table, case_id, pkg, complete=complete, team=team)
         except ArenaError as e:
             if quota_used_up(e):
                 used_up.set()
@@ -178,19 +203,31 @@ def play_all(client, case_ids, pkg=None, parallel=8, complete=None):
             return case_id, e
 
     with ThreadPoolExecutor(max_workers=parallel) as pool:
-        return dict(pool.map(one, case_ids))
+        return dict(pool.map(one, files))
 
 
-def play_waves(client, pkg=None, waves=5, parallel=10, poll=2.0, complete=None):
+class PracticeTable(RemoteTable):
+    """A practice or sandbox table that knows its case file before the session opens, for the
+    research team. Only the final resumes a running session, so a refused open raises as it is."""
+
+    def open(self, case_id):
+        r = self.client.open_session(case_id)
+        self.session_id = r["session_id"]
+        log.info("session %s", self.session_id)
+        return r["case"], r["threads"]
+
+
+def play_waves(client, pkg=None, waves=5, parallel=10, poll=2.0, complete=None, team=True):
     """The Live Final: wait for each wave, play its cases in parallel within the wave's cap. No
     human may restart it, so nothing here raises: a failed poll is polled again, a crashed case is
-    resumed once (the arena names the running session on a second open)."""
+    resumed once (the arena names the running session on a second open). The final writes no
+    lessons: what the team knows was learned before it."""
     started, closed, caps = {}, set(), {}
 
     def one(case, deadline):
         for attempt in range(2):
             try:
-                return play_case(RemoteTable(client, case), case["case_id"], pkg, deadline, complete)
+                return play_case(RemoteTable(client, case), case["case_id"], pkg, deadline, complete, team, False)
             except Exception as e:  # noqa: BLE001 - one broken case must not stop the others
                 log.exception("%s failed (attempt %d)", case["case_id"], attempt + 1)
                 err = e

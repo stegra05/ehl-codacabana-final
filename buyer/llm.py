@@ -3,6 +3,7 @@ person would (its questions, its points, its situation). Code writes everything 
 checked: figures, data IDs, the proposal. A paragraph with any digit, data ID or leak is dropped
 and the template stands in. Hard timeout: the move goes out without the model if it is late."""
 
+import json
 import logging
 import os
 import re
@@ -16,7 +17,7 @@ TIMEOUT_S = 15.0
 MIN_S = 2.0  # less time than this left on the clocks: the template, no model call
 # A late call is abandoned, not interrupted: it finishes in the background (httpx timeout) while
 # the move goes out with the template.
-POOL = ThreadPoolExecutor(max_workers=32, thread_name_prefix="writer")
+POOL = ThreadPoolExecutor(max_workers=96, thread_name_prefix="model")  # 10 cases x their subagents
 FORBIDDEN = re.compile(
     r"\d|\b(?:idx|quote|offer|sc|qn|po|cost|fc|news|doc|ctr):|urgent|urgency|deadline|budget|no alternative|"
     r"walk away|other options|last chance|desperate|must close|time pressure|target price",
@@ -60,6 +61,29 @@ def complete_from_env():
         return r.json()["choices"][0]["message"]["content"]
 
     return complete
+
+
+def submit(complete, system, user):
+    """A subagent's call in the background (several run at once): a future for `read_json`."""
+    return POOL.submit(complete, system, user) if complete else None
+
+
+def read_json(future, timeout=TIMEOUT_S):
+    """A subagent's answer as a dict within `timeout` seconds, or None (no model, late, broken, not
+    JSON). The caller clamps every value: nothing a model returns binds us unchecked."""
+    if future is None or timeout <= 0:
+        return None
+    try:
+        text = future.result(timeout=timeout) or ""
+        out = json.loads(text[text.index("{") : text.rindex("}") + 1])
+    except Exception as e:  # noqa: BLE001 - a slow or broken model must not cost the move
+        log.warning("subagent failed: %r", e)
+        return None
+    return out if isinstance(out, dict) else None
+
+
+def ask_json(complete, system, user, timeout=TIMEOUT_S):
+    return read_json(submit(complete, system, user), timeout) if timeout >= MIN_S else None
 
 
 def paragraph(complete, brief, timeout=TIMEOUT_S):

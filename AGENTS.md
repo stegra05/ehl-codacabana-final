@@ -62,6 +62,7 @@ supplier bots (LLM personas with hidden economics) and closes one term sheet per
 | `docs/challenge.md`, `api.md`, `submission.md` | Tacto's brief, API and cost formula, hand-in (upstream copies) |
 | `buyer/policy.py`, `runner.py` | the price engine: per-thread policy and the loop that plays a case (`docs/design.md`, Implemented) |
 | `buyer/economics.py`, `claims.py`, `personas.py`, `writer.py`, `llm.py` | C and term planning, claim bank, persona signals, e-mail and model paragraph |
+| `buyer/research.py`, `rehearsal.py`, `analyst.py`, `memory.py` | the subagent team around the engine: specialists and lead researcher, demo bidding, live analyst, debrief (`docs/design.md`); `buyer/lessons.jsonl` is what it learned |
 | `buyer/cli.py` | `buyer play`, `buyer run`, `buyer pull` |
 | `tests/` | end to end against `arena-sim`, no network, no model |
 | `exports/` | Saturday probe sessions as CSV/JSONL; schema in `exports/README.md` |
@@ -86,7 +87,8 @@ uv run arena-sim serve --no-clock --data data/package   # local API, scripted su
 uv run --with pandas python analysis/explore.py # data package -> analysis/out/
 ```
 
-`--agent naive` plays the kit's baseline instead of ours.
+`--agent naive` plays the kit's baseline instead of ours; `--no-team` plays our price engine
+without the subagent team (research, demo bidding, live analyst, debrief), for A/B runs.
 
 ## Working on the negotiation agent
 

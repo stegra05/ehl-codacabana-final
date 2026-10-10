@@ -40,6 +40,16 @@ def pull(client, set_):
     print(f"{saved} new sessions in {out}")
 
 
+def case_file(client, case_id):
+    """The case file before its session opens (free, no quota), for the research team; None when
+    the arena does not list it."""
+    for set_ in ("sandbox", "practice"):
+        for case in client.cases(set_):
+            if case["case_id"] == case_id:
+                return case
+    return None
+
+
 def main(argv=None):
     load_env()
     ap = argparse.ArgumentParser(prog="buyer")
@@ -47,6 +57,12 @@ def main(argv=None):
     verbose = argparse.ArgumentParser(add_help=False)  # -v also after the command
     verbose.add_argument("-v", "--verbose", action="store_true", default=argparse.SUPPRESS)
     verbose.add_argument("--no-llm", action="store_true", default=argparse.SUPPRESS, help="template e-mails only")
+    verbose.add_argument(
+        "--no-team",
+        action="store_true",
+        default=argparse.SUPPRESS,
+        help="the plain price engine: no research team, no live analyst, no debrief",
+    )
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser = functools.partial(sub.add_parser, parents=[verbose])
     data = {"default": os.environ.get("ARENA_DATA"), "help": "data package folder"}
@@ -65,6 +81,7 @@ def main(argv=None):
     s.add_argument("--set", default="practice", choices=["practice", "sandbox", "final"])
     args = ap.parse_args(argv)
     args.no_llm = getattr(args, "no_llm", False)
+    team = not getattr(args, "no_team", False)
     logging.basicConfig(
         level=logging.INFO if args.verbose else logging.WARNING,
         format="%(asctime)s %(message)s",
@@ -78,12 +95,13 @@ def main(argv=None):
     pkg = None if naive else load_package(args.data)
     complete = None if naive or args.no_llm else llm.complete_from_env()
     if args.cmd == "play":
-        table = RemoteTable(client)
         try:
             if naive:
+                table = RemoteTable(client)
                 result = play(table, args.case_id, naive_factory()())
             else:
-                result = runner.play_case(table, args.case_id, pkg, complete=complete)
+                table = runner.PracticeTable(client, case_file(client, args.case_id))
+                result = runner.play_case(table, args.case_id, pkg, complete=complete, team=team)
         except ArenaError as e:  # e.g. not hosted, the quota, a paused key: the arena says why
             raise SystemExit(str(e)) from None
         print(json.dumps(summary(result), indent=2))
@@ -95,18 +113,18 @@ def main(argv=None):
         if naive:
             out = play_waves(client, naive_factory(), args.waves, parallel)
         else:
-            out = runner.play_waves(client, pkg, args.waves, parallel, complete=complete)
+            out = runner.play_waves(client, pkg, args.waves, parallel, complete=complete, team=team)
         for case_id, result in out.items():
             print(case_id, result if isinstance(result, Exception) else summary(result))
     else:
-        ids = [c["case_id"] for c in hosted(client.cases(args.set))]
+        cases = hosted(client.cases(args.set))
         if args.cases:
-            ids = [i for i in ids if i.split(":")[-1] in args.cases.split(",")]
+            cases = [c for c in cases if c["case_id"].split(":")[-1] in args.cases.split(",")]
         parallel = min(args.parallel, 10)
         if naive:
-            out = play_all(lambda: RemoteTable(client), ids, naive_factory(), parallel)
+            out = play_all(lambda: RemoteTable(client), [c["case_id"] for c in cases], naive_factory(), parallel)
         else:
-            out = runner.play_all(client, ids, pkg, parallel, complete=complete)
+            out = runner.play_all(client, cases, pkg, parallel, complete=complete, team=team)
         for case_id, result in out.items():
             print(case_id, result if isinstance(result, Exception) else summary(result))
         scores = [r["score"] for r in out.values() if isinstance(r, dict) and r.get("score") is not None]
