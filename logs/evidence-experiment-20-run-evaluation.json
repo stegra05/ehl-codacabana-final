@@ -1,0 +1,177 @@
+{
+  "candidate_commit": "d3a4700251cb7fff53c224e3dffb293ae1bcf593",
+  "baseline_commit": "d0962e4100ea79a00d0c08798806c331bff01e06",
+  "candidate_base": "185ad65",
+  "model": "gpt-6-luna",
+  "rows": [
+    {
+      "case": "case:P01",
+      "sessions": [
+        "0a7cec486b95c091",
+        "1c41eecec27650e9",
+        "c50726d1aedb6065"
+      ],
+      "baseline": 0.977899710624052,
+      "candidate_1": 0.9053225934432937,
+      "candidate_2": 0.9085046053680266,
+      "candidate_mean": 0.9069135994056601,
+      "mean_delta": -0.07098611121839193
+    },
+    {
+      "case": "case:P02",
+      "sessions": [
+        "2fdd4b1c95d1fe69",
+        "c20a6994ddf40ed1",
+        "3a392f66dfbfdfab"
+      ],
+      "baseline": 0.7347381731929096,
+      "candidate_1": 0.7347381731929096,
+      "candidate_2": 0.7347381731929096,
+      "candidate_mean": 0.7347381731929096,
+      "mean_delta": 0.0
+    },
+    {
+      "case": "case:P03",
+      "sessions": [
+        "0268c2f2c60a387d",
+        "996feafdb0f0e9e6",
+        "d768a48d923b0e0b"
+      ],
+      "baseline": 0.9228331929713948,
+      "candidate_1": 0.9228331929713948,
+      "candidate_2": 0.9228331929713948,
+      "candidate_mean": 0.9228331929713948,
+      "mean_delta": 0.0
+    },
+    {
+      "case": "case:P04",
+      "sessions": [
+        "b25c7e2e66594b06",
+        "261560eba48128f4",
+        "c9c3367464a6da5d"
+      ],
+      "baseline": 0.8604451426623068,
+      "candidate_1": 0.8604451426623068,
+      "candidate_2": 0.8604451426623068,
+      "candidate_mean": 0.8604451426623068,
+      "mean_delta": 0.0
+    },
+    {
+      "case": "case:P05",
+      "sessions": [
+        "acdb9decaadb3c4c",
+        "a225222efca09001",
+        "1369096e8079b153"
+      ],
+      "baseline": 0.8218454790802674,
+      "candidate_1": 0.8218454790802674,
+      "candidate_2": 0.8218454790802674,
+      "candidate_mean": 0.8218454790802674,
+      "mean_delta": 0.0
+    },
+    {
+      "case": "case:P07",
+      "sessions": [
+        "08283d6f52781542",
+        "1af2d56ae4de776b",
+        "26f0ca348eba25f7"
+      ],
+      "baseline": 0.7509714726367044,
+      "candidate_1": 0.73129525000079,
+      "candidate_2": 0.7509714726367044,
+      "candidate_mean": 0.7411333613187472,
+      "mean_delta": -0.009838111317957199
+    },
+    {
+      "case": "case:P08",
+      "sessions": [
+        "2c26fc2e8886b3e4",
+        "c2de23b15eeeea44",
+        "547356d808be0819"
+      ],
+      "baseline": 0.6925552439813769,
+      "candidate_1": 0.703622066438297,
+      "candidate_2": 0.6925552439813769,
+      "candidate_mean": 0.6980886552098369,
+      "mean_delta": 0.005533411228459961
+    },
+    {
+      "case": "case:P10",
+      "sessions": [
+        "464a4139cb05f070",
+        "2e77bb78339e2b0f",
+        "dfdef99be220a669"
+      ],
+      "baseline": 0.6785164534560958,
+      "candidate_1": 0.6785164534560958,
+      "candidate_2": 0.6785164534560958,
+      "candidate_mean": 0.6785164534560958,
+      "mean_delta": 0.0
+    },
+    {
+      "case": "case:P11",
+      "sessions": [
+        "29e65d0c5130119a",
+        "16021eaee85e7221",
+        "d7a252eea6dd9615"
+      ],
+      "baseline": 0.7098962346486538,
+      "candidate_1": 0.7098962346486538,
+      "candidate_2": 0.7935118099900735,
+      "candidate_mean": 0.7517040223193636,
+      "mean_delta": 0.041807787670709806
+    },
+    {
+      "case": "case:P18",
+      "sessions": [
+        "8dd70ed50f314b81",
+        "a75f517b0b731366",
+        "09dd1a217deec06d"
+      ],
+      "baseline": 0.6883119264840607,
+      "candidate_1": 0.6956757649682936,
+      "candidate_2": 0.6883119264840607,
+      "candidate_mean": 0.6919938457261772,
+      "mean_delta": 0.0036819192421164715
+    }
+  ],
+  "groups": [
+    {
+      "mean": 0.7838013029737823,
+      "deals": 10,
+      "above_08": 4,
+      "timeouts": 0,
+      "claim_checks": {
+        "verified": 45,
+        "duplicate": 3
+      }
+    },
+    {
+      "mean": 0.7764190350862302,
+      "deals": 10,
+      "above_08": 4,
+      "timeouts": 2,
+      "claim_checks": {
+        "verified": 43
+      }
+    },
+    {
+      "mean": 0.7852233499823217,
+      "deals": 10,
+      "above_08": 4,
+      "timeouts": 0,
+      "claim_checks": {
+        "verified": 44
+      }
+    }
+  ],
+  "candidate_mean": 0.780821192534276,
+  "promotion": "rejected",
+  "limitations": [
+    "Two candidate runs per case versus one preceding baseline run; not a randomized A/B trial.",
+    "Two changes tested together: one forecast per bundle and removal of year from curated persona prose.",
+    "Candidate includes intervening upstream cleanup; score changes cannot be causally assigned to either edit.",
+    "No held-out hosted cases in this evaluation. Synthetic scores all tied in 576 paired runs.",
+    "Leaderboard best-of-run mean differs from these batch means."
+  ]
+}

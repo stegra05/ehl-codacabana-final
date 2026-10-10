@@ -11,6 +11,39 @@ session or data ID) and what it means for the agent. Tags: `arena` seen in a ses
 the data package, `rules` from `docs/api.md` or the kit's code. Untested ideas go under
 Hypotheses; agent changes go under Agent versions. Correct or delete entries that turn out wrong.
 
+## Evidence and writer experiment, 10 October late evening
+
+- 2026-10-10 `arena` Two fixed-code hosted batches test candidate `d3a4700`
+  against the preceding ten-case batch `d0962e4`. Candidate changes retain one
+  component-specific forecast per bundle and remove a literal year from curated
+  persona prose, keeping the writer's digit filter intact. No case/supplier-ID
+  tuning or hidden benchmark targets were added. The experiment is not promoted;
+  complete scores and session IDs are in `logs/evidence-experiment-20-run-evaluation.json`.
+- 2026-10-10 `arena` All 20 sessions closed deals. Batch means were 0.776419
+  and 0.785223, combined 0.780821 versus baseline 0.783801. Four of ten cases
+  exceeded 0.8 in each batch. P11 improved to 0.793512 in the second repetition
+  (session `d7a252eea6dd9615`, price 45.00), but its first repetition tied 0.709896.
+  P08 and P18 gains from the first repetition did not repeat. Keep baseline code;
+  a higher best-of-run leaderboard aggregate would not establish repeatable gains.
+- 2026-10-10 `arena` P01 `1c41eecec27650e9` scored 0.905323 versus baseline
+  0.977900. A quoted-package switch refreshed the estimated relationship target;
+  the bot then sent 132.27 against a 132.20 counter, closing before forecast and
+  delivery evidence. Repeat `c50726d1aedb6065` scored 0.908505: the bot sent its
+  131.27 target against 130.50 and omitted the remaining delivery claim. This
+  identifies an acceptance/target-calibration hypothesis, not proof that every
+  lower price helps: relationship cost remains part of total cost.
+- 2026-10-10 `arena` P07 `1af2d56ae4de776b` removed the baseline's three
+  duplicate forecast checks but scored 0.731295 versus 0.750971. Better claim
+  hygiene alone did not establish a score improvement. P05 in that first batch
+  had two explicit timeout trace events despite closing successfully. Deadline
+  scheduling remains a separate issue; this candidate did not change the runner.
+- 2026-10-10 `rules` Local candidate validation: 48 tests and Ruff passed;
+  576 paired simulator scores tied, plus 48 renamed-ID runs per version. Existing
+  invalid-proposal stress failures remain, with zero invalid accepted deals in
+  that matrix. Local success did not predict hosted improvement. Two changes
+  were bundled, the upstream cleanup intervened, and only two candidate sessions
+  per case were observed; neither individual edit has a causal score estimate.
+
 ## Relationship-target correction after hosted validation
 
 - 2026-10-10 `arena` PR18 `a1b7afb` ran all ten practice cases with the configured
