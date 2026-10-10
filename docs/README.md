@@ -19,3 +19,5 @@ these copies when it changes.
   ablations, aggressive anchors, hosted D01/D02 scores and adaptive concessions.
 - [Recorded research summary](research/round2-summary.json): aggregate outcomes,
   separate official scores and source hashes; no session credentials or raw logs.
+- [Anchor versus supplier risk](research/anchor-risk-analysis.json): matched 20%/30%
+  outcomes, supplier-level uncertainty, financial/operational strata and document evidence.

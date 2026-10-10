@@ -195,3 +195,44 @@ D01 is a free hosted price-increase demo with one foundry supplier. D02 is a fre
 hosted RFQ demo with two competing suppliers. S01-S03 are local scripted cases;
 practice cases are separate and consume the shared quota. No practice or final
 session was opened by this research batch.
+
+
+## Does supplier weakness predict gains from a 30% anchor?
+
+The user hypothesis was that weaker firms accept more aggressive openings. We tested paired 30% minus 20% outcomes, separating financial indicators from operational scorecards. This analysis measures final agreement and synthetic saving, not direct first-offer acceptance or a supplier willingness parameter.
+
+We reused 152 original paired cases and 190 fresh-seed paired cases. These are 342 pairs, or 684 recorded negotiations, on 19 suppliers, not 342 independent firms. A sensitivity slice removes the 38 invented lowball-exit cases from the fresh batch. No new online or practice sessions were opened.
+
+| Group | Suppliers | Original effect, pp | Fresh seeds, same behaviors, pp | Fresh seeds including exit stress, pp |
+|---|---:|---:|---:|---:|
+| Credit index >=300 (existing risk heuristic) | 2 | +0.045 | +0.000 | -0.330 |
+| Credit index <300 | 17 | +0.144 | -0.045 | -1.736 |
+| Equity ratio <33.95% | 13 | +0.133 | +0.006 | -1.206 |
+| Equity ratio >=33.95% | 6 | +0.135 | -0.140 | -2.418 |
+| Red scorecard | 5 | +0.202 | +0.150 | -1.727 |
+| Amber scorecard | 4 | +0.590 | +0.096 | -0.907 |
+| Green scorecard | 10 | -0.084 | -0.190 | -1.791 |
+
+Positive effects mean higher mean synthetic saving with 30%. Red scorecards show a small positive association in both four-behavior batches. This does not establish willingness to concede: the supplier simulation does not read scorecard quality or financial fragility when generating reservation prices and financing. Profile information changes some buyer assumptions and starting terms; synthetic shocks and latent economics can confound these group patterns. All five red suppliers landed in the 19-supplier evaluation split, another coverage limitation.
+
+The original overall effect was +0.133 pp, with a supplier-bootstrap 95% interval of [-0.168, +0.436]. On fresh seeds with the same four behaviors it was -0.040 pp [-0.297, +0.158]. The bootstrap uses 4,000 supplier-level resamples, seed 601. It describes this synthetic sample and does not supply real-world generalization guarantees, especially for groups of two suppliers.
+
+Spearman correlations were computed on supplier mean paired effects, for credit index, equity ratio, credit deterioration, on-time delivery, defect PPM and scorecard score. Two-sided permutation p-values use 1,999 permutations. No correlation survives Benjamini-Hochberg correction across the 18 exploratory comparisons (smallest adjusted q = 0.270). The fresh-seed equity association appears when exit stress is included and disappears when it is removed. A significant raw p-value here would not establish causality.
+
+All 22 agreements lost by 30% relative to 20% in the fresh-seed batch came from the deliberately imposed lowball-exit behavior. Excluding it, both anchors close 89/152 cases. This measures sensitivity to an assumed reaction, not the real probability that a financially weak supplier exits.
+
+### Stronger document evidence: cash preference and margin resistance
+
+Across all 46 dossiers, dated through 30 September 2026, exact phrase extraction finds 16 suppliers offering a cash discount for earlier payment, two with explicit cash-and-bank pressure visit notes, and five explicitly resisting a reduction in margin despite asking for earlier payment. The groups overlap. These are fictional challenge documents, not independent market observations.
+
+- Wimbacher: green scorecard, credit index 231, equity ratio 39.9%; liquidity note `doc:20260802-70130-M1` asks for earlier payment and rejects lower margin.
+- Kalwisz: red scorecard, credit index 225, equity ratio 39.1%; `doc:20260715-70140-M1` expresses the same condition.
+- Weißacher: red scorecard, credit index 343, equity ratio 24.9%; `doc:20260912-70350-M1` also resists margin reduction.
+
+These counterexamples show why operational quality, cash pressure and negotiating flexibility cannot be treated as one good/bad rating. Early payment can create value for a cash-constrained supplier while a pure price cut destroys margin. A blanket weak-firm -> 30% rule is unsupported.
+
+### What to test next
+
+Keep anchor selection separate from package value and acceptance checks. Test a 2x2 comparison of 20%/30% openings and standard/earlier-payment packages, holding the rest of the policy fixed and using several runs per financial-risk stratum. Record total cost, final agreement, supplier exit, quality and delivery obligations, and sustainable-margin effects. Add genuinely new suppliers before selecting a rule. Hosted D01/D02 can validate mechanics but lack matched company dossiers; this batch cannot validate that financial-risk interaction online.
+
+Reproduce with `python3 scripts/analyze_anchor_relationship.py`. Full paired rows, profile indicators, source document IDs, correlation tests and input hashes are in `out/company-analysis/round2/anchor-risk-analysis.json`. The consolidated English dashboard includes the group comparison. Research code remains local; published findings are separate from production integration.
