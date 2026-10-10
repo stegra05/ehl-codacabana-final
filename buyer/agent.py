@@ -3,9 +3,11 @@ floor, anchor, target, levers and claim bank per supplier), keeps the blackboard
 reads, and owns the decision to close. The per-thread move is in `thread.py`. Code owns every
 number and every binding decision; the model reads the supplier's prose and words our e-mail."""
 
+import json
 import logging
 import math
 import threading
+from concurrent.futures import ThreadPoolExecutor
 
 from arena_kit.agents import NaiveAgent
 from arena_kit.data import DataPackage
@@ -38,9 +40,9 @@ class Negotiator:
     # ---------- case open ----------
 
     def prepare(self, case, threads):
-        """Before the clock matters: persona, estimate, floor, anchor, target, the lever analysis and
-        the claim bank per supplier. With no threads yet (no session) the plan uses the current or
-        fallback price in place of the quote, so it can be read before opening a case."""
+        """Before the clock matters: persona, stance, estimate, floor, anchor, target, the lever
+        analysis and the claim bank per supplier. With no threads yet (no session) the plan uses the
+        current or fallback price in place of the quote, so it can be read before opening a case."""
         self.case, self.plan, self.used_ids = case, {}, set()
         self.bank = claims.ClaimBank(self.pkg, case)
         buyer = case["buyer"]
@@ -56,6 +58,10 @@ class Negotiator:
         alt_terms = (buyer.get("alternative") or {}).get("terms") or {}
         proxy = buyer.get("current_unit_price") or alt_terms.get("unit_price") or buyer.get("fallback_unit_price")
         rivals = len(case.get("suppliers", [])) - 1
+        justified = economics.justified_increase_pct(self.bank, part) if case.get("type") == "price_increase" else None
+
+        # Pass 1: what we know about each supplier, and the dossier the model sets the stance from.
+        pre = {}
         for sid in case.get("suppliers", []):
             events = threads.get(sid, [])
             opening = latest(events) if events else {}
@@ -63,22 +69,42 @@ class Negotiator:
             persona = personas.build(self.pkg, sid, case) if self.pkg else personas.stranger(sid, case, name)
             if name and persona["name"] == sid:
                 persona["name"] = name
-            themes = claims.themes_in(trigger + " " + opening.get("body", ""))
             personas.refine(persona, opening.get("body", ""))
-            std = standard_terms(events)
             sheet_id, qterms = standing(events) if events else (None, {})
             qprice = qterms.get("unit_price") or proxy
             cost_fact = self.bank.should_cost(part, sid) if part else None
-            est = economics.supplier_estimate(case, persona, std, qprice, cost_fact and cost_fact[1])
-            floor = economics.floor_price(case, persona, est, qprice) if qprice else None
-            justified = (
-                economics.justified_increase_pct(self.bank, part) if case.get("type") == "price_increase" else None
-            )
-            anchor = economics.anchor_price(case, persona, floor, qprice, justified) if qprice else None
+            breakdown = next((b for m in events for b in [thread.breakdown_in(m)] if b), None)
+            pre[sid] = {
+                "persona": persona,
+                "events": events,
+                "opening": opening,
+                "std": standard_terms(events),
+                "sheet_id": sheet_id,
+                "qterms": qterms,
+                "qprice": qprice,
+                "cost_fact": cost_fact and cost_fact[1],
+                "breakdown": breakdown,
+                "themes": claims.themes_in(trigger + " " + opening.get("body", "")),
+            }
+            pre[sid]["dossier"] = _dossier(case, pre[sid], trigger, asked, justified, rivals)
+        stances = {sid: None for sid in pre}
+        if self.llm:
+            with ThreadPoolExecutor(max_workers=max(1, len(pre))) as pool:
+                stances = dict(zip(pre, pool.map(lambda sid: self.llm.stance(pre[sid]["dossier"]), pre), strict=False))
+
+        # Pass 2: the numbers, from the clamped stance.
+        for sid, d in pre.items():
+            persona, std, qterms, qprice = d["persona"], d["std"], d["qterms"], d["qprice"]
+            stance = economics.clamp_stance(stances.get(sid), case, persona)
+            est = economics.supplier_estimate(case, persona, std, qprice, d["cost_fact"], stance, d["breakdown"])
+            floor = economics.floor_price(case, est, qprice, stance) if qprice else None
+            anchor = economics.anchor_price(case, floor, qprice, stance, justified) if qprice else None
             c_open = (
-                economics.cost(case, qterms if sheet_id else {"unit_price": qprice}, std, est) if qprice else math.inf
+                economics.cost(case, qterms if d["sheet_id"] else {"unit_price": qprice}, std, est)
+                if qprice
+                else math.inf
             )
-            bank_claims = self.bank.for_supplier(sid, persona, threads, themes)
+            bank_claims = self.bank.for_supplier(sid, persona, threads, d["themes"])
             analysis = []
             if anchor:
                 analysis = economics.lever_analysis(
@@ -103,19 +129,27 @@ class Negotiator:
             if justified is not None and current and first:
                 justified_price = round(current * (1 + max(0.0, justified) / 100), 2)
                 c_cap = economics.cost(case, {**first[0], "unit_price": justified_price}, std, est)
+            target = (
+                economics.target_cost(case, c_open, c_anchor, c_cap, stance["capture"])
+                if c_open < math.inf
+                else math.inf
+            )
             self.plan[sid] = {
                 "persona": persona,
+                "stance": stance,
                 "std": std,
                 "est": est,
+                "quote": qprice,
                 "floor": floor,
                 "anchor": anchor,
                 "justified_pct": justified,
                 "asked_pct": asked,
                 "c_open": c_open,
-                "target": economics.target_cost(case, c_open, c_anchor, c_cap) if c_open < math.inf else math.inf,
+                "c_cap": c_cap,
+                "target": target,
                 "levers": levers,
                 "analysis": analysis,
-                "themes": themes,
+                "themes": d["themes"],
                 "dropped": set(),
                 "claims": bank_claims,
                 "used_ids": set(),
@@ -123,17 +157,18 @@ class Negotiator:
                 "hold": {},
                 "price_pushes": 0,
                 "final_packages": 0,
-                "subject": opening.get("subject") or case.get("title", ""),
-                "pre_session": not events,
+                "subject": d["opening"].get("subject") or case.get("title", ""),
+                "pre_session": not d["events"],
             }
             log.plan(
                 {
                     "case": case["case_id"],
                     "supplier": sid,
-                    "pre_session": not events,
+                    "pre_session": not d["events"],
                     "archetype": persona["archetype"],
                     "tier": persona["importance"]["tier"],
                     "signals": persona["signals"],
+                    "stance": stance,
                     "estimate": est,
                     "floor": floor,
                     "anchor": anchor,
@@ -141,23 +176,25 @@ class Negotiator:
                     "justified_pct": justified,
                     "asked_pct": asked,
                     "c_open": c_open,
-                    "target": self.plan[sid]["target"],
+                    "target": target,
                     "levers": levers,
                     "analysis": analysis,
                     "claims": [c["ids"] for c in bank_claims[:6]],
                 }
             )
             logger.info(
-                "%s %s: %s/%s tier=%s floor=%s anchor=%s quote=%s target=%.0f c_open=%.0f",
+                "%s %s: %s/%s tier=%s stance=%s floor=%s (%s) anchor=%s quote=%s target=%.0f c_open=%.0f",
                 case["case_id"],
                 sid,
                 persona["archetype"],
                 persona["tone"],
                 persona["importance"]["tier"],
+                stance["source"],
                 floor,
+                (est or {}).get("source"),
                 anchor,
                 qprice,
-                self.plan[sid]["target"],
+                target,
                 c_open,
             )
             for r in analysis:
@@ -252,6 +289,33 @@ class Negotiator:
                     "replay": result.get("replay_url"),
                 }
             )
+
+
+def _dossier(case, d, trigger, asked, justified, rivals):
+    """What the model sets the stance from: the case, our position and the supplier's profile.
+    Internal figures stay internal; this text never reaches the supplier."""
+    persona, buyer = d["persona"], case["buyer"]
+    alt = buyer.get("alternative") or {}
+    lines = [
+        f"CASE: {case.get('title')} ({case.get('type')}); category goal {buyer.get('category_goal')}; "
+        f"{rivals} other bidder(s); need {buyer.get('need_per_year')} a year for {buyer.get('horizon_years')} year(s).",
+        f"OUR POSITION: current price {buyer.get('current_unit_price')}; "
+        f"fallback price {buyer.get('fallback_unit_price')}; alternative: {alt.get('kind') or 'none'}; "
+        f"negotiable: {', '.join(case.get('negotiable', []))}.",
+        f"THEIR QUOTE: {d['qprice']} per unit, terms {json.dumps(d['qterms'])}; standard terms {json.dumps(d['std'])}.",
+        f"COST DATA: should-cost {d['cost_fact'] and d['cost_fact'].get('unit_cost')}; "
+        f"cost breakdown full cost {d['breakdown']}; justified increase {justified}%; asked {asked}%.",
+        f"SUPPLIER: {persona['name']} ({persona.get('country') or '?'}, {persona.get('category') or '?'}); "
+        f"tier {persona['importance']['tier']} ({persona['importance'].get('reason', '')}); "
+        f"archetype {persona['archetype']} / {persona.get('secondary')}; "
+        f"profile {json.dumps(persona.get('profile') or {}, default=str)[:1200]}.",
+        "SIGNALS: " + "; ".join(persona.get("signals") or []),
+        f"THEMES IN ITS LETTER OR QUOTE: {', '.join(d['themes']) or 'none'}.",
+        f"ITS OPENING E-MAIL:\n{(d['opening'].get('body') or '')[:1500]}",
+    ]
+    if trigger:
+        lines.append(f"THE LETTER THAT STARTED THE CASE:\n{trigger[:1500]}")
+    return "\n".join(lines)
 
 
 def _signature(body):

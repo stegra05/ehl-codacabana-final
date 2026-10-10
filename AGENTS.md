@@ -105,6 +105,13 @@ uv run arena-sim serve --no-clock --data data/package   # local API with a scrip
 - **Code owns numbers, the model owns words.** Every binding value (term sheets, accept,
   walk away) is computed or checked in code with `total_cost` and `must_haves_ok`. Every figure
   in an e-mail comes from code, next to its data ID. The model reads the supplier and writes.
+- **The floor is always a real number.** Full cost per unit from the supplier's cost breakdown
+  (when it sends one), else the should-cost fact, else the quote less the margin the stance
+  estimates in it; plus the margin we leave. A breakdown arriving mid-case lowers floor and target.
+- **The model proposes the stance, code clamps it.** Opening gap, capture, margin, justified share
+  and concession steps are set per supplier from the dossier at case open, inside ranges by tier
+  and goal (`economics.STANCE_RANGES`); the constants are the fallback, never the answer. Every
+  stance is logged with its reason so practice can judge it.
 - **Never accept** a term sheet that breaks a must-have or costs more than the alternative.
   Price unstated fields at the supplier's standard terms from its quote PDF (`docs.standard_terms`).
 - **Generalise, don't memorise.** No logic keyed on practice case IDs or supplier IDs. Knowledge

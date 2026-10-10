@@ -66,8 +66,18 @@ def plan(client, case_id, new_agent):
         )
         for s in persona["signals"]:
             print(f"  signal: {s}")
+        st = p["stance"]
         print(
-            f"  floor {p['floor']}  anchor {p['anchor']}  c_open {p['c_open']:,.0f}  target {p['target']:,.0f}  "
+            f"  stance ({st['source']}): gap {st['opening_gap']:.2f}, capture {st['capture']:.2f}, "
+            f"margin {st['margin_pct']:.1f}%, quote margin {st['quote_margin_pct']:.0f}%, "
+            f"steps {st['steps']}, close {st['close_step']:.2f}"
+        )
+        if st.get("reason"):
+            print(f"  reason: {st['reason']}")
+        est = p["est"] or {}
+        print(
+            f"  full cost {est.get('full_cost')} ({est.get('source')})  floor {p['floor']}  anchor {p['anchor']}  "
+            f"c_open {p['c_open']:,.0f}  target {p['target']:,.0f}  "
             f"justified {p['justified_pct']}%  asked {p['asked_pct']}%"
         )
         print(f"  levers: {', '.join(p['levers'])}")
@@ -99,6 +109,7 @@ def main(argv=None):
     q = sub.add_parser("plan", help="print the case brief without opening a session (no quota)")
     q.add_argument("case_id")
     q.add_argument("--data", **data)
+    q.add_argument("--no-model", action="store_true", help="the default stance instead of the model's")
     s = sub.add_parser("pull", help="save finished sessions with trace and back office to logs/sessions/")
     s.add_argument("--set", default="practice", choices=["practice", "sandbox", "final"])
     args = ap.parse_args(argv)
@@ -112,7 +123,7 @@ def main(argv=None):
     if args.cmd == "pull":
         return pull(client, args.set)
     if args.cmd == "plan":
-        return plan(client, args.case_id, agent_factory("buyer", args.data, model=False))
+        return plan(client, args.case_id, agent_factory("buyer", args.data, model=False if args.no_model else None))
     new_agent = agent_factory(args.agent, args.data)
     ours = args.agent == "buyer"
     if args.cmd == "play":

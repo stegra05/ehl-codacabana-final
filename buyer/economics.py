@@ -6,14 +6,119 @@ import math
 
 from arena_kit.cost import closing_terms, complete_offer, must_haves_ok, total_cost
 
+# The fallback stance by tier and goal, used when the model gives none: the share of the
+# opening gap to capture before accepting, the anchor below the quote, the margin left on the
+# supplier's estimated full cost, the share of a justified increase conceded in round 1, the
+# concession steps (a share of the remaining gap, only after the supplier moved) and the step
+# once the tier's pushes are used.
 GOAL_CAPTURE = {"leverage": 0.75, "routine": 0.5, "stabilise": 0.6, "secure_supply": 0.55, "quality_first": 0.65}
 OPENING_GAP = {"strategic": 0.05, "important": 0.08, "standard": 0.12}
-# Outside stabilise and secure_supply the arena charges nothing for the supplier's margin;
-# this is the margin we still leave an important supplier on its estimated full cost.
 TIER_MARGIN = {"strategic": 4.0, "important": 2.0, "standard": 0.0}
-# Price increase: the share of the justified increase we concede in the opening sheet, by tier.
 JUSTIFIED_SHARE = {"strategic": 0.5, "important": 0.25, "standard": 0.0}
 STEPS = [0.35, 0.25, 0.15, 0.10]
+# What a model-proposed stance may range over; outside these bounds code wins.
+STANCE_RANGES = {
+    "opening_gap": {"strategic": (0.02, 0.08), "important": (0.04, 0.12), "standard": (0.06, 0.20)},
+    "capture": (0.4, 0.95),
+    "margin_pct": (0.0, 10.0),
+    "justified_share": (0.0, 0.6),
+    "steps": (0.05, 0.5),
+    "close_step": (0.4, 0.8),
+    "quote_margin_pct": (3.0, 35.0),
+}
+
+
+def default_stance(case, persona):
+    """The stance from the constants: what applies when the model proposes none."""
+    tier = persona.get("importance", {}).get("tier", "standard")
+    goal = case.get("buyer", {}).get("category_goal", "leverage")
+    gap = OPENING_GAP.get(tier, 0.12)
+    if goal == "routine":
+        gap = min(gap, 0.06)
+    # The arena itself charges for every margin point below the case's sustainable margin, and
+    # only there; elsewhere a small tier margin is all we leave on an estimated full cost.
+    margin = case["buyer"].get("sustainable_margin_pct") or 0 if goal in ("stabilise", "secure_supply") else 0
+    margin = max(margin, TIER_MARGIN.get(tier, 0.0))
+    return {
+        "opening_gap": gap,
+        "capture": GOAL_CAPTURE.get(goal, 0.6),
+        "margin_pct": margin,
+        "justified_share": JUSTIFIED_SHARE.get(tier, 0.0),
+        "steps": list(STEPS),
+        "close_step": 0.6,
+        "quote_margin_pct": 12.0,  # the supplier's margin in its quote, when no cost data exists
+        "source": "default",
+        "reason": "constants by tier and goal",
+    }
+
+
+def _clip(v, lo, hi, fallback):
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return fallback
+    return min(hi, max(lo, v)) if math.isfinite(v) else fallback
+
+
+def clamp_stance(proposed, case, persona):
+    """A model-proposed stance inside the ranges code allows: by tier, and never below the margin
+    a protected supplier or a relationship goal needs. Missing or broken fields take the default."""
+    base = default_stance(case, persona)
+    if not proposed:
+        return base
+    tier = persona.get("importance", {}).get("tier", "standard")
+    goal = case.get("buyer", {}).get("category_goal", "leverage")
+    out = dict(base)
+    lo, hi = STANCE_RANGES["opening_gap"].get(tier, (0.06, 0.20))
+    out["opening_gap"] = _clip(proposed.get("opening_gap"), lo, hi, base["opening_gap"])
+    out["capture"] = _clip(proposed.get("capture"), *STANCE_RANGES["capture"], base["capture"])
+    if goal == "routine":
+        out["opening_gap"], out["capture"] = min(out["opening_gap"], 0.08), min(out["capture"], 0.7)
+    protect = persona.get("relationship", {}).get("protect")
+    m_lo = base["margin_pct"] if protect else STANCE_RANGES["margin_pct"][0]
+    m_hi = STANCE_RANGES["margin_pct"][1] if protect else 3.0  # a standard supplier's margin is in its quote already
+    out["margin_pct"] = _clip(proposed.get("margin_pct"), m_lo, max(m_lo, m_hi), base["margin_pct"])
+    out["justified_share"] = _clip(
+        proposed.get("justified_share"), *STANCE_RANGES["justified_share"], base["justified_share"]
+    )
+    steps = proposed.get("steps") if isinstance(proposed.get("steps"), list) else []
+    out["steps"] = [
+        _clip(v, *STANCE_RANGES["steps"], d)
+        for v, d in zip(steps + base["steps"][len(steps) :], base["steps"], strict=False)
+    ]
+    out["close_step"] = _clip(proposed.get("close_step"), *STANCE_RANGES["close_step"], base["close_step"])
+    out["quote_margin_pct"] = _clip(
+        proposed.get("quote_margin_pct"), *STANCE_RANGES["quote_margin_pct"], base["quote_margin_pct"]
+    )
+    out["source"], out["reason"] = "model", str(proposed.get("reason") or "")[:300]
+    return out
+
+
+def breakdown_full_cost(text):
+    """Full cost per unit from a cost-breakdown XLSX (as `docs.read_document` renders it): the EUR
+    elements without the profit; a row that merges overhead and profit counts half. None if the
+    text holds no such table."""
+    if "breakdown" not in (text or "").lower():
+        return None
+    total, found = 0.0, False
+    for line in text.splitlines():
+        cells = [c.strip() for c in line.split(" | ")]
+        if len(cells) < 2:
+            continue
+        name = cells[0].lower()
+        try:
+            value = float(cells[1])
+        except ValueError:
+            continue
+        if name.startswith(("unit price", "total", "price")):
+            continue
+        found = True
+        if "profit" in name or "margin" in name:
+            value = value / 2 if "overhead" in name else 0.0
+        total += value
+    return round(total, 2) if found and total > 0 else None
+
+
 # Which value of a lever is a sweetener for the supplier (the probe sheet moves it there).
 SUPPLIER_FRIENDLY = {
     "payment_days": min,
@@ -47,16 +152,20 @@ def gate_ok(case, terms, std, est=None):
     )
 
 
-def supplier_estimate(case, persona, std, quote_price, cost_fact=None):
-    """Our estimate of the supplier for the relationship term: full cost per unit and its cost of
-    money. `cost_fact`: the should-cost fact for the part (claims.ClaimBank.should_cost), if any.
-    Standard terms the quote PDF did not give are filled from the case's defaults, so the
-    relationship term never fails on a missing field."""
-    if cost_fact and cost_fact.get("unit_cost"):
-        factor = 1.0 if cost_fact.get("supplier") else persona.get("estimate", {}).get("country_factor", 1.0)
-        full_cost, source = cost_fact["unit_cost"] * factor, "should_cost"
+def supplier_estimate(case, persona, std, quote_price, cost_fact=None, stance=None, breakdown=None):
+    """Our estimate of the supplier for the relationship term and the floor: full cost per unit and
+    its cost of money. In order of trust: the cost breakdown it sent (`breakdown`, EUR per unit),
+    the should-cost fact for the part (`cost_fact`), else the quote less the margin the stance
+    estimates in it. Standard terms the quote PDF did not give are filled from the case's defaults,
+    so the relationship term never fails on a missing field."""
+    factor = persona.get("estimate", {}).get("country_factor", 1.0)
+    if breakdown:
+        full_cost, source = breakdown, "breakdown"
+    elif cost_fact and cost_fact.get("unit_cost"):
+        full_cost, source = cost_fact["unit_cost"] * (1.0 if cost_fact.get("supplier") else factor), "should_cost"
     elif quote_price:
-        full_cost, source = quote_price * 0.88, "assumed"  # no should-cost: assume a 12 % margin in the quote
+        margin = (stance or default_stance(case, persona))["quote_margin_pct"]
+        full_cost, source = quote_price * (1 - margin / 100), "estimated"
     else:
         return None
     return {
@@ -67,24 +176,14 @@ def supplier_estimate(case, persona, std, quote_price, cost_fact=None):
     }
 
 
-def floor_price(case, persona, est, quote_price):
+def floor_price(case, est, quote_price, stance):
     """The lowest price we ever write into a sheet: the supplier's estimated full cost plus the
-    margin we leave it, and never a fantasy figure far below its quote."""
-    guard = persona.get("relationship", {})
+    margin the stance leaves it, never a fantasy figure far below its quote, never above it."""
     goal = case.get("buyer", {}).get("category_goal")
-    if goal in ("stabilise", "secure_supply"):
-        # the arena itself charges for every margin point below the sustainable margin
-        margin = max(guard.get("min_margin_pct", 2.0), case["buyer"].get("sustainable_margin_pct") or 0)
-    else:
-        margin = TIER_MARGIN.get(persona.get("importance", {}).get("tier"), 0.0)
-    if est and est.get("source") == "should_cost":
-        floor = est["full_cost"] / (1 - margin / 100)
-    else:  # no should-cost: below the opening gap of the tier, so the anchor is not clipped
-        tier = persona.get("importance", {}).get("tier", "standard")
-        floor = (quote_price or 0) * (1 - OPENING_GAP.get(tier, 0.12) - 0.03)
+    floor = est["full_cost"] / (1 - stance["margin_pct"] / 100) if est else (quote_price or 0) * 0.9
     if quote_price:
         ceiling = quote_price if goal in ("stabilise", "secure_supply") else quote_price * 0.97
-        floor = min(max(floor, quote_price * 0.80), ceiling)
+        floor = min(max(floor, quote_price * 0.75), ceiling)
     return round(floor, 2)
 
 
@@ -94,20 +193,14 @@ def justified_increase_pct(bank, part):
     return round(sum(w * pct for _, w, pct in changes), 2) if changes else None
 
 
-def anchor_price(case, persona, floor, quote_price, justified_pct=None):
-    """Round-1 price: the justified increase on the current price in a price case, else a
-    deliberate gap below the quote - but never below the floor and never above the quote."""
-    tier = persona.get("importance", {}).get("tier", "standard")
-    goal = case.get("buyer", {}).get("category_goal")
+def anchor_price(case, floor, quote_price, stance, justified_pct=None):
+    """Round-1 price: the justified increase on the current price in a price case, else the
+    stance's gap below the quote - but never below the floor and never above the quote."""
     current = case.get("buyer", {}).get("current_unit_price")
     if case.get("type") == "price_increase" and current:
-        share = JUSTIFIED_SHARE.get(tier, 0.0)
-        anchor = current * (1 + share * max(0.0, justified_pct or 0.0) / 100)
+        anchor = current * (1 + stance["justified_share"] * max(0.0, justified_pct or 0.0) / 100)
     else:
-        gap = OPENING_GAP.get(tier, 0.12)
-        if goal == "routine":
-            gap = min(gap, 0.06)
-        anchor = quote_price * (1 - gap)
+        anchor = quote_price * (1 - stance["opening_gap"])
     anchor = max(floor, min(anchor, quote_price * 0.985))
     return round(anchor, 2)
 
@@ -165,24 +258,26 @@ def sheets(case, std, est, price, levers, floor, standing=None, hold=None):
     return keep or [a]
 
 
-def concession(ours_last, theirs, round_idx, moved, close_in=False, small=False):
+def concession(ours_last, theirs, round_idx, moved, close_in=False, small=False, stance=None):
     """Our next price toward theirs: a falling share of the gap, only after they moved. `small`:
     the supplier needs an approval for bigger steps, so keep the step one its rep can sign."""
     if ours_last is None or theirs is None or theirs <= ours_last:
         return ours_last
     if not moved and not close_in:
         return ours_last
-    step = 0.6 if close_in else STEPS[min(round_idx, len(STEPS) - 1)]
+    steps, close_step = (stance or {}).get("steps", STEPS), (stance or {}).get("close_step", 0.6)
+    step = close_step if close_in else steps[min(round_idx, len(steps) - 1)]
     if small:
         step = min(step, 0.15)
     return round(min(theirs, ours_last + step * (theirs - ours_last)), 2)
 
 
-def target_cost(case, c_open, c_anchor, c_cap=None):
-    """Where we stop pushing: the share of the opening gap the category goal asks us to capture,
-    and never above `c_cap` (a price increase: C at the justified price)."""
-    goal = case.get("buyer", {}).get("category_goal", "leverage")
-    target = c_open - GOAL_CAPTURE.get(goal, 0.6) * (c_open - c_anchor)
+def target_cost(case, c_open, c_anchor, c_cap=None, capture=None):
+    """Where we stop pushing: the share of the opening gap the stance asks us to capture, and
+    never above `c_cap` (a price increase: C at the justified price)."""
+    if capture is None:
+        capture = GOAL_CAPTURE.get(case.get("buyer", {}).get("category_goal", "leverage"), 0.6)
+    target = c_open - capture * (c_open - c_anchor)
     return min(target, c_cap) if c_cap is not None else target
 
 

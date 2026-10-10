@@ -14,7 +14,7 @@ import re
 log = logging.getLogger("buyer")
 
 DEFAULT_MODEL = "claude-opus-5-5"
-READER_S, WRITER_S = 14.0, 16.0
+READER_S, WRITER_S, STANCE_S = 14.0, 16.0, 15.0
 
 READER_SYSTEM = """You read a supplier's e-mail in an industrial procurement negotiation, for the buyer.
 Report only what the e-mail says or clearly implies, as JSON. Themes name the cost drivers the supplier
@@ -105,6 +105,58 @@ Rules:
 - Sign off as "Hollerau Pumpenwerke, Purchasing". Reply with the e-mail body only."""
 
 
+STANCE_SYSTEM = """You are a senior buyer at Hollerau Pumpenwerke, a German pump maker, planning one negotiation with
+one supplier before the first e-mail. From the dossier, set the stance as numbers. The analysts turn them into
+term sheets; you never write a price. Reply as JSON.
+
+- opening_gap: our first price below the supplier's quote, as a share (0.02 = 2 % below). Deep when it has free
+  capacity, needs cash, faces rivals or quoted above its past prices; shallow for a single source, a strategic
+  partner, a full order book, or a routine case where a quick fair deal beats a long fight.
+- capture: the share of the gap between its opening and our first price we insist on before accepting
+  (0.4 = settle early, 0.95 = hold out). High in leverage cases with rivals; low when the relationship is
+  scored or the supplier walks easily.
+- margin_pct: the margin we leave it on its estimated full cost (0 to 10). Give a strategic or cash-short
+  partner enough to stay healthy.
+- justified_share: in a price-increase case, the share of the cost-justified increase we concede in round 1.
+- steps: four concession sizes as shares of the remaining gap, one per round after the supplier moved.
+  Small steps for a supplier with an approval ladder; larger when time is short.
+- close_step: the share of the remaining gap we give once the pushes are used, to close.
+- quote_margin_pct: your estimate of the margin inside its quote (3 to 35), from its country, category,
+  size, settle history and remarks; used only when no cost data exists.
+- reason: one sentence.
+
+Calibration from this arena's suppliers: with a rival bidder or free capacity they have conceded 10 to 25 % below
+their opening quote over four to six rounds; a single-source strategic foundry still conceded 5 to 6 % and agreed
+to a 24-month term. A supplier walks only after we push past its final offer, which the analysts never do, so a
+shallow opening leaves money, it does not buy safety. Leave margin_pct at 0 for a standard supplier: its margin is
+already in quote_margin_pct."""
+
+STANCE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "opening_gap": {"type": "number"},
+        "capture": {"type": "number"},
+        "margin_pct": {"type": "number"},
+        "justified_share": {"type": "number"},
+        "steps": {"type": "array", "items": {"type": "number"}},
+        "close_step": {"type": "number"},
+        "quote_margin_pct": {"type": "number"},
+        "reason": {"type": "string"},
+    },
+    "required": [
+        "opening_gap",
+        "capture",
+        "margin_pct",
+        "justified_share",
+        "steps",
+        "close_step",
+        "quote_margin_pct",
+        "reason",
+    ],
+    "additionalProperties": False,
+}
+
+
 class LLM:
     def __init__(self, provider=None, model=None, writer_model=None, effort=None):
         self.provider = (
@@ -181,6 +233,10 @@ class LLM:
             f"E-MAIL:\n{body[:6000]}"
         )
         return self._call(READER_SYSTEM, user, READER_S, 4000, READER_SCHEMA)
+
+    def stance(self, dossier):
+        """The model's stance for one supplier (`economics.clamp_stance` bounds it), or None."""
+        return self._call(STANCE_SYSTEM, dossier, STANCE_S, 4000, STANCE_SCHEMA)
 
     def write_email(self, brief):
         """`brief`: the plain-text brief built by the thread (tone, their mail, options, arguments, question)."""

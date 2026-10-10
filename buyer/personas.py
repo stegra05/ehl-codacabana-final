@@ -54,9 +54,9 @@ ARCHETYPES = {
 # Category strategies (company.md): categories where the relationship itself is scored.
 CATEGORY_GOAL = {"castings": "stabilise", "seals": "secure_supply", "electrical": "stabilise"}
 TIERS = {
-    "strategic": {"protect": True, "min_margin_pct": 8.0, "max_price_pushes": 2, "walk_allowed": False},
-    "important": {"protect": True, "min_margin_pct": 5.0, "max_price_pushes": 3, "walk_allowed": True},
-    "standard": {"protect": False, "min_margin_pct": 2.0, "max_price_pushes": 6, "walk_allowed": True},
+    "strategic": {"protect": True, "max_price_pushes": 2, "walk_allowed": False},
+    "important": {"protect": True, "max_price_pushes": 3, "walk_allowed": True},
+    "standard": {"protect": False, "max_price_pushes": 6, "walk_allowed": True},
 }
 CASH_NEWS = {"credit_watch", "credit_downgrade", "short_time_work", "restructuring"}
 FULL_NEWS = {"full_order_book", "big_order", "allocation", "chip_shortage"}

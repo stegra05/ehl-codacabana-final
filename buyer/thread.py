@@ -54,6 +54,8 @@ def decide(agent, case, threads, sid):
     c_theirs = economics.cost(case, theirs, std, est) if sheet_id else math.inf
 
     reading = read(agent, p, last)
+    if (fc := breakdown_in(last)) and p["est"] and p["est"]["source"] != "breakdown":
+        reestimate(agent, case, p, sid, fc)
     p["dropped"] |= set(reading.get("rejected_themes") or [])
     p["themes"] = list(dict.fromkeys((reading.get("cost_driver_themes") or []) + p["themes"]))
     for field in reading.get("interested_in") or []:
@@ -86,7 +88,7 @@ def decide(agent, case, threads, sid):
     review_move = None
     if sheet_id and gate and stalled(p, status, moved, left, reading):
         verdict = review(case, p, sid, status, c_theirs, left)
-        if verdict["decision"] == "accept":
+        if verdict["decision"] == "accept" and (not moved or left <= 2):  # a moving supplier gets one more round
             return {"kind": "accept"}
         review_move = verdict.get("next_move")
     # A final offer, or a reply that reads like one: no price push, at most one non-price package.
@@ -115,7 +117,7 @@ def decide(agent, case, threads, sid):
     else:
         close_in = p["price_pushes"] >= rel["max_price_pushes"] or left <= 1 or review_move == "best_and_final"
         price = economics.concession(
-            prev["price"], t_price, round_idx - 1, moved, close_in, small=bool(reading.get("needs_approval"))
+            prev["price"], t_price, round_idx - 1, moved, close_in, bool(reading.get("needs_approval")), p["stance"]
         )
         if left <= 1:
             move = "Our best and final package: we move clearly toward them so this can close."
@@ -220,6 +222,43 @@ def send(agent, case, threads, sid, p, sheets, status, reading, moved, move, t0,
             "refs": sorted(ids)[:20],
         },
     }
+
+
+def breakdown_in(msg):
+    """The full cost per unit from a cost-breakdown XLSX attached to a supplier message, or None."""
+    for att in msg.get("attachments") or []:
+        if "breakdown" in (att.get("name") or "").lower() and att.get("text"):
+            return economics.breakdown_full_cost(att["text"])
+    return None
+
+
+def reestimate(agent, case, p, sid, full_cost):
+    """The supplier sent its cost breakdown: the floor and the target now rest on its real full
+    cost (plus the stance's margin) instead of an estimate. The target never rises."""
+    p["est"] = {**p["est"], "full_cost": full_cost, "source": "breakdown"}
+    old_floor, p["floor"] = p["floor"], economics.floor_price(case, p["est"], p["quote"], p["stance"])
+    sheet = economics.sheets(case, p["std"], p["est"], p["floor"], p["levers"], p["floor"])[0]
+    c_floor = economics.cost(case, sheet, p["std"], p["est"])
+    target = economics.target_cost(case, p["c_open"], c_floor, p["c_cap"], p["stance"]["capture"])
+    p["target"] = min(p["target"], target)
+    logger.info(
+        "%s/%s: cost breakdown: full cost %.2f, floor %s -> %s, target %.0f",
+        case["case_id"],
+        sid,
+        full_cost,
+        old_floor,
+        p["floor"],
+        p["target"],
+    )
+    log.plan(
+        {
+            "case": case["case_id"],
+            "supplier": sid,
+            "breakdown_full_cost": full_cost,
+            "floor": p["floor"],
+            "target": p["target"],
+        }
+    )
 
 
 # ---------- the closer: a rule when a thread stalls ----------
