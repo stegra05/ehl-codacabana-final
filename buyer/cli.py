@@ -1,5 +1,6 @@
-"""`buyer` command line: play one case or a whole set with our agent, and pull finished sessions
-(result, trace with the supplier's reasons, back office) into logs/ for the learning loop."""
+"""`buyer` command line: play one case or a whole set with our agent, probe a case with a person
+picking the moves, and pull finished sessions (result, trace with the supplier's reasons, back
+office, attachments) into logs/ for the learning loop."""
 
 import argparse
 import functools
@@ -7,36 +8,17 @@ import json
 import logging
 import os
 import statistics
-from pathlib import Path
 
 from arena_kit import ArenaClient, ArenaError, RemoteTable, play, play_all
+from arena_kit.agents import llm_from_env
 from arena_kit.cli import load_env, summary
+from arena_kit.data import DataPackage
 from arena_kit.play import hosted, play_waves
 
 from .agent import AGENTS, agent_factory
-
-LOGS = Path("logs/sessions")
-
-
-def pull(client, set_):
-    """Save every ended session of a set that has its trace to logs/sessions/<set>/, once."""
-    out = LOGS / set_
-    out.mkdir(parents=True, exist_ok=True)
-    saved = 0
-    for s in client.sessions(set_):
-        path = out / f"{s['case_id'].split(':')[-1]}_{s['session_id']}.json"
-        if s["status"] != "ended" or path.exists():
-            continue
-        state = client.session(s["session_id"])
-        if not (state.get("result") or {}).get("trace"):  # final: the trace comes after the final
-            continue
-        try:
-            state["backoffice"] = client.backoffice(s["session_id"])
-        except ArenaError:
-            state["backoffice"] = None
-        path.write_text(json.dumps(state, indent=2, ensure_ascii=False))
-        saved += 1
-    print(f"{saved} new sessions in {out}")
+from .console import AUTO_AFTER_S, Console
+from .harvest import pull, save
+from .suggest import Suggester
 
 
 def main(argv=None):
@@ -58,6 +40,11 @@ def main(argv=None):
     r.add_argument("--data", **data)
     r.add_argument("--parallel", type=int, default=8, help="cases at once (at most 10)")
     r.add_argument("--waves", type=int, default=5, help="final: stop after this many waves have closed")
+    pr = sub.add_parser("probe", help="play one case yourself: pick each move from options built in code")
+    pr.add_argument("case_id")
+    pr.add_argument("--data", **data)
+    pr.add_argument("--auto", type=float, default=AUTO_AFTER_S, help="seconds until the default move goes out")
+    pr.add_argument("--no-ai", action="store_true", help="code options only, no model suggestions")
     s = sub.add_parser("pull", help="save finished sessions with trace and back office to logs/sessions/")
     s.add_argument("--set", default="practice", choices=["practice", "sandbox", "final"])
     args = ap.parse_args(argv)
@@ -70,6 +57,8 @@ def main(argv=None):
 
     if args.cmd == "pull":
         return pull(client, args.set)
+    if args.cmd == "probe":
+        return probe(client, args)
     new_agent = agent_factory(args.agent, args.data)
     if args.cmd == "play":
         table = RemoteTable(client)
@@ -96,6 +85,27 @@ def main(argv=None):
         pull(client, args.set)
     if client.practice_remaining is not None:
         print(f"practice sessions left today: {client.practice_remaining}")
+
+
+def probe(client, args):
+    """A practice case costs one session of the team's quota: say so and ask first."""
+    if not any(c["case_id"] == args.case_id for c in client.cases("sandbox")):
+        left = client.me()["practice"]["left"]
+        if input(f"{args.case_id} costs 1 practice session ({left} left today). Go? [y/N] ").strip().lower() != "y":
+            return
+    package = DataPackage(args.data) if args.data else None
+    suggester = None
+    if not args.no_ai:
+        try:
+            suggester = Suggester(llm_from_env(), package)
+        except KeyError as e:
+            print(f"AI suggestions off: {e} is not set")
+    console = Console(client, args.case_id, package, auto_after=args.auto, suggester=suggester)
+    result = console.run()
+    keep = ("deal", "score", "c_open", "c_deal", "c_alt", "c_best", "terms", "cost_breakdown")
+    print(json.dumps({k: result.get(k) for k in keep}, indent=2))
+    path = save(client, console.table.session_id, probe=console.log)
+    print(f"saved {path}")
 
 
 if __name__ == "__main__":
