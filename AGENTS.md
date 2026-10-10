@@ -62,8 +62,16 @@ Some cite the Sunday 08:00 data release. Wave score = mean case score x 100; tot
 
 | Path | What |
 |---|---|
-| `buyer/agent.py` | which agent plays a case; our strategy grows here (today: the kit's `LLMAgent`) |
-| `buyer/cli.py` | `buyer play`, `buyer run`, `buyer pull` |
+| `buyer/agent.py` | the case coordinator: the brief per supplier (persona, floor, anchor, target, levers, claims), the blackboard, the decision to close |
+| `buyer/thread.py` | one move in one supplier thread: read the reply, policy, e-mail, guard |
+| `buyer/economics.py` | every number: C of a package, floor, anchor, probe sheets, concessions, the accept gate |
+| `buyer/claims.py` | the claim bank: pre-verified data sentences, figure next to ID, as the arena checks them |
+| `buyer/personas.py` | supplier archetype, levers, tone and relationship guard from the data; refined from the first reply |
+| `buyer/llm.py` | the model: reads a reply into signals, words the e-mail; hard timeouts, None on failure |
+| `buyer/guard.py` | last check on an outgoing body: no leaks, no unknown IDs, no foreign figures; the template e-mail |
+| `buyer/runner.py` | one negotiator per thread in parallel; practice and Live Final runners |
+| `buyer/cli.py` | `buyer play`, `buyer run`, `buyer plan`, `buyer pull` |
+| `logs/*.jsonl` | plans, moves and cases as JSON lines, gitignored |
 | `tests/` | end to end against `arena-sim`, no network, no model |
 | `docs/` | brief, API, submission guide (copied from upstream) |
 | `data/package/` | the data package, gitignored; `uv run arena data` fetches it (Sunday also `data/release-sunday/`) |
@@ -80,6 +88,7 @@ uv sync                                         # install (Python 3.12)
 uv run arena data                               # data package into data/ (again Sunday after 08:00)
 uv run arena me                                 # key works? quota left?
 uv run pytest -q && uv run ruff check .         # before every PR
+uv run buyer plan case:P01                      # the case brief, no session, no quota
 uv run buyer play case:D01 -v                   # sandbox: free, real supplier bots
 uv run buyer play case:P01 -v                   # practice: costs 1 of the team's 200
 uv run buyer run --set practice --parallel 10   # all 10 hosted practice cases: costs 10

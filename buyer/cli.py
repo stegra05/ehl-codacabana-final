@@ -1,5 +1,6 @@
-"""`buyer` command line: play one case or a whole set with our agent, and pull finished sessions
-(result, trace with the supplier's reasons, back office) into logs/ for the learning loop."""
+"""`buyer` command line: play one case or a whole set with our agent, print the plan for a case
+without opening a session, and pull finished sessions (result, trace with the supplier's reasons,
+back office) into logs/ for the learning loop."""
 
 import argparse
 import functools
@@ -9,10 +10,11 @@ import os
 import statistics
 from pathlib import Path
 
-from arena_kit import ArenaClient, ArenaError, RemoteTable, play, play_all
+from arena_kit import ArenaClient, ArenaError, RemoteTable, play
 from arena_kit.cli import load_env, summary
-from arena_kit.play import hosted, play_waves
+from arena_kit.play import hosted
 
+from . import economics, runner
 from .agent import AGENTS, agent_factory
 
 LOGS = Path("logs/sessions")
@@ -39,6 +41,42 @@ def pull(client, set_):
     print(f"{saved} new sessions in {out}")
 
 
+def data_dir():
+    """ARENA_DATA when it holds a package, else data/package (`uv run arena data`), else None."""
+    for d in (os.environ.get("ARENA_DATA"), "data/package"):
+        if d and (Path(d) / "facts.json").is_file():
+            return d
+    logging.getLogger("buyer").warning("no data package found: run `uv run arena data`")
+    return None
+
+
+def plan(client, case_id, new_agent):
+    """The case brief without a session: persona, floor, anchor, target, levers, claims."""
+    set_ = "sandbox" if case_id.split(":")[-1].startswith("D") else "practice"
+    case = next((c for c in client.cases(set_) if c["case_id"] == case_id), None)
+    if not case:
+        raise SystemExit(f"{case_id}: not in the {set_} case list")
+    agent = new_agent()
+    agent.prepare(case, {})
+    for sid, p in agent.plan.items():
+        persona = p["persona"]
+        print(
+            f"\n{sid} {persona['name']}: {persona['archetype']} ({persona.get('secondary') or '-'}), "
+            f"tier {persona['importance']['tier']}, tone {persona['tone']}"
+        )
+        for s in persona["signals"]:
+            print(f"  signal: {s}")
+        print(
+            f"  floor {p['floor']}  anchor {p['anchor']}  c_open {p['c_open']:,.0f}  target {p['target']:,.0f}  "
+            f"justified {p['justified_pct']}%  asked {p['asked_pct']}%"
+        )
+        print(f"  levers: {', '.join(p['levers'])}")
+        for r in p["analysis"]:
+            print(f"  lever {economics.lever_line(r)}")
+        for c in p["claims"][:8]:
+            print(f"  claim [{c['strength']:.1f}{'' if c['for_us'] else ' not for us'}] {c['sentence']}")
+
+
 def main(argv=None):
     load_env()
     ap = argparse.ArgumentParser(prog="buyer")
@@ -47,7 +85,7 @@ def main(argv=None):
     verbose.add_argument("-v", "--verbose", action="store_true", default=argparse.SUPPRESS)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser = functools.partial(sub.add_parser, parents=[verbose])
-    data = {"default": os.environ.get("ARENA_DATA"), "help": "data package folder"}
+    data = {"default": data_dir(), "help": "data package folder"}
     p = sub.add_parser("play", help="play one case")
     p.add_argument("case_id")
     p.add_argument("--agent", default="buyer", choices=AGENTS)
@@ -58,6 +96,9 @@ def main(argv=None):
     r.add_argument("--data", **data)
     r.add_argument("--parallel", type=int, default=8, help="cases at once (at most 10)")
     r.add_argument("--waves", type=int, default=5, help="final: stop after this many waves have closed")
+    q = sub.add_parser("plan", help="print the case brief without opening a session (no quota)")
+    q.add_argument("case_id")
+    q.add_argument("--data", **data)
     s = sub.add_parser("pull", help="save finished sessions with trace and back office to logs/sessions/")
     s.add_argument("--set", default="practice", choices=["practice", "sandbox", "final"])
     args = ap.parse_args(argv)
@@ -70,11 +111,14 @@ def main(argv=None):
 
     if args.cmd == "pull":
         return pull(client, args.set)
+    if args.cmd == "plan":
+        return plan(client, args.case_id, agent_factory("buyer", args.data, model=False))
     new_agent = agent_factory(args.agent, args.data)
+    ours = args.agent == "buyer"
     if args.cmd == "play":
         table = RemoteTable(client)
         try:
-            result = play(table, args.case_id, new_agent())
+            result = (runner.play_case if ours else play)(table, args.case_id, new_agent())
         except ArenaError as e:  # e.g. not hosted, the quota, a paused key: the arena says why
             raise SystemExit(str(e)) from None
         print(json.dumps(summary(result), indent=2))
@@ -82,12 +126,12 @@ def main(argv=None):
         print(f"replay: {os.environ['ARENA_URL'].rstrip('/')}{state.get('replay_url')}")
         pull(client, state["set"])
     elif args.set == "final":  # no human in the loop: waits for each wave, plays it within its cap
-        out = play_waves(client, new_agent, args.waves, min(args.parallel, 10))
+        out = runner.play_waves(client, new_agent, args.waves, min(args.parallel, 10))
         for case_id, result in out.items():
             print(case_id, result if isinstance(result, Exception) else summary(result))
     else:
         ids = [c["case_id"] for c in hosted(client.cases(args.set))]
-        out = play_all(lambda: RemoteTable(client), ids, new_agent, min(args.parallel, 10))
+        out = runner.play_all(client, ids, new_agent, min(args.parallel, 10))
         for case_id, result in out.items():
             print(case_id, result if isinstance(result, Exception) else summary(result))
         scores = [r["score"] for r in out.values() if isinstance(r, dict) and r.get("score") is not None]

@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Codacabana's buyer agent for the Tacto Negotiation Arena"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-dependencies = ["arena-kit[sim,mcp]"]
+dependencies = [
+    "anthropic>=1.13.0",
+    "arena-kit[sim,mcp]",
+]
 
 [project.scripts]
 buyer = "buyer.cli:main"
