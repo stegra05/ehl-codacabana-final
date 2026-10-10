@@ -1,0 +1,126 @@
+{
+ "case": "case:P04",
+ "session": "adb599fbc97b7f04",
+ "notes": [
+  {
+   "t": 1791662203.3,
+   "supplier": "sup:70620",
+   "what": "setup",
+   "quote": {
+    "unit_price": 4.96,
+    "payment_days": 30,
+    "contract_months": 12
+   },
+   "std": {
+    "ppm_commitment": 150,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": "family",
+    "country": "DE",
+    "category": "C-parts",
+    "signals": [
+     "deprioritising_us",
+     "open_book",
+     "price_frozen",
+     "spare_capacity"
+    ],
+    "rate": 0.075,
+    "warm": true
+   },
+   "full_cost": null,
+   "near_cost": false,
+   "terms": {
+    "unit_price": 4.77,
+    "payment_days": 90,
+    "contract_months": 36
+   },
+   "quote_at_terms": 5.02,
+   "anchor": 4.77,
+   "target": null,
+   "menu": [],
+   "budget": 1.0,
+   "claims": [
+    "Our last 3 orders for this part were at EUR 4.39 (po:4500014467-10, po:4500014389-10, po:4500014329-10).",
+    "In our call of 2026-06-16 (doc:20260616-70620-M6) you offered to walk us through your calculation; we would welcome that now.",
+    "Our forecast for this part is up 4.2% (fc:360020@2026-09).",
+    "Your on-time delivery was 85.0% in 2026Q3 (sc:70620@2026Q3)."
+   ]
+  },
+  {
+   "t": 1791662204.9,
+   "supplier": "sup:70620",
+   "what": "send",
+   "state": "open",
+   "theirs": 5.02,
+   "ours": 4.77,
+   "claims": [
+    "order_history",
+    "open_book",
+    "forecast"
+   ],
+   "asks": [],
+   "attached": []
+  },
+  {
+   "t": 1791662225.2,
+   "supplier": "sup:70620",
+   "what": "send",
+   "state": "open",
+   "theirs": 4.94,
+   "ours": 4.82,
+   "claims": [
+    "scorecard"
+   ],
+   "asks": [],
+   "attached": []
+  },
+  {
+   "t": 1791662245.2,
+   "supplier": "sup:70620",
+   "what": "signals",
+   "new": [
+    "spare_capacity"
+   ]
+  },
+  {
+   "t": 1791662247.0,
+   "supplier": "sup:70620",
+   "what": "send",
+   "state": "open",
+   "theirs": 4.94,
+   "ours": 4.86,
+   "claims": [],
+   "asks": [],
+   "attached": []
+  },
+  {
+   "t": 1791662267.6,
+   "supplier": "sup:70620",
+   "what": "accept",
+   "c": 196852.67,
+   "offer": "offer:70620-3"
+  }
+ ],
+ "result": {
+  "deal": true,
+  "supplier_id": "sup:70620",
+  "terms": {
+   "payment_days": 90,
+   "lead_time_days": 7,
+   "volume_per_year": 20000,
+   "contract_months": 36,
+   "effective_date": "2027-01-01",
+   "index_clause": null,
+   "incoterm": "DAP",
+   "tooling_eur": 0.0,
+   "ppm_commitment": 150,
+   "chargeback_eur_per_complaint": 0.0,
+   "unit_price": 4.94
+  },
+  "c_open": 198846.33,
+  "c_deal": 196852.67,
+  "c_best": 196529.32,
+  "score": 0.8604451426623068
+ }
+}

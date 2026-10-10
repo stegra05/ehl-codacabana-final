@@ -1,0 +1,100 @@
+21:49:41 HTTP Request: GET https://arena.tacto.ai/v1/cases?set=practice "HTTP/1.1 200 OK"
+21:49:41 HTTP Request: POST https://arena.tacto.ai/v1/sessions "HTTP/1.1 200 OK"
+21:49:41 session 8839210e24f47e37
+21:49:41 HTTP Request: POST https://arena.tacto.ai/v1/sessions "HTTP/1.1 200 OK"
+21:49:41 session 7196cc241752a806
+21:49:41 HTTP Request: POST https://arena.tacto.ai/v1/sessions "HTTP/1.1 200 OK"
+21:49:41 session 7826bde84e0fd3e0
+21:49:41 HTTP Request: GET https://arena.tacto.ai/v1/sessions/8839210e24f47e37/attachments/att:70710-0-quote "HTTP/1.1 200 OK"
+21:49:41 HTTP Request: GET https://arena.tacto.ai/v1/sessions/7196cc241752a806/attachments/att:70510-0-quote "HTTP/1.1 200 OK"
+21:49:41 case:P08 sup:70710 {'t': 1791661781.8, 'supplier': 'sup:70710', 'what': 'setup', 'quote': {'unit_price': 6.05, 'payment_days': 30, 'index_clause': None, 'contract_months': 12}, 'full_cost': None, 'near_cost': False, 'terms': {'unit_price': 4.76, 'index_clause': None, 'payment_days': 90, 'contract_months': 36}, 'quote_at_terms': 6.1, 'anchor': 4.76, 'target': None, 'menu': [{'unit_price': 4.71, 'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 5, 'base_month': '2026-08'}, 'payment_days': 90, 'contract_months': 36}], 'budget': 1.0}
+21:49:41 case:P02 sup:70510 {'t': 1791661781.8, 'supplier': 'sup:70510', 'what': 'setup', 'quote': {'unit_price': 370.96, 'payment_days': 30, 'index_clause': None}, 'full_cost': 370.96, 'near_cost': True, 'terms': {'unit_price': 351.23, 'payment_days': 90, 'index_clause': None}, 'quote_at_terms': 374.06, 'anchor': 351.23, 'target': 362.31, 'menu': [{'unit_price': 362.02, 'payment_days': 90, 'index_clause': {'series': 'CU-NOTATION', 'material_share': 0.2, 'deadband_pct': 5, 'base_month': '2026-08'}}], 'budget': 0.14}
+21:49:41 HTTP Request: GET https://arena.tacto.ai/v1/sessions/7826bde84e0fd3e0/attachments/att:70740-0-quote "HTTP/1.1 200 OK"
+21:49:41 case:P18 sup:70740 {'t': 1791661781.9, 'supplier': 'sup:70740', 'what': 'setup', 'quote': {'unit_price': 6.1, 'payment_days': 30, 'index_clause': None, 'contract_months': 12}, 'full_cost': None, 'near_cost': False, 'terms': {'unit_price': 4.77, 'index_clause': None, 'payment_days': 45, 'contract_months': 36}, 'quote_at_terms': 6.12, 'anchor': 4.77, 'target': None, 'menu': [{'unit_price': 4.72, 'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 5, 'base_month': '2026-08'}, 'payment_days': 45, 'contract_months': 36}], 'budget': 1.0}
+21:49:43 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+21:49:43 writer paragraph in 2.0s
+21:49:43 case:P02 sup:70510 {'t': 1791661783.7, 'supplier': 'sup:70510', 'what': 'send', 'state': 'open', 'theirs': 374.06, 'ours': 351.23, 'asks': [], 'attached': []}
+21:49:44 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+21:49:44 writer paragraph in 2.5s
+21:49:44 case:P08 sup:70710 {'t': 1791661784.3, 'supplier': 'sup:70710', 'what': 'send', 'state': 'open', 'theirs': 6.1, 'ours': 4.76, 'asks': [], 'attached': []}
+21:49:44 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+21:49:44 writer paragraph in 2.9s
+21:49:44 case:P18 sup:70740 {'t': 1791661784.8, 'supplier': 'sup:70740', 'what': 'send', 'state': 'open', 'theirs': 6.12, 'ours': 4.77, 'asks': [], 'attached': []}
+21:50:14 HTTP Request: POST https://arena.tacto.ai/v1/sessions/8839210e24f47e37/threads/sup:70710/messages "HTTP/1.1 200 OK"
+21:50:14 case:P08 sup:70710 {'t': 1791661814.6, 'supplier': 'sup:70710', 'what': 'switch_terms', 'why': 'its index clause', 'target': None, 'terms': {'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 5.0, 'base_month': '2026-08'}, 'payment_days': 90, 'contract_months': 36}}
+21:50:15 HTTP Request: POST https://arena.tacto.ai/v1/sessions/7826bde84e0fd3e0/threads/sup:70740/messages "HTTP/1.1 200 OK"
+21:50:15 case:P18 sup:70740 {'t': 1791661815.2, 'supplier': 'sup:70740', 'what': 'switch_terms', 'why': 'its index clause', 'target': None, 'terms': {'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 5.0, 'base_month': '2026-08'}, 'payment_days': 45, 'contract_months': 36}}
+21:50:16 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+21:50:16 writer paragraph in 2.0s
+21:50:16 case:P08 sup:70710 {'t': 1791661816.6, 'supplier': 'sup:70710', 'what': 'send', 'state': 'open', 'theirs': 5.64, 'ours': 5.02, 'asks': ['volume'], 'attached': []}
+21:50:17 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+21:50:17 writer paragraph in 1.9s
+21:50:17 case:P18 sup:70740 {'t': 1791661817.1, 'supplier': 'sup:70740', 'what': 'send', 'state': 'open', 'theirs': 5.5, 'ours': 4.99, 'asks': ['volume'], 'attached': []}
+21:50:19 HTTP Request: POST https://arena.tacto.ai/v1/sessions/7196cc241752a806/threads/sup:70510/messages "HTTP/1.1 200 OK"
+21:50:19 case:P02 sup:70510 {'t': 1791661819.2, 'supplier': 'sup:70510', 'what': 'switch_terms', 'why': 'its index clause', 'target': 362.02, 'terms': {'payment_days': 90, 'index_clause': {'series': 'CU-NOTATION', 'material_share': 0.2, 'deadband_pct': 5.0, 'base_month': '2026-08'}}}
+21:50:19 HTTP Request: GET https://arena.tacto.ai/v1/sessions/7196cc241752a806/attachments/att:70510-1-quote "HTTP/1.1 200 OK"
+21:50:19 case:P02 sup:70510 {'t': 1791661819.3, 'supplier': 'sup:70510', 'what': 'accept', 'c': 2252943.79, 'offer': 'offer:70510-1'}
+21:50:19 HTTP Request: POST https://arena.tacto.ai/v1/sessions/7196cc241752a806/threads/sup:70510/messages "HTTP/1.1 200 OK"
+21:50:32 HTTP Request: POST https://arena.tacto.ai/v1/sessions/7826bde84e0fd3e0/threads/sup:70740/messages "HTTP/1.1 200 OK"
+21:50:34 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+21:50:34 writer paragraph in 2.1s
+21:50:34 case:P18 sup:70740 {'t': 1791661834.2, 'supplier': 'sup:70740', 'what': 'send', 'state': 'open', 'theirs': 5.3, 'ours': 5.08, 'asks': ['proof'], 'attached': ['forecast.csv']}
+21:50:34 HTTP Request: POST https://arena.tacto.ai/v1/sessions/8839210e24f47e37/threads/sup:70710/messages "HTTP/1.1 200 OK"
+21:50:36 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+21:50:36 writer paragraph in 2.0s
+21:50:36 case:P08 sup:70710 {'t': 1791661836.7, 'supplier': 'sup:70710', 'what': 'send', 'state': 'open', 'theirs': 5.52, 'ours': 5.17, 'asks': [], 'attached': []}
+21:50:52 HTTP Request: POST https://arena.tacto.ai/v1/sessions/8839210e24f47e37/threads/sup:70710/messages "HTTP/1.1 200 OK"
+21:50:52 HTTP Request: GET https://arena.tacto.ai/v1/sessions/8839210e24f47e37/attachments/att:70710-3-quote "HTTP/1.1 200 OK"
+21:50:52 case:P08 sup:70710 {'t': 1791661852.8, 'supplier': 'sup:70710', 'what': 'accept', 'c': 1037631.5, 'offer': 'offer:70710-3'}
+21:50:52 HTTP Request: POST https://arena.tacto.ai/v1/sessions/8839210e24f47e37/threads/sup:70710/messages "HTTP/1.1 200 OK"
+21:50:56 HTTP Request: POST https://arena.tacto.ai/v1/sessions/7826bde84e0fd3e0/threads/sup:70740/messages "HTTP/1.1 200 OK"
+21:50:56 HTTP Request: GET https://arena.tacto.ai/v1/sessions/7826bde84e0fd3e0/attachments/att:70740-3-quote "HTTP/1.1 200 OK"
+21:50:56 case:P18 sup:70740 {'t': 1791661856.4, 'supplier': 'sup:70740', 'what': 'accept', 'c': 249519.92, 'offer': 'offer:70740-3'}
+21:50:56 HTTP Request: POST https://arena.tacto.ai/v1/sessions/7826bde84e0fd3e0/threads/sup:70740/messages "HTTP/1.1 200 OK"
+21:50:56 HTTP Request: GET https://arena.tacto.ai/v1/sessions?set=practice "HTTP/1.1 200 OK"
+21:50:56 HTTP Request: GET https://arena.tacto.ai/v1/sessions/491006cd111217a3 "HTTP/1.1 200 OK"
+21:50:56 HTTP Request: GET https://arena.tacto.ai/v1/sessions/491006cd111217a3/backoffice "HTTP/1.1 200 OK"
+21:50:56 HTTP Request: GET https://arena.tacto.ai/v1/sessions/91d2b5ad7501ce55 "HTTP/1.1 200 OK"
+21:50:57 HTTP Request: GET https://arena.tacto.ai/v1/sessions/91d2b5ad7501ce55/backoffice "HTTP/1.1 200 OK"
+21:50:57 HTTP Request: GET https://arena.tacto.ai/v1/sessions/d02573947884ff4c "HTTP/1.1 200 OK"
+21:50:57 HTTP Request: GET https://arena.tacto.ai/v1/sessions/d02573947884ff4c/backoffice "HTTP/1.1 200 OK"
+21:50:57 HTTP Request: GET https://arena.tacto.ai/v1/sessions/cd533e8117eee384 "HTTP/1.1 200 OK"
+21:50:57 HTTP Request: GET https://arena.tacto.ai/v1/sessions/cd533e8117eee384/backoffice "HTTP/1.1 200 OK"
+21:50:57 HTTP Request: GET https://arena.tacto.ai/v1/sessions/7b029b996e86ae1c "HTTP/1.1 200 OK"
+21:50:57 HTTP Request: GET https://arena.tacto.ai/v1/sessions/7b029b996e86ae1c/backoffice "HTTP/1.1 200 OK"
+21:50:57 HTTP Request: GET https://arena.tacto.ai/v1/sessions/1f36a83c6e80e818 "HTTP/1.1 200 OK"
+21:50:57 HTTP Request: GET https://arena.tacto.ai/v1/sessions/1f36a83c6e80e818/backoffice "HTTP/1.1 200 OK"
+21:50:58 HTTP Request: GET https://arena.tacto.ai/v1/sessions/0e897a8043153661 "HTTP/1.1 200 OK"
+21:50:58 HTTP Request: GET https://arena.tacto.ai/v1/sessions/0e897a8043153661/backoffice "HTTP/1.1 200 OK"
+21:50:58 HTTP Request: GET https://arena.tacto.ai/v1/sessions/e64ffdb40a42b3a9 "HTTP/1.1 200 OK"
+21:50:58 HTTP Request: GET https://arena.tacto.ai/v1/sessions/e64ffdb40a42b3a9/backoffice "HTTP/1.1 200 OK"
+21:50:58 HTTP Request: GET https://arena.tacto.ai/v1/sessions/ea485d8c4db527aa "HTTP/1.1 200 OK"
+21:50:58 HTTP Request: GET https://arena.tacto.ai/v1/sessions/ea485d8c4db527aa/backoffice "HTTP/1.1 200 OK"
+21:50:58 HTTP Request: GET https://arena.tacto.ai/v1/sessions/4ad7436e68138dae "HTTP/1.1 200 OK"
+21:50:58 HTTP Request: GET https://arena.tacto.ai/v1/sessions/4ad7436e68138dae/backoffice "HTTP/1.1 200 OK"
+21:50:59 HTTP Request: GET https://arena.tacto.ai/v1/sessions/50502ff781d898c6 "HTTP/1.1 200 OK"
+21:50:59 HTTP Request: GET https://arena.tacto.ai/v1/sessions/50502ff781d898c6/backoffice "HTTP/1.1 200 OK"
+21:50:59 HTTP Request: GET https://arena.tacto.ai/v1/sessions/a74b89173c96c23c "HTTP/1.1 200 OK"
+21:50:59 HTTP Request: GET https://arena.tacto.ai/v1/sessions/a74b89173c96c23c/backoffice "HTTP/1.1 200 OK"
+21:50:59 HTTP Request: GET https://arena.tacto.ai/v1/sessions/8fb681977cac2f19 "HTTP/1.1 200 OK"
+21:50:59 HTTP Request: GET https://arena.tacto.ai/v1/sessions/8fb681977cac2f19/backoffice "HTTP/1.1 200 OK"
+21:50:59 HTTP Request: GET https://arena.tacto.ai/v1/sessions/436cda7322d0e9fe "HTTP/1.1 200 OK"
+21:50:59 HTTP Request: GET https://arena.tacto.ai/v1/sessions/436cda7322d0e9fe/backoffice "HTTP/1.1 200 OK"
+21:50:59 HTTP Request: GET https://arena.tacto.ai/v1/sessions/c2959d6854ef9d6e "HTTP/1.1 200 OK"
+21:51:00 HTTP Request: GET https://arena.tacto.ai/v1/sessions/c2959d6854ef9d6e/backoffice "HTTP/1.1 200 OK"
+21:51:00 HTTP Request: GET https://arena.tacto.ai/v1/sessions/05511071716baf45 "HTTP/1.1 200 OK"
+21:51:00 HTTP Request: GET https://arena.tacto.ai/v1/sessions/05511071716baf45/backoffice "HTTP/1.1 200 OK"
+21:51:00 HTTP Request: GET https://arena.tacto.ai/v1/sessions/a379915509702d04 "HTTP/1.1 200 OK"
+21:51:00 HTTP Request: GET https://arena.tacto.ai/v1/sessions/a379915509702d04/backoffice "HTTP/1.1 200 OK"
+21:51:00 HTTP Request: GET https://arena.tacto.ai/v1/sessions/8839210e24f47e37 "HTTP/1.1 200 OK"
+21:51:00 HTTP Request: GET https://arena.tacto.ai/v1/sessions/8839210e24f47e37/backoffice "HTTP/1.1 200 OK"
+21:51:00 HTTP Request: GET https://arena.tacto.ai/v1/sessions/7196cc241752a806 "HTTP/1.1 200 OK"
+21:51:00 HTTP Request: GET https://arena.tacto.ai/v1/sessions/7196cc241752a806/backoffice "HTTP/1.1 200 OK"
+21:51:01 HTTP Request: GET https://arena.tacto.ai/v1/sessions/7826bde84e0fd3e0 "HTTP/1.1 200 OK"
+21:51:01 HTTP Request: GET https://arena.tacto.ai/v1/sessions/7826bde84e0fd3e0/backoffice "HTTP/1.1 200 OK"
+case:P02 {'deal': True, 'supplier_id': 'sup:70510', 'terms': {'payment_days': 90, 'lead_time_days': 35, 'volume_per_year': 6110, 'contract_months': 12, 'effective_date': '2027-01-01', 'index_clause': {'series': 'CU-NOTATION', 'material_share': 0.2, 'deadband_pct': 5.0, 'base_month': '2026-08'}, 'incoterm': 'DAP', 'tooling_eur': 0.0, 'ppm_commitment': 250, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 362.02}, 'c_open': 2282867.49, 'c_deal': 2248173.76, 'c_best': 2235514.05, 'score': 0.7326549032129481}
+case:P08 {'deal': True, 'supplier_id': 'sup:70710', 'terms': {'payment_days': 90, 'lead_time_days': 10, 'volume_per_year': 94800, 'contract_months': 36, 'effective_date': '2027-01-01', 'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 5.0, 'base_month': '2026-08'}, 'incoterm': 'DAP', 'tooling_eur': 0.0, 'ppm_commitment': 50, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 5.46}, 'c_open': 1135887.28, 'c_deal': 1037631.5, 'c_best': 960309.33, 'score': 0.5596134366530648}
+case:P18 {'deal': True, 'supplier_id': 'sup:70740', 'terms': {'payment_days': 45, 'lead_time_days': 14, 'volume_per_year': 23700, 'contract_months': 36, 'effective_date': '2027-01-01', 'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 5.0, 'base_month': '2026-08'}, 'incoterm': 'DAP', 'tooling_eur': 0.0, 'ppm_commitment': 70, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 5.2}, 'c_open': 295173.23, 'c_deal': 249519.92, 'c_best': 222651.27, 'score': 0.6295101511321533}
+mean score: 64.1 over 3 cases
+20 new sessions in logs/sessions/practice
+practice sessions left today: 352

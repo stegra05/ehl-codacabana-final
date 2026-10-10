@@ -1,0 +1,93 @@
+16:53:05 session d52ccdd3d2e07b3f
+16:53:06 session 3986e97af2cfe3b0
+16:53:06 session cb1eb418a0b85c17
+16:53:08 session d35aae9c5bc1d039
+16:53:08 session 28f7425128e20c30
+16:53:09 session c0199ed70c419cda
+16:53:09 session dd2d942c3be1f0d6
+16:53:09 session f99fb6c24caa89e9
+16:53:09 session f860ab9fbea61f2a
+16:53:18 sup:70410 failed
+Traceback (most recent call last):
+  File "/Users/stef/Projects/ehlcodacabana-final/buyer/autoprobe.py", line 219, in _thread
+    if "result" in self._send(sid, key, message, note):
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/stef/Projects/ehlcodacabana-final/buyer/autoprobe.py", line 182, in _send
+    reply = self.client.send_message(self.table.session_id, sid, message)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/stef/Projects/ehlcodacabana-final/.venv/lib/python3.12/site-packages/arena_kit/client.py", line 104, in send_message
+    return self._call("POST", path, {"message": message})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/stef/Projects/ehlcodacabana-final/.venv/lib/python3.12/site-packages/arena_kit/client.py", line 83, in _call
+    raise ArenaError(r.status_code, detail)
+arena_kit.client.ArenaError: HTTP 422: volume_per_year=22230 is not one of [16379, 19890, 23400]
+16:53:19 sup:70510 open [{'unit_price': 363.7, 'payment_days': 30, 'index_clause': None}] -> open {'unit_price': 370.6, 'payment_days': 30, 'index_clause': None}
+16:53:21 sup:70620 open [{'unit_price': 4.39, 'payment_days': 30, 'contract_months': 12}] -> open {'unit_price': 4.96, 'payment_days': 30, 'contract_months': 12}
+16:53:25 sup:70610 open [{'unit_price': 5.28, 'payment_days': 30, 'contract_months': 12}] -> open {'unit_price': 5.63, 'payment_days': 30, 'contract_months': 12}
+16:53:28 sup:70530 open [{'unit_price': 412.74, 'payment_days': 30, 'contract_months': 12, 'volume_per_year': 4580}] -> open {'unit_price': 438.21, 'payment_days': 30, 'contract_months': 12, 'volume_per_year': 4580}
+16:53:33 sup:70740 open [{'unit_price': 5.84, 'index_clause': None, 'payment_days': 30, 'contract_months': 12}] -> open {'unit_price': 6.0, 'payment_days': 30, 'index_clause': None, 'contract_months': 12}
+16:53:36 sup:70710 open [{'unit_price': 5.45, 'index_clause': None, 'payment_days': 30, 'contract_months': 12}] -> open {'unit_price': 5.93, 'payment_days': 30, 'index_clause': None, 'contract_months': 12}
+16:53:41 sup:70510 ours [{'unit_price': 370.6, 'payment_days': 90, 'index_clause': None}] -> open {'unit_price': 374.53, 'payment_days': 90, 'index_clause': None}
+16:53:46 sup:70620 ours [{'unit_price': 4.96, 'payment_days': 90, 'contract_months': 12}, {'unit_price': 4.96, 'payment_days': 30, 'contract_months': 24}] -> agreed {'unit_price': 4.96, 'payment_days': 30, 'contract_months': 24}
+16:53:48 sup:70140 open [{'ppm_commitment': 1500, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 45.15}] -> open {'unit_price': 46.5, 'ppm_commitment': 1500, 'chargeback_eur_per_complaint': 0.0}
+16:53:49 sup:70620 ours [{'unit_price': 4.96, 'payment_days': 90, 'contract_months': 24}] -> open {'unit_price': 5.02, 'payment_days': 90, 'contract_months': 24}
+16:53:51 sup:70610 ours [{'unit_price': 5.63, 'payment_days': 30, 'contract_months': 24}, {'unit_price': 5.63, 'payment_days': 90, 'contract_months': 12}] -> agreed {'unit_price': 5.63, 'payment_days': 30, 'contract_months': 24}
+16:53:53 sup:70620 theirs [{'unit_price': 4.71, 'payment_days': 90, 'contract_months': 36}, {'unit_price': 4.71, 'payment_days': 14, 'contract_months': 24}] -> agreed {'unit_price': 4.96, 'payment_days': 30, 'contract_months': 24}
+16:53:58 sup:70620 claims [{'unit_price': 4.79, 'payment_days': 30, 'contract_months': 24}] -> agreed {'unit_price': 4.96, 'payment_days': 30, 'contract_months': 24}
+16:53:59 sup:70620 push [{'unit_price': 4.89, 'payment_days': 30, 'contract_months': 24}] -> agreed {'unit_price': 4.96, 'payment_days': 30, 'contract_months': 24}
+16:54:14 sup:70610 ours [{'unit_price': 5.63, 'payment_days': 90, 'contract_months': 24}] -> open {'unit_price': 5.71, 'payment_days': 90, 'contract_months': 24}
+16:54:14 sup:70740 ours [{'unit_price': 6.0, 'index_clause': None, 'payment_days': 30, 'contract_months': 24}, {'unit_price': 6.0, 'index_clause': None, 'payment_days': 90, 'contract_months': 12}] -> agreed {'unit_price': 6.0, 'payment_days': 90, 'index_clause': None, 'contract_months': 12}
+16:54:14 sup:70510 theirs [{'unit_price': 369.12, 'payment_days': 14, 'index_clause': None}, {'unit_price': 369.12, 'payment_days': 90, 'index_clause': {'series': 'CU-NOTATION', 'material_share': 0.2, 'deadband_pct': 0, 'base_month': '2026-08'}}] -> agreed {'unit_price': 369.12, 'payment_days': 90, 'index_clause': {'series': 'CU-NOTATION', 'material_share': 0.2, 'deadband_pct': 0.0, 'base_month': '2026-08'}}
+16:54:17 sup:70140 ours [{'ppm_commitment': 1500, 'chargeback_eur_per_complaint': 500, 'unit_price': 46.5}, {'ppm_commitment': 300, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 46.5}] -> open {'unit_price': 47.0, 'ppm_commitment': 300, 'chargeback_eur_per_complaint': 0.0}
+16:54:17 sup:70610 theirs [{'unit_price': 5.48, 'payment_days': 90, 'contract_months': 36}, {'unit_price': 5.48, 'payment_days': 14, 'contract_months': 24}] -> agreed {'unit_price': 5.63, 'payment_days': 30, 'contract_months': 24}
+16:54:19 sup:70740 ours [{'unit_price': 6.0, 'index_clause': None, 'payment_days': 90, 'contract_months': 24}] -> agreed {'unit_price': 6.0, 'payment_days': 90, 'index_clause': None, 'contract_months': 12}
+16:54:19 sup:70510 theirs [{'unit_price': 366.41, 'payment_days': 14, 'index_clause': {'series': 'CU-NOTATION', 'material_share': 0.2, 'deadband_pct': 0.0, 'base_month': '2026-08'}}] -> agreed {'unit_price': 366.41, 'payment_days': 14, 'index_clause': {'series': 'CU-NOTATION', 'material_share': 0.2, 'deadband_pct': 0.0, 'base_month': '2026-08'}}
+16:54:32 sup:70140 ours [{'ppm_commitment': 300, 'chargeback_eur_per_complaint': 500, 'unit_price': 47.0}] -> open {'unit_price': 47.0, 'ppm_commitment': 300, 'chargeback_eur_per_complaint': 0.0}
+16:54:33 sup:70610 claims [{'unit_price': 5.53, 'payment_days': 30, 'contract_months': 24}] -> agreed {'unit_price': 5.63, 'payment_days': 30, 'contract_months': 24}
+16:54:35 sup:70740 theirs [{'unit_price': 5.92, 'index_clause': None, 'payment_days': 90, 'contract_months': 36}, {'unit_price': 5.92, 'index_clause': None, 'payment_days': 14, 'contract_months': 12}, {'unit_price': 5.92, 'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 0, 'base_month': '2026-08'}, 'payment_days': 90, 'contract_months': 12}] -> agreed {'unit_price': 6.0, 'payment_days': 90, 'index_clause': None, 'contract_months': 12}
+16:54:35 sup:70510 claims [{'unit_price': 366.41, 'payment_days': 14, 'index_clause': {'series': 'CU-NOTATION', 'material_share': 0.2, 'deadband_pct': 0.0, 'base_month': '2026-08'}}] -> agreed {'unit_price': 366.41, 'payment_days': 14, 'index_clause': {'series': 'CU-NOTATION', 'material_share': 0.2, 'deadband_pct': 0.0, 'base_month': '2026-08'}}
+16:54:37 sup:70530 ours [{'unit_price': 438.21, 'payment_days': 30, 'contract_months': 24, 'volume_per_year': 4580}, {'unit_price': 438.21, 'payment_days': 90, 'contract_months': 12, 'volume_per_year': 4580}] -> agreed {'unit_price': 438.21, 'payment_days': 30, 'contract_months': 24, 'volume_per_year': 4580}
+16:54:37 sup:70710 ours [{'unit_price': 5.93, 'index_clause': None, 'payment_days': 90, 'contract_months': 12}, {'unit_price': 5.93, 'index_clause': None, 'payment_days': 30, 'contract_months': 24}] -> agreed {'unit_price': 5.93, 'payment_days': 90, 'index_clause': None, 'contract_months': 12}
+16:54:37 sup:70250 open [{'unit_price': 36.39, 'payment_days': 30, 'lead_time_days': 28}] -> open {'unit_price': 36.5, 'payment_days': 30, 'lead_time_days': 28}
+16:54:37 sup:70240 open [{'unit_price': 35.76, 'payment_days': 45, 'lead_time_days': 42}] -> agreed {'unit_price': 35.76, 'payment_days': 45, 'lead_time_days': 42}
+16:54:39 sup:70210 open [{'unit_price': 35.76, 'payment_days': 30, 'lead_time_days': 28}] -> agreed {'unit_price': 35.76, 'payment_days': 30, 'lead_time_days': 28}
+16:54:40 sup:70510 push [{'unit_price': 360.91, 'payment_days': 14, 'index_clause': {'series': 'CU-NOTATION', 'material_share': 0.2, 'deadband_pct': 0.0, 'base_month': '2026-08'}}] -> agreed {'unit_price': 366.41, 'payment_days': 14, 'index_clause': {'series': 'CU-NOTATION', 'material_share': 0.2, 'deadband_pct': 0.0, 'base_month': '2026-08'}}
+16:54:41 sup:70530 ours [{'unit_price': 438.21, 'payment_days': 90, 'contract_months': 24, 'volume_per_year': 4580}] -> open {'unit_price': 441.21, 'payment_days': 90, 'contract_months': 24, 'volume_per_year': 4580}
+16:54:43 sup:70210 ours [{'unit_price': 35.76, 'payment_days': 90, 'lead_time_days': 28}] -> agreed {'unit_price': 35.76, 'payment_days': 30, 'lead_time_days': 28}
+16:54:45 sup:70210 ours [{'unit_price': 35.76, 'payment_days': 90, 'lead_time_days': 28}] -> agreed {'unit_price': 35.76, 'payment_days': 30, 'lead_time_days': 28}
+16:54:46 sup:70610 push [{'unit_price': 5.55, 'payment_days': 30, 'contract_months': 24}] -> agreed {'unit_price': 5.63, 'payment_days': 30, 'contract_months': 24}
+16:54:46 sup:70740 claims [{'unit_price': 5.95, 'index_clause': None, 'payment_days': 90, 'contract_months': 12}] -> agreed {'unit_price': 6.0, 'payment_days': 90, 'index_clause': None, 'contract_months': 12}
+16:54:47 sup:70210 theirs [{'unit_price': 35.76, 'payment_days': 14, 'lead_time_days': 28}] -> agreed {'unit_price': 35.76, 'payment_days': 14, 'lead_time_days': 28}
+16:54:48 sup:70710 ours [{'unit_price': 5.93, 'index_clause': None, 'payment_days': 90, 'contract_months': 24}] -> agreed {'unit_price': 5.93, 'payment_days': 90, 'index_clause': None, 'contract_months': 12}
+16:54:52 sup:70530 theirs [{'unit_price': 426.98, 'payment_days': 90, 'contract_months': 36, 'volume_per_year': 4580}, {'unit_price': 426.98, 'payment_days': 14, 'contract_months': 24, 'volume_per_year': 4580}, {'unit_price': 426.98, 'payment_days': 90, 'contract_months': 24, 'volume_per_year': 5496}] -> agreed {'unit_price': 438.21, 'payment_days': 30, 'contract_months': 24, 'volume_per_year': 4580}
+16:54:52 sup:70740 push [{'unit_price': 5.91, 'index_clause': None, 'payment_days': 90, 'contract_months': 12}] -> agreed {'unit_price': 6.0, 'payment_days': 90, 'index_clause': None, 'contract_months': 12}
+16:54:56 sup:70710 theirs [{'unit_price': 5.69, 'index_clause': None, 'payment_days': 90, 'contract_months': 36}, {'unit_price': 5.69, 'index_clause': None, 'payment_days': 14, 'contract_months': 12}, {'unit_price': 5.69, 'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 0, 'base_month': '2026-08'}, 'payment_days': 90, 'contract_months': 12}] -> agreed {'unit_price': 5.93, 'payment_days': 90, 'index_clause': None, 'contract_months': 12}
+case:P02 {"deal": true, "supplier_id": "sup:70510", "score": 0.0, "c_open": 2282867.49, "c_deal": 2304040.67, "c_alt": 2604227.78, "c_best": 2235514.05, "terms": {"payment_days": 14, "lead_time_days": 35, "volume_per_year": 6110, "contract_months": 12, "effective_date": "2027-01-01", "index_clause": {"series": "CU-NOTATION", "material_share": 0.2, "deadband_pct": 0.0, "base_month": "2026-08"}, "incoterm": "DAP", "tooling_eur": 0.0, "ppm_commitment": 250, "chargeback_eur_per_complaint": 0.0, "unit_price": 366.41}} -> logs/sessions/practice/P02_d52ccdd3d2e07b3f.json
+16:54:57 sup:70140 claims [{'ppm_commitment': 300, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 47.0}] -> agreed {'unit_price': 47.0, 'ppm_commitment': 300, 'chargeback_eur_per_complaint': 0.0}
+16:55:00 sup:70710 claims [{'unit_price': 5.77, 'index_clause': None, 'payment_days': 90, 'contract_months': 12}] -> agreed {'unit_price': 5.93, 'payment_days': 90, 'index_clause': None, 'contract_months': 12}
+16:55:02 sup:70530 claims [{'unit_price': 430.72, 'payment_days': 30, 'contract_months': 24, 'volume_per_year': 4580}] -> agreed {'unit_price': 438.21, 'payment_days': 30, 'contract_months': 24, 'volume_per_year': 4580}
+16:55:03 sup:70530 push [{'unit_price': 431.64, 'payment_days': 30, 'contract_months': 24, 'volume_per_year': 4580}] -> agreed {'unit_price': 438.21, 'payment_days': 30, 'contract_months': 24, 'volume_per_year': 4580}
+16:55:03 sup:70710 push [{'unit_price': 5.84, 'index_clause': None, 'payment_days': 90, 'contract_months': 12}] -> agreed {'unit_price': 5.93, 'payment_days': 90, 'index_clause': None, 'contract_months': 12}
+16:55:04 sup:70140 claims [{'ppm_commitment': 300, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 47.0}] -> agreed {'unit_price': 47.0, 'ppm_commitment': 300, 'chargeback_eur_per_complaint': 0.0}
+case:P03 {"deal": true, "supplier_id": "sup:70530", "score": 0.6035203094295825, "c_open": 4246314.02, "c_deal": 4042764.17, "c_alt": 4332545.92, "c_best": 3909043.1, "terms": {"payment_days": 30, "lead_time_days": 49, "volume_per_year": 4580, "contract_months": 24, "effective_date": "2027-01-01", "index_clause": null, "incoterm": "DAP", "tooling_eur": 0.0, "ppm_commitment": 350, "chargeback_eur_per_complaint": 0.0, "unit_price": 438.21}} -> logs/sessions/practice/P03_3986e97af2cfe3b0.json
+case:P04 {"deal": true, "supplier_id": "sup:70620", "score": 0.0, "c_open": 198846.33, "c_deal": 200292.67, "c_alt": 203169.0, "c_best": 196529.32, "terms": {"payment_days": 30, "lead_time_days": 7, "volume_per_year": 20000, "contract_months": 24, "effective_date": "2027-01-01", "index_clause": null, "incoterm": "DAP", "tooling_eur": 0.0, "ppm_commitment": 150, "chargeback_eur_per_complaint": 0.0, "unit_price": 4.96}} -> logs/sessions/practice/P04_cb1eb418a0b85c17.json
+16:55:09 sup:70140 push [{'ppm_commitment': 300, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 46.3}] -> agreed {'unit_price': 47.0, 'ppm_commitment': 300, 'chargeback_eur_per_complaint': 0.0}
+16:55:10 sup:70250 ours [{'unit_price': 36.5, 'payment_days': 90, 'lead_time_days': 28}] -> open {'unit_price': 36.5, 'payment_days': 30, 'lead_time_days': 28}
+16:55:13 sup:70240 ours [{'unit_price': 35.76, 'payment_days': 90, 'lead_time_days': 42}, {'unit_price': 35.76, 'payment_days': 45, 'lead_time_days': 28}] -> open {'unit_price': 36.5, 'payment_days': 90, 'lead_time_days': 42}
+16:55:13 sup:70210 claims [{'unit_price': 35.76, 'payment_days': 14, 'lead_time_days': 28}] -> agreed {'unit_price': 35.76, 'payment_days': 14, 'lead_time_days': 28}
+16:55:27 sup:70250 ours [{'unit_price': 36.5, 'payment_days': 90, 'lead_time_days': 28}] -> open {'unit_price': 36.5, 'payment_days': 30, 'lead_time_days': 28}
+16:55:56 sup:70240 ours [{'unit_price': 36.5, 'payment_days': 90, 'lead_time_days': 28}] -> agreed {'unit_price': 35.76, 'payment_days': 45, 'lead_time_days': 42}
+16:55:56 sup:70210 push [{'unit_price': 35.22, 'payment_days': 14, 'lead_time_days': 28}] -> agreed {'unit_price': 35.76, 'payment_days': 14, 'lead_time_days': 28}
+16:56:01 sup:70250 theirs [{'unit_price': 36.45, 'payment_days': 14, 'lead_time_days': 28}] -> agreed {'unit_price': 36.45, 'payment_days': 14, 'lead_time_days': 28}
+16:56:08 sup:70240 theirs [{'unit_price': 35.76, 'payment_days': 14, 'lead_time_days': 42}] -> agreed {'unit_price': 35.76, 'payment_days': 14, 'lead_time_days': 42}
+16:56:08 sup:70250 claims [{'unit_price': 36.45, 'payment_days': 14, 'lead_time_days': 28}] -> agreed {'unit_price': 36.45, 'payment_days': 14, 'lead_time_days': 28}
+16:56:16 sup:70240 claims [{'unit_price': 35.76, 'payment_days': 14, 'lead_time_days': 42}] -> agreed {'unit_price': 35.76, 'payment_days': 14, 'lead_time_days': 42}
+16:56:16 sup:70250 push [{'unit_price': 35.9, 'payment_days': 14, 'lead_time_days': 28}] -> agreed {'unit_price': 36.45, 'payment_days': 14, 'lead_time_days': 28}
+16:56:19 sup:70240 push [{'unit_price': 35.22, 'payment_days': 14, 'lead_time_days': 42}] -> agreed {'unit_price': 35.76, 'payment_days': 14, 'lead_time_days': 42}
+case:P05 {"deal": true, "supplier_id": "sup:70210", "score": 0.011707266820010286, "c_open": 305544.96, "c_deal": 304583.55, "c_alt": null, "c_best": 223424.17, "terms": {"payment_days": 14, "lead_time_days": 28, "volume_per_year": 4200, "contract_months": 24, "effective_date": "2027-01-01", "index_clause": null, "incoterm": "DAP", "tooling_eur": 0.0, "ppm_commitment": 1200, "chargeback_eur_per_complaint": 0.0, "unit_price": 35.76}} -> logs/sessions/practice/P05_d35aae9c5bc1d039.json
+case:P07 {"deal": true, "supplier_id": "sup:70610", "score": 0.5550590499129988, "c_open": 391027.4, "c_deal": 340080.8, "c_alt": 379916.0, "c_best": 299241.49, "terms": {"payment_days": 30, "lead_time_days": 5, "volume_per_year": 30000, "contract_months": 24, "effective_date": "2027-01-01", "index_clause": null, "incoterm": "DAP", "tooling_eur": 0.0, "ppm_commitment": 80, "chargeback_eur_per_complaint": 0.0, "unit_price": 5.63}} -> logs/sessions/practice/P07_28f7425128e20c30.json
+case:P08 {"deal": true, "supplier_id": "sup:70710", "score": 0.10791423410513731, "c_open": 1135887.28, "c_deal": 1116939.92, "c_alt": 1157019.84, "c_best": 960309.33, "terms": {"payment_days": 90, "lead_time_days": 10, "volume_per_year": 94800, "contract_months": 12, "effective_date": "2027-01-01", "index_clause": null, "incoterm": "DAP", "tooling_eur": 0.0, "ppm_commitment": 50, "chargeback_eur_per_complaint": 0.0, "unit_price": 5.93}} -> logs/sessions/practice/P08_dd2d942c3be1f0d6.json
+case:P10 {"deal": false, "supplier_id": null, "score": 0.0, "c_open": 1932492.18, "c_deal": null, "c_alt": null, "c_best": 1328926.89, "terms": null} -> logs/sessions/practice/P10_c0199ed70c419cda.json
+case:P11 {"deal": true, "supplier_id": "sup:70140", "score": 0.45904950862439453, "c_open": 817578.0, "c_deal": 773932.5, "c_alt": 894383.19, "c_best": 722500.02, "terms": {"payment_days": 60, "lead_time_days": 56, "volume_per_year": 15900, "contract_months": 12, "effective_date": "2027-01-01", "index_clause": null, "incoterm": "FCA", "tooling_eur": 0.0, "ppm_commitment": 300, "chargeback_eur_per_complaint": 0.0, "unit_price": 47.0}} -> logs/sessions/practice/P11_f99fb6c24caa89e9.json
+case:P18 {"deal": true, "supplier_id": "sup:70740", "score": 0.059041426900210484, "c_open": 295173.23, "c_deal": 290891.43, "c_alt": 301087.96, "c_best": 222651.27, "terms": {"payment_days": 90, "lead_time_days": 14, "volume_per_year": 23700, "contract_months": 12, "effective_date": "2027-01-01", "index_clause": null, "incoterm": "DAP", "tooling_eur": 0.0, "ppm_commitment": 70, "chargeback_eur_per_complaint": 0.0, "unit_price": 6.0}} -> logs/sessions/practice/P18_f860ab9fbea61f2a.json
+session page: logs/view.html
