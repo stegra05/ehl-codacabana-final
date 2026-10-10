@@ -11,8 +11,8 @@ the LLM only reads replies and writes e-mails.
 Personas and claims are built once before the final. During a wave, every supplier thread loops
 reader → fact check → policy → writer → guard; only the code steps set numbers.
 
-(System architecture diagram: offline preparation, live wave, thread negotiator loop. See the
-source PDF.)
+The architecture diagram (offline preparation, live wave, thread negotiator loop) is on page 1 of
+[how-it-works.pdf](how-it-works.pdf), the source of this page.
 
 ## A case, step by step
 
