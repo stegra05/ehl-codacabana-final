@@ -20,6 +20,11 @@ reader design that is not merged. The architecture diagram is on page 1 of
 | `buyer/policy.py` | per thread: anchor by goal and persona, 30 % of the gap per round, held low after a deep first concession, patience budget for near-cost, fully booked and relationship-goal suppliers; adopts its counter terms when they cost us less, mirrors a better alternative, takes a required index clause; claims 3 in round 1, then 1 per round; close on final offer, agreement or round limit |
 | `buyer/writer.py`, `buyer/llm.py` | the e-mail: a model paragraph that answers the supplier's last e-mail (no digits, IDs or leaks, else the template), then claims and the proposal from code |
 | `buyer/runner.py` | one message at a time per session, to the thread whose 60 s clock has run longest; keepalive questions for finished bidders; rollback when a send times out; accept the cheapest standing sheet; Live Final waves |
+**Status.** `main` plays the kit's `LLMAgent` behind our runner (`buyer/agent.py`). Julian's draft
+two implements most of the design below on the unmerged branch `origin/julian/draft-two`
+(`buyer/economics.py`, `claims.py`, `personas.py`, `llm.py`, `guard.py`, `runner.py`,
+`thread.py`): sandbox D01 0.96, D02 0.54, no practice quota used. The architecture diagram is on
+page 1 of [how-it-works.pdf](how-it-works.pdf).
 
 ## Principle
 
