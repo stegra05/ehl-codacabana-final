@@ -53,13 +53,14 @@ Hypotheses. Correct or delete entries that turn out wrong.
 
 ## Where we stand
 
-Best score per hosted case, Saturday 21:30: mean 0.737 (team rank about 4 of 21 on the practice
-board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in brackets).
+Best score per hosted case, Saturday 22:30: mean about 0.77 (P02 0.733 and P18 0.630 on branch
+`steffen/elicit`; team rank about 4 of 21 on the practice board). Record = best of all teams on
+`/v1/live` at about 20:30 (house agent in brackets).
 
 | Case | Goal | Ours | Session | Deal | Record (house) | What limits us |
 |---|---|---|---|---|---|---|
 | P01 | stabilise | 0.974 | `4cc256188e1cd8af` | 130.18, Nov, 14 d | 0.995 (0.966) | agreed at our sheet in round 4 |
-| P02 | stabilise | 0.507 | `3ad1d67f26aac5e7` | 371.88, 90 d | 0.847 (0.740) | Nordmark settles near 371.9 after round 1 |
+| P02 | stabilise | 0.733 | `7196cc241752a806` | 362.02, 90 d, CU clause 5 % deadband | 0.847 (0.740) | agreed in round 1; the relationship charge caps the clause price near 362 |
 | P03 | stabilise | 0.923 | `c7fcc4c7ae8f4e9a` | 432.15, 90 d, 24 m | 0.936 (0.925) | price frozen |
 | P04 | routine | 0.860 | `81e9fd209c3fd659` | 4.94, 90 d, 36 m | 0.874 (0.860) | C_best needs 4.93 |
 | P05 | leverage RFQ | 0.828 | `917135b8156fb8a3` | Dralveck 27.86, 14 d, 35 d | 0.824 (0.555) | ours is the record |
@@ -67,7 +68,7 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
 | P08 | leverage | 0.648 | `practice-v9.log` | 5.26, AS-14404 clause | 0.732 (0.752) | final offer in round 2 to 4; 5.26 to 5.61 across identical runs |
 | P10 | secure_supply | 0.679 | `7c4f1855794797d6` | 31.50, 56 d, 36 m | 0.702 (0.686) | fully booked, final early |
 | P11 | quality_first | 0.710 | `3ac9ee6cf673cf7c` | 45.50, 300 ppm | 0.807 (0.314) | wants faster payment, which is fixed |
-| P18 | leverage | 0.485 | `6a39d7511267e0ff` | 5.30, AS-14404 clause | 0.677 (0.386) | final offer in round 2 to 3 |
+| P18 | leverage | 0.630 | `7826bde84e0fd3e0` | 5.20, AS-14404 clause 5 % deadband | 0.677 (0.386) | final offer in round 3; 0.62 with the 0 % clause (v10) |
 
 ## Score and terms
 
@@ -112,6 +113,40 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
 - 2026-10-10 `rules` No alternative, so walking away scores 0: D01, P05, P06, P10, P14, P17.
 
 ## Supplier behaviour
+
+- 2026-10-10 `arena` **An index clause is worth far more to some suppliers than it costs us; the
+  kit's `supplier_value` prices it at zero.** Nordmark (P02, group, copper up 47.7 %): fixed price
+  at 90 days 373.13 in round 1 and a 371.88 final; with a CU-NOTATION clause at a 5 % deadband it
+  agreed at once to 358.00 (`491006cd111217a3`, 0.670; it wrote "we can even improve upon your
+  proposed base price") and to 362.02 (`7196cc241752a806`, 0.733), and from an anchor of 345 it
+  countered 351.05, 349.85, 349.35, 349.05 before withdrawing (`ea485d8c4db527aa`). The 5 %
+  deadband costs us 0.8 % of spend (the index risk only; the path is +5 %); Nordmark pays about
+  6 %. Offered a fixed sheet and a clause sheet in one message it picked the clause
+  (`91d2b5ad7501ce55`). The distributors price the deadband at our cost (Donautal 5.45 at 0 %
+  against 5.57 at 5 %), so there the clause type does not matter, and our 5 % sheet got a first
+  counter 1.5 to 2 % above the 0 % clause they add themselves (P08 5.60 to 5.64, P18 5.50 at 5 %
+  against 5.40 and 5.30 at 0 %, six runs). → Offer the clause with the largest deadband as a
+  second sheet in round 1 at equal C for us, to a supplier whose letter did not propose a clause
+  itself; let the supplier's own clause stand where it asked for one.
+- 2026-10-10 `arena` **The relationship charge, calibrated from the arena's own breakdown, puts
+  Nordmark's full cost near 368.6, below the own-plant should-cost of 374.95 and the quote.** The
+  arena's charge was 59,670 at 358 and 642 at 371.88 (90 days). The lowest C with the 5 % clause
+  sits near 361 to 362 at 90 days (0.73); 349 would score about 0.2 and the should-cost would have
+  stopped us at 368 (0.49). → In a relationship goal the full-cost estimate is at most the quote at
+  its standard terms (it never sells below cost); the target is recomputed for the structure in
+  play; a clause sheet in round 1 never sits below that target, as it may be agreed at once.
+- 2026-10-10 `arena` **How many counters a supplier gives depends on our path; how much it moves
+  per counter is its own.** 115 practice threads: Nordmark 1 to 6 counters, Donautal 2 to 6,
+  Werdenfels 2 to 6, Kalwisz 4 to 6. Its move as a share of our previous move (median, rounds 3
+  on): Brandlhuber 0.62, Donautal 0.44, Werdenfels 0.45, Leitner 0.36, Nordmark 0.15, Kalwisz
+  0.0, Selvbrunn and Wälzlager 0.0. A slow walk on P08 (12 % of the gap per round,
+  `50502ff781d898c6`) got five counters and 5.31; the standard walk four and 5.33 to 5.39:
+  the schedule shrinks to the same floor. Giving Donautal its clause in round 1, two clause
+  sheets, a fixed 24-month ask at 5.35 (refused: "cannot maintain a fixed price for a 24-month
+  term") and a forecast-volume statement all ended 5.36 to 5.39. Kalwisz's floor is 45.50 at 300
+  and at 800 ppm (`1f36a83c6e80e818`, `a74b89173c96c23c`). → An opponent model of the arena's
+  rules is identifiable from two replies, but on these suppliers it would reproduce the caps we
+  already feed; the gap on P08, P18 and P11 is not in the path.
 
 - 2026-10-10 `arena` **The round-1 counter is a cap plus claims, not a reaction to the anchor.**
   D01 (quote 52.90), 30 sandbox runs: anchors 44.0 to 48.5 without claims all got 51.30 (-3.0 %);
@@ -291,6 +326,24 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
 
 ## Agent experiments
 
+- 2026-10-10 `arena` **A model-written e-mail (whole prose, figures and IDs guarded) changed no
+  outcome.** `LLM_WRITER=full` on branch `steffen/elicit`: the model writes the body from the
+  greeting to the proposal, every figure must be one code put on the table, IDs and leaks are
+  blocked, 2.2 to 2.8 s per call. Two runs each: P02 0.733 and P18 0.630 to the cent as with the
+  template, P11 45.50 again (floor), P08 0.60 and 0.57 against 0.56 with the template and the
+  same menu (spread of identical runs 0.47 to 0.67). → Wording moves these bots within their
+  noise band only; the sheets, the claims and their caps decide. The mode stays off by default.
+
+- 2026-10-10 `arena` **Round-1 clause menu (branch `steffen/elicit`).** The planned sheet plus
+  the index clause with the largest deadband at equal C for us, in a relationship goal priced at
+  that structure's optimum; the full-cost estimate bounded by the quote; the target recomputed on
+  a switch of terms. P02 0.733 at 362.02 with the 5 % copper clause, agreed in round 1
+  (`7196cc241752a806`, three identical runs; was 0.507). With the menu also sent to the
+  distributors: P18 0.63 at 5.20 (`7826bde84e0fd3e0`, best so far), P08 0.56 at 5.46
+  (`8839210e24f47e37`, inside the 0.47 to 0.67 spread of identical runs), both with a first
+  counter 1.5 to 2 % above the fixed-ask path; the menu now skips a supplier whose letter proposes
+  a clause. Same code plays every case file on the simulator (`tests/`).
+
 - 2026-10-10 `arena` **A falling cost driver over the best window moves the first counter (v10).**
   The claim bank only knew 12-month index changes, where the distributors' main driver AS-14404
   rose 5.9 %; over the window the arena checks (any two months up to 12 apart, ending within the
@@ -421,8 +474,9 @@ shows evidence.
 
 ## Hypotheses (untested in the arena)
 
-- Records on P02 (0.85) and P08 (0.73) come from a lower round-1 counter, not from later rounds:
-  our later rounds converge to the same price whatever the gap (P02 371.9 in v4 to v6).
+- The P08 record (0.73) comes from a lower round-1 counter, not from later rounds: our later
+  rounds converge to the same price whatever the gap. (P02's record is explained by the copper
+  clause, see Supplier behaviour.)
 - Three sheets of equal C for us in round 1 reveal what each lever is worth to the supplier
   (payment, lead time, ppm) and could lift P10 and P11.
 - The close response of a final case carries `c_best`; calibrating anchors between waves from it

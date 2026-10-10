@@ -15,6 +15,7 @@ What the suppliers showed (sandbox and practice, `docs/learnings.md`):
 import base64
 import functools
 import logging
+import re
 import time
 
 from arena_kit.docs import standard_terms
@@ -134,7 +135,10 @@ class Negotiator:
         s.target = self.target_for(s, s.terms)
         # round 1 also offers the index clause the kit values at zero, at equal C for us; in a
         # relationship goal not below that structure's optimum, as it may be agreed at once
-        s.menu = safe(lambda: eco.menu(case, s.std, s.est, s.terms, self.target_for(s, s.terms, menu=True)), [])
+        # not to a supplier whose own letter proposes a clause (the distributors): it imposes its
+        # clause anyway and priced our deadband sheet 1.5 to 2 % above its own (P08, P18)
+        if not self.asked_for_clause():
+            s.menu = safe(lambda: eco.menu(case, s.std, s.est, s.terms, self.target_for(s, s.terms, menu=True)), [])
         s.claims = safe(lambda: self.bank.for_supplier(sid, q_price), [])
         self.note(
             sid,
@@ -153,6 +157,12 @@ class Negotiator:
             claims=[c["text"] for c in s.claims],
         )
         return s
+
+    def asked_for_clause(self):
+        """Whether the case's trigger letter proposes an index or surcharge clause itself."""
+        doc = self.case.get("trigger_doc")
+        text = safe(lambda: self.pkg.document(doc), "") if doc and self.pkg else ""
+        return bool(re.search(r"(adjustment|surcharge|index|escalat\w*) clause|preisgleit", text or "", re.I))
 
     def target_for(self, s, terms, menu=False):
         """Relationship goals: the price at `terms` below which a lower price costs more in
