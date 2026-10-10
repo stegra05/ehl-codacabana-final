@@ -151,7 +151,9 @@ class Negotiator:
         s.quote = safe(
             lambda: round(eco.price_for_value(case, s.terms, s.est, eco.value(case, quote, s.est)), 2), q_price
         )
-        if full_cost and not near_cost:
+        if full_cost:
+            # also for a supplier selling at our cost estimate: below the optimum a lower price costs
+            # us more than it saves, and pushing on made Nordmark withdraw (P02 v1)
             s.target = safe(lambda: eco.relationship_optimum(case, s.terms, s.std, s.est, full_cost * 0.85, s.quote))
         safe(lambda: self.trade_clause(s, quote, full_cost))
         s.claims = safe(lambda: self.bank.for_supplier(sid, q_price), [])
@@ -181,6 +183,8 @@ class Negotiator:
         case = self.case
         if "index_clause" not in case["negotiable"] or quote.get("index_clause"):
             return
+        if "hedged" in s.prof["signals"]:
+            return  # its material is bought forward at fixed prices: the index does not reach its costs
         for clause in case.get("term_options", {}).get("index_clause") or []:
             if clause and clause.get("series") not in s.est["index_moves"]:
                 move = self.bank.move12(clause["series"])

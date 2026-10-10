@@ -75,19 +75,33 @@ def estimate(case, std, rate, full_cost=None, ppm=None, lead=None, overtime=0.0)
     return est
 
 
+# The most a supplier is assumed to value an index clause at, as a share of the price. The model
+# below is linear in the driver's move and the material share; it is backed by one supplier that
+# valued its clause at 8.5 % (Nordmark, P02). Copper's 48 % year would value a 55 % share at 24 %
+# of the price (P14), which nothing supports.
+CLAUSE_VALUE_MAX = 0.08
+
+
+def clause_share(clause, est):
+    """What a clause is worth to the supplier as a share of the price: it expects its driver to
+    move on as it did over the last twelve months (what it cites in its quote), and the clause
+    pays it that share beyond the deadband, capped at `CLAUSE_VALUE_MAX`. None without a move."""
+    move = est.get("index_moves", {}).get(clause.get("series"))
+    if move is None:
+        return None
+    exposed = max(0.0, move - (clause.get("deadband_pct") or 0) / 100)
+    return min(CLAUSE_VALUE_MAX, (clause.get("material_share") or 0) * exposed)
+
+
 def clause_value(terms, est):
-    """What an index clause is worth to the supplier per unit: it expects its driver to move on as
-    it did over the last twelve months (what it cites in its quote), and the clause pays it that
-    share beyond the deadband. Nordmark agreed at once to a copper clause 4 % below its fixed
-    price (P02); the distributors priced the AS-14404 deadband at exactly this (P08, P18)."""
+    """What an index clause is worth to the supplier per unit. Nordmark agreed at once to a copper
+    clause 4 % below its fixed price (P02); the distributors priced the AS-14404 deadband at
+    exactly our cost (P08, P18)."""
     clause = terms.get("index_clause")
     if not clause:
         return 0.0
-    move = est.get("index_moves", {}).get(clause.get("series"))
-    if move is None:
-        return 0.0
-    exposed = max(0.0, move - (clause.get("deadband_pct") or 0) / 100)
-    return (clause.get("material_share") or 0) * exposed * (terms.get("unit_price") or 0)
+    share = clause_share(clause, est)
+    return 0.0 if share is None else share * (terms.get("unit_price") or 0)
 
 
 def clause_cost_share(case, clause):
@@ -107,10 +121,9 @@ def clause_trade(case, est, min_gain=0.02):
     for clause in case.get("term_options", {}).get("index_clause") or []:
         if not clause:
             continue
-        move = est.get("index_moves", {}).get(clause.get("series"))
-        if move is None:
+        theirs = clause_share(clause, est)
+        if theirs is None:
             continue
-        theirs = (clause.get("material_share") or 0) * max(0.0, move - (clause.get("deadband_pct") or 0) / 100)
         gain = theirs - clause_cost_share(case, clause)
         key = (round(gain, 4), clause.get("deadband_pct") or 0)
         if gain >= min_gain and (best is None or key > best[0]):
