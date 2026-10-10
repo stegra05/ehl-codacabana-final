@@ -90,8 +90,9 @@ def build(neg, s, quote, events):
         f"Overtime per day faster than quoted: {s.est.get('overtime')} of the price.",
         f"Code's opening price at L1: {s.anchor}. Its quote at L1 terms: {s.quote}."
         + (
-            f" Relationship goal: below {s.target} per unit at L1 a lower price raises our C "
-            "(the supplier's margin charge grows faster than the saving); never go below it."
+            f" Relationship goal: our estimate puts the lowest C near {s.target} per unit at L1 (below it the "
+            "supplier's margin charge grows faster than the saving); an estimate, off by a few percent. "
+            "The code policy opens below it and closes when its counter reaches it."
             if s.target
             else ""
         ),

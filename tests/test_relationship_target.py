@@ -77,4 +77,4 @@ def test_changed_economics_refresh_target_without_clipping_search(monkeypatch):
     neg.move(side.sid, {side.sid: [event]})
     assert len(bounds) == 1
     assert bounds[0][1] >= 16
-    assert side.ours[-1] == 16
+    assert side.ours[-1] == 14.7  # its counter below the target: taken, never offered above

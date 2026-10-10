@@ -355,9 +355,11 @@ class Negotiator:
         if status in DONE or left <= 0:
             return self.finish(s, sheets, events, theirs, left)
         if s.ours and s.target and theirs <= s.target:
-            # relationship goal: below the target a lower price costs more than it saves
+            # relationship goal: below the target a lower price costs more than it saves; but a
+            # counter below our estimate shows its cost is lower than we think: take the counter,
+            # never offer above it (P01: 131.27 sent against its 130.50, 0.91 against 0.98)
             s.state = "closing"
-            return self.send(s, [eco.at_price(s.terms, max(s.target, theirs))], [], events, theirs)
+            return self.send(s, [eco.at_price(s.terms, theirs)], [], events, theirs)
         if s.ours and theirs <= s.ours[-1]:  # it came below what we offered: take it
             return self.finish(s, sheets, events, theirs, left)
         price, n_claims = self.next_price(s, theirs)

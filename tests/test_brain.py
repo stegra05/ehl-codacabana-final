@@ -2,6 +2,7 @@
 guard, out-of-bounds answers are clamped, and a broken model leaves the move to the code policy."""
 
 import json
+import re
 import secrets
 
 from arena_kit import ArenaClient, RemoteTable
@@ -69,11 +70,33 @@ def test_prose_with_a_figure_falls_back_to_the_template(sim_url, tmp_path, monke
             "read": "",
             "plan": "",
             "action": "counter",
-            "sheets": [{"row": "L1", "unit_price": 1e6}],
+            "sheets": [{"row": "L0", "unit_price": 1e6}],
             "claims": [],
             "email": "We can pay in 14 days.",
         }
 
     result, notes = play(sim_url, tmp_path, monkeypatch, model(answer))
     assert any("prose dropped: template" in f for n in notes if n["what"] == "model_move" for f in n["fixes"])
+    assert result["deal"]
+
+
+def test_the_main_line_stays_on_code_terms(sim_url, tmp_path, monkeypatch):
+    """Another row first goes out second, behind our L0 line at the same value for the supplier."""
+
+    def answer(n, user):
+        rows = re.findall(r"^- (L[1-9]\d*) at ", user, re.M)  # other rows, priced in the menu
+        row = rows[0] if rows else "L0"
+        return {
+            "read": "",
+            "plan": "",
+            "action": "counter",
+            "sheets": [{"row": row, "unit_price": 1e6}],
+            "claims": [],
+            "email": "Thank you.",
+        }
+
+    result, notes = play(sim_url, tmp_path, monkeypatch, model(answer))
+    fixes = [f for n in notes if n["what"] == "model_move" for f in n["fixes"]]
+    assert any(f.startswith("main line kept on L0") for f in fixes)
+    assert not any(n["what"] == "switch_terms" and n["why"] == "the model's row" for n in notes)
     assert result["deal"]

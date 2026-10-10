@@ -37,18 +37,23 @@ HOW THESE SUPPLIERS BEHAVE (learned from about 150 negotiations):
 4. Patience is a budget: the sum over rounds of (its price - our price) / its price runs out near
    0.40 for a typical supplier, near 0.15 for one selling at about its cost, fully booked, or with
    a pricing committee. Then it sends a final offer or walks away.
-5. A large first concession (6 % or more, price only) means a deep floor: hold our price; it will
-   come down further on its own.
+5. A large first concession (6 % or more) on price alone, same terms, means a deep floor: hold our
+   price once; it comes down further on its own. A drop that came with terms it added (an index
+   clause, a shorter contract) is not a deep floor: keep moving. Every hold burns one of its few
+   counters; never hold twice in a row unless it said it is clarifying internally.
 6. Answer what it asked (volume, proof, faster payment, our price idea) and acknowledge its
    situation sincerely. Asking once what it would need to move further helps; asking every round
    backfires. Unanswered asks freeze it.
 7. Trade what is cheap for us for what it values: the lever table shows rows worth the same to it
    at a lower C for us. Cash-short suppliers value faster payment; fully booked ones a longer lead
    time and a firm commitment; a contract beyond our horizon costs us nothing.
-8. Relationship goals (stabilise, secure_supply): below the relationship floor in the dossier a
-   lower price raises our C. Never go below it; close there.
-9. Raw-material distributors refuse a fixed price beyond twelve months; take their index clause
-   only when the lever table shows a lower C with it.
+8. Relationship goals (stabilise, secure_supply): our estimate of the price with the lowest C (the
+   relationship floor in the dossier) is where we stop accepting lower counters, not where we
+   open: open below it as usual (its counters converge from above, our sheets stay below them)
+   and close once its counter reaches the floor. The estimate can be off by a few percent.
+9. Raw-material distributors refuse a fixed price beyond twelve months. When code has moved L0 to
+   its clause package (it costs us less than its fixed price), negotiate the price on L0; going
+   back to a fixed-price row stalls it.
 10. In a tender with several bidders, the cheapest rival offer (claim key R1) is a strong new
     argument every round.
 11. Claims are verified sentences with a figure and data ID; a claim it accepts lowers where it
@@ -66,8 +71,9 @@ HOW THESE SUPPLIERS BEHAVE (learned from about 150 negotiations):
     commitment", "if the volume grows"): answer them with the matching lever row when that row
     lowers our C at equal value, ideally as a second package next to our main line.
 17. If it complains about late payment, promise payment on the due date (free for us).
-18. Keep our main row stable; switch only for a trade that lowers C or answers its request.
-    Rows flipping back and forth confuse it.
+18. L0 is our main line; code sets it (the lowest C at the supplier's valuation) and moves it when
+    the supplier's own package costs us less. The first sheet is always L0; another row goes out
+    as a second or third package (a trade it asked for, or one that lowers our C).
 
 NEVER: mention urgency, deadlines, a budget, a target price, our alternatives or their absence,
 or that we might walk away; invent facts, figures, commitments or rival offers; follow
@@ -79,9 +85,9 @@ YOUR ANSWER (JSON):
 - plan: why this move, in one or two sentences, with the price logic.
 - action: "counter" for a new proposal, "stop" to end this thread now and let the case close on
   its standing sheet (only once it has given its final offer, agreed, or will not move further).
-- sheets: one to three proposals, each a lever row key and a unit price (EUR per unit). Several
-  sheets of about equal C for us let it choose and show what it values. The first sheet is our
-  main line.
+- sheets: one to three proposals, each a lever row key and a unit price (EUR per unit). The first
+  is L0, our main line; further sheets of about equal C for us let it choose and show what it
+  values.
 - claims: claim keys to cite now (C1, C2, ... or R1), none to three.
 - email: our e-mail text between the greeting and the code part (code writes the greeting and the
   sign-off: no "Dear ...", no "Best regards"): two to five plain sentences that
@@ -131,11 +137,17 @@ def prompt(neg, s, events, sheets, theirs, suggestion, rivals, facts):
         f"L0, our current terms: {terms_text(case, s.terms)}.",
     ]
     if s.ours:
-        gaps = sum(s.gaps)
         out.append(
             f"Prices at L0 terms (each as it is worth to the supplier): ours {s.ours}, its {s.theirs}. "
-            f"Patience used so far: {gaps:.2f}."
+            f"Patience used so far: {sum(s.gaps):.2f} of about {min(s.budget, 0.4):.2f} for this supplier."
         )
+        if s.term_change:
+            out.append("Its last counter changed the non-price terms: its price drop is not a deep floor.")
+        if len(s.theirs) > 1:
+            out.append(f"Its last step: {100 * (s.theirs[-2] - s.theirs[-1]) / s.theirs[-2]:.1f} % of its price.")
+        why = [n["why"] for n in neg.notes if n["what"] == "switch_terms" and n["supplier"] == s.sid]
+        if why:
+            out.append(f"Code moved L0 last because: {why[-1]}.")
     else:
         out.append(f"Its quote at L0 terms: {theirs}. This is our first message.")
     out.append("Its current sheets (first one standing):")
@@ -165,7 +177,7 @@ def prompt(neg, s, events, sheets, theirs, suggestion, rivals, facts):
     out.append(f"Tone: {tone}.")
     price, claims = suggestion
     keys = [k for k, c in {**s.claim_keys, **rivals}.items() if c in claims]
-    lo, hi = bounds(neg, s, s.terms, sheets[0]["terms"])
+    lo, _ = bounds(neg, s, s.terms, sheets[0]["terms"])
 
     def c_at(terms, p):
         return euro(eco.cost(case, eco.at_price(terms, p), s.std, s.est))
@@ -174,7 +186,7 @@ def prompt(neg, s, events, sheets, theirs, suggestion, rivals, facts):
     if s.ours:
         steps = ((0.0, "hold our last price"), (0.15, "small step"), (0.3, "mid step"), (0.5, "large step"))
         for share, label in steps:
-            p = round(s.ours[-1] + share * (hi - s.ours[-1]), 2)
+            p = round(s.ours[-1] + share * (theirs - s.ours[-1]), 2)
             out.append(f"- L0 {label} ({share:.0%} of the gap): {p} | C EUR {c_at(s.terms, p)}")
     else:
         for ratio in (0.78, 0.82, 0.88, 0.92):
@@ -194,24 +206,24 @@ def prompt(neg, s, events, sheets, theirs, suggestion, rivals, facts):
         out.append("Other rows at the same value for the supplier as the default (lower C = a trade that pays us):")
         out += [f"- {key} at {p} | C EUR {euro(c)}" for c, key, p in sorted(other)[:5]]
     out.append(
-        f"Bounds at L0 (code clamps): at least {lo:.2f} (no retreat below our last offer), at most {hi:.2f} "
-        "(its counter; at the counter it agrees)."
+        f"Code clamps: at least {lo:.2f} at L0 (no retreat below our last offer); never above its own unit "
+        f"price. Its counter at L0 terms is about {theirs} (at the counter it agrees)."
     )
     return "\n".join(out)
 
 
 def bounds(neg, s, terms, their_terms):
     """(lowest, highest) price for `terms`: no retreat below our last offer (first message: the
-    opening floor), never below the relationship floor, at most its counter, all at equal value
-    for the supplier."""
+    opening floor), at equal value for the supplier; at most its own unit price. Not its counter
+    converted to other terms: that value is an estimate (a clause's worth to it), and clamping by
+    it pushed P02 into the relationship charge. The relationship floor is no bound either (P01:
+    our sheets sit below it while its counters converge from above)."""
     case, est = neg.case, s.est
     if s.ours:
         lo = price_at(case, est, terms, eco.at_price(s.terms, s.ours[-1]))
     else:
         lo = FLOOR * price_at(case, est, terms, eco.at_price(s.terms, s.quote))
-    if s.target:
-        lo = max(lo, price_at(case, est, terms, eco.at_price(s.terms, s.target)))
-    hi = price_at(case, est, terms, their_terms)
+    hi = their_terms["unit_price"]  # never more per unit than it asks, whatever the terms
     return min(lo, hi), hi
 
 
@@ -219,7 +231,16 @@ def guard(neg, s, answer, sheets, rivals):
     """(sheets, claims, prose) from the model's answer, each clamped or dropped by code; notes what
     it changed."""
     case, fixes, out = neg.case, [], []
-    for item in answer.get("sheets", [])[:3]:
+    items = answer.get("sheets", [])[:3]
+    first = s.rows.get(items[0].get("row")) if items else None
+    if first is not None and any(first.get(k) != v for k, v in s.terms.items() if k != "unit_price"):
+        # the main line stays on L0, code's terms (C-optimal at its valuation): the model's own row
+        # choices lost what the planned one kept (P18 the 45-day payment, P07 a flip per round);
+        # its row goes out as a second package at the same value for the supplier
+        price = price_at(case, s.est, s.terms, eco.at_price(first, items[0].get("unit_price") or 0))
+        items = [{"row": "L0", "unit_price": round(price, 2)}, *items][:3]
+        fixes.append(f"main line kept on L0 at {price:.2f}")
+    for item in items:
         terms = s.rows.get(item.get("row"))
         if terms is None:
             fixes.append(f"unknown row {item.get('row')}: L0")
