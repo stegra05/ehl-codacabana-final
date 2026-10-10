@@ -56,14 +56,58 @@ def estimate(case, std, rate, full_cost=None, ppm=None, lead=None, overtime=0.0)
         est["ppm"] = ppm
     if full_cost:
         est["full_cost"] = full_cost
+    est["index_moves"] = {}  # series -> its change over the last 12 months (share), what the supplier expects on
     return est
+
+
+def clause_value(case, terms, est):
+    """What an index clause is worth to the supplier per unit: it expects its driver to move on as
+    it did over the last twelve months (what it cites in its quote), and the clause pays it that
+    share beyond the deadband. Nordmark agreed at once to a copper clause 4 % below its fixed
+    price (P02); the distributors priced the AS-14404 deadband at exactly this (P08, P18)."""
+    clause = terms.get("index_clause")
+    if not clause:
+        return 0.0
+    move = est.get("index_moves", {}).get(clause.get("series"))
+    if move is None:
+        return 0.0
+    exposed = max(0.0, move - (clause.get("deadband_pct") or 0) / 100)
+    return (clause.get("material_share") or 0) * exposed * (terms.get("unit_price") or 0)
+
+
+def clause_cost_share(case, clause):
+    """Our cost of a clause as a share of the spend: the case's path beyond the deadband plus the
+    index risk charge."""
+    b = case["buyer"]
+    share, deadband = clause.get("material_share") or 0, (clause.get("deadband_pct") or 0) / 100
+    path = abs(b.get("index_paths", {}).get(clause.get("series"), 0.0))
+    return share * max(0.0, path - deadband) + share * b.get("index_risk_pct", 0) / 100
+
+
+def clause_trade(case, est, min_gain=0.02):
+    """The index clause worth trading: the supplier's value less our cost, as a share of the price,
+    above `min_gain`; among equal gains the widest deadband (least risk). None when no clause pays
+    (P08, P18: the supplier's value equals our cost) or the case has none to offer."""
+    best = None
+    for clause in case.get("term_options", {}).get("index_clause") or []:
+        if not clause:
+            continue
+        move = est.get("index_moves", {}).get(clause.get("series"))
+        if move is None:
+            continue
+        theirs = (clause.get("material_share") or 0) * max(0.0, move - (clause.get("deadband_pct") or 0) / 100)
+        gain = theirs - clause_cost_share(case, clause)
+        key = (round(gain, 4), clause.get("deadband_pct") or 0)
+        if gain >= min_gain and (best is None or key > best[0]):
+            best = (key, clause)
+    return best[1] if best else None
 
 
 def value(case, terms, est):
     """What a sheet is worth to the supplier per unit, in cash at its standard terms, less the
     overtime a faster delivery than it quoted costs it (fully booked suppliers: about 0.5 % of
     the price per day, P05 and P10)."""
-    v = supplier_value(case, known_incoterm(case, terms), est)
+    v = supplier_value(case, known_incoterm(case, terms), est) + clause_value(case, terms, est)
     lead, quoted = terms.get("lead_time_days"), est.get("lead")
     if est.get("overtime") and lead is not None and quoted and lead < quoted:
         v -= est["overtime"] * terms["unit_price"] * (quoted - lead)

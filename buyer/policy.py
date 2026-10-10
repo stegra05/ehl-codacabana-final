@@ -102,6 +102,12 @@ class Negotiator:
         )
         q_price = quote["unit_price"]
         goal, signals = case["buyer"].get("category_goal"), s.prof["signals"]
+        sustainable = case["buyer"].get("sustainable_margin_pct") or 0
+        if full_cost and goal in eco.RELATIONSHIP_GOALS:
+            # it quoted with its margin: a should-cost above that is our estimate's error (P02: 374.95
+            # against a quote of 370.96; the relationship charge of the deals says about 368)
+            full_cost = min(full_cost, eco.value(case, quote, s.est) * (1 - sustainable / 100))
+            s.est["full_cost"] = full_cost
         ratio = ANCHOR.get(goal, 0.85)
         near_cost = bool(own_plant and full_cost >= 0.98 * q_price)  # it sells at our cost estimate
         if goal in eco.RELATIONSHIP_GOALS:
@@ -125,6 +131,7 @@ class Negotiator:
         )
         if full_cost and not near_cost:
             s.target = safe(lambda: eco.relationship_optimum(case, s.terms, s.std, s.est, full_cost * 0.85, s.quote))
+        safe(lambda: self.trade_clause(s, quote, full_cost))
         s.claims = safe(lambda: self.bank.for_supplier(sid, q_price), [])
         self.note(
             sid,
@@ -142,6 +149,37 @@ class Negotiator:
             claims=[c["text"] for c in s.claims],
         )
         return s
+
+    def trade_clause(self, s, quote, full_cost):
+        """An index clause the supplier values more than it costs us (its driver rose over the
+        year, the case's path is small): offer it from the start at the price worth the same to it
+        as our anchor without it, and in a relationship goal no lower than the relationship
+        optimum, where it is agreed at once (P02: Nordmark agreed to a 5 % copper deadband 4 %
+        below its fixed price). No trade where its value equals our cost (P08, P18)."""
+        case = self.case
+        if "index_clause" not in case["negotiable"] or quote.get("index_clause"):
+            return
+        for clause in case.get("term_options", {}).get("index_clause") or []:
+            if clause and clause.get("series") not in s.est["index_moves"]:
+                move = self.bank.move12(clause["series"])
+                if move is not None:
+                    s.est["index_moves"][clause["series"]] = move
+        clause = eco.clause_trade(case, s.est)
+        if not clause or s.terms.get("index_clause") == clause:
+            return
+        target_value = eco.value(case, s.terms, s.est)  # our anchor as it is worth to the supplier
+        terms = {**s.terms, "index_clause": clause}
+        price = eco.price_for_value(case, terms, s.est, target_value)
+        floor = None
+        if full_cost and case["buyer"].get("category_goal") in eco.RELATIONSHIP_GOALS:
+            floor = eco.relationship_optimum(case, terms, s.std, s.est, full_cost * 0.85, s.quote)
+            price = max(price, floor or 0.0)
+        if not eco.must_haves_ok(case, eco.at_price(case, terms, price), s.std):
+            return
+        s.terms = eco.at_price(case, terms, price)
+        s.anchor = s.terms["unit_price"]
+        s.target = floor or s.target
+        self.note(s.sid, "clause_trade", clause=clause, anchor=s.anchor, target=s.target)
 
     def full_cost(self, part, sid):
         """(should-cost of the part, whether it models this supplier's own plant): full cost
@@ -403,6 +441,11 @@ class Negotiator:
             out.append("payment terms are fixed for this agreement; we pay reliably on the due date")
         if "contract_months" in case["negotiable"]:
             out.append("we offer a long contract term, which gives them planning security")
+        if s.terms.get("index_clause") and self.notes and any(n["what"] == "clause_trade" for n in self.notes):
+            out.append(
+                "instead of a fixed price we propose an index clause with a deadband on their main cost driver, "
+                "so both sides share the material risk; in return the price basis reflects that"
+            )
         if any(c["kind"] == "forecast" for c in claims) or any(c["kind"] == "forecast" for c in s.claims):
             out.append("our demand forecast for this part is rising")
         if s.ours and len(s.ours) > 1 and s.ours[-1] > s.ours[-2]:
