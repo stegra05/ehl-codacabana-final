@@ -1,0 +1,30 @@
+21:53:42 HTTP Request: GET https://arena.tacto.ai/v1/cases?set=practice "HTTP/1.1 200 OK"
+21:53:42 HTTP Request: POST https://arena.tacto.ai/v1/sessions "HTTP/1.1 200 OK"
+21:53:42 session b4273791cbb8ff75
+21:53:42 HTTP Request: GET https://arena.tacto.ai/v1/sessions/b4273791cbb8ff75/attachments/att:70510-0-quote "HTTP/1.1 200 OK"
+21:53:42 case:P02 sup:70510 {'t': 1791662022.5, 'supplier': 'sup:70510', 'what': 'clause_trade', 'clause': {'series': 'CU-NOTATION', 'material_share': 0.2, 'deadband_pct': 5, 'base_month': '2026-08'}, 'anchor': 361.67, 'target': 361.67}
+21:53:42 case:P02 sup:70510 {'t': 1791662022.5, 'supplier': 'sup:70510', 'what': 'setup', 'quote': {'unit_price': 370.96, 'payment_days': 30, 'index_clause': None}, 'full_cost': 370.6431383333333, 'near_cost': True, 'terms': {'unit_price': 361.67, 'payment_days': 90, 'index_clause': {'series': 'CU-NOTATION', 'material_share': 0.2, 'deadband_pct': 5, 'base_month': '2026-08'}}, 'quote_at_terms': 374.06, 'anchor': 361.67, 'target': 361.67, 'budget': 0.14}
+21:53:44 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+21:53:44 writer paragraph in 2.1s
+21:53:44 case:P02 sup:70510 {'t': 1791662024.6, 'supplier': 'sup:70510', 'what': 'send', 'state': 'closing', 'theirs': 344.5, 'ours': 361.67, 'asks': [], 'attached': []}
+21:54:05 HTTP Request: POST https://arena.tacto.ai/v1/sessions/b4273791cbb8ff75/threads/sup:70510/messages "HTTP/1.1 200 OK"
+21:54:06 HTTP Request: GET https://arena.tacto.ai/v1/sessions/b4273791cbb8ff75/attachments/att:70510-1-quote "HTTP/1.1 200 OK"
+21:54:06 case:P02 sup:70510 {'t': 1791662046.0, 'supplier': 'sup:70510', 'what': 'accept', 'c': 2251054.53, 'offer': 'offer:70510-1'}
+21:54:06 HTTP Request: POST https://arena.tacto.ai/v1/sessions/b4273791cbb8ff75/threads/sup:70510/messages "HTTP/1.1 200 OK"
+21:54:06 HTTP Request: GET https://arena.tacto.ai/v1/sessions?set=practice "HTTP/1.1 200 OK"
+21:54:06 HTTP Request: GET https://arena.tacto.ai/v1/sessions/0af139c3bfcd5a70 "HTTP/1.1 200 OK"
+21:54:06 HTTP Request: GET https://arena.tacto.ai/v1/sessions/0af139c3bfcd5a70/backoffice "HTTP/1.1 200 OK"
+21:54:06 HTTP Request: GET https://arena.tacto.ai/v1/sessions/a833aef99bbf9670 "HTTP/1.1 200 OK"
+21:54:06 HTTP Request: GET https://arena.tacto.ai/v1/sessions/a833aef99bbf9670/backoffice "HTTP/1.1 200 OK"
+21:54:06 HTTP Request: GET https://arena.tacto.ai/v1/sessions/c5b5bfa5d502e57a "HTTP/1.1 200 OK"
+21:54:06 HTTP Request: GET https://arena.tacto.ai/v1/sessions/c5b5bfa5d502e57a/backoffice "HTTP/1.1 200 OK"
+21:54:07 HTTP Request: GET https://arena.tacto.ai/v1/sessions/8b6cfb4167b46580 "HTTP/1.1 200 OK"
+21:54:07 HTTP Request: GET https://arena.tacto.ai/v1/sessions/8b6cfb4167b46580/backoffice "HTTP/1.1 200 OK"
+21:54:07 HTTP Request: GET https://arena.tacto.ai/v1/sessions/f37fdb57f2599ee3 "HTTP/1.1 200 OK"
+21:54:07 HTTP Request: GET https://arena.tacto.ai/v1/sessions/f37fdb57f2599ee3/backoffice "HTTP/1.1 200 OK"
+21:54:07 HTTP Request: GET https://arena.tacto.ai/v1/sessions/b4273791cbb8ff75 "HTTP/1.1 200 OK"
+21:54:07 HTTP Request: GET https://arena.tacto.ai/v1/sessions/b4273791cbb8ff75/backoffice "HTTP/1.1 200 OK"
+case:P02 {'deal': True, 'supplier_id': 'sup:70510', 'terms': {'payment_days': 90, 'lead_time_days': 35, 'volume_per_year': 6110, 'contract_months': 12, 'effective_date': '2027-01-01', 'index_clause': {'series': 'CU-NOTATION', 'material_share': 0.2, 'deadband_pct': 5.0, 'base_month': '2026-08'}, 'incoterm': 'DAP', 'tooling_eur': 0.0, 'ppm_commitment': 250, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 361.67}, 'c_open': 2282867.49, 'c_deal': 2248075.11, 'c_best': 2235514.05, 'score': 0.7347381731929096}
+mean score: 73.5 over 1 cases
+6 new sessions in logs/sessions/practice
+practice sessions left today: 340

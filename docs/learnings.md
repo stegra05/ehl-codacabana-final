@@ -53,21 +53,21 @@ Hypotheses. Correct or delete entries that turn out wrong.
 
 ## Where we stand
 
-Best score per hosted case, Saturday 21:30: mean 0.737 (team rank about 4 of 21 on the practice
-board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in brackets).
+Best score per hosted case, Saturday 22:00: mean 0.776 (team rank 4 of 24 on the practice board;
+first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (house agent in brackets).
 
 | Case | Goal | Ours | Session | Deal | Record (house) | What limits us |
 |---|---|---|---|---|---|---|
 | P01 | stabilise | 0.974 | `4cc256188e1cd8af` | 130.18, Nov, 14 d | 0.995 (0.966) | agreed at our sheet in round 4 |
-| P02 | stabilise | 0.507 | `3ad1d67f26aac5e7` | 371.88, 90 d | 0.847 (0.740) | Nordmark settles near 371.9 after round 1 |
+| P02 | stabilise | 0.735 | `practice-v11-P02.log` | 361.67, 90 d, CU clause 5 % deadband | 0.847 (0.740) | agreed at once at our relationship optimum; the charge (not the price) caps the score |
 | P03 | stabilise | 0.923 | `c7fcc4c7ae8f4e9a` | 432.15, 90 d, 24 m | 0.936 (0.925) | price frozen |
 | P04 | routine | 0.860 | `81e9fd209c3fd659` | 4.94, 90 d, 36 m | 0.874 (0.860) | C_best needs 4.93 |
 | P05 | leverage RFQ | 0.828 | `917135b8156fb8a3` | Dralveck 27.86, 14 d, 35 d | 0.824 (0.555) | ours is the record |
 | P07 | routine | 0.751 | `cacd5028b34d30dc` | 5.35, 45 d, 36 m | 0.779 (0.782) | final offer in round 3 |
-| P08 | leverage | 0.648 | `practice-v9.log` | 5.26, AS-14404 clause | 0.732 (0.752) | final offer in round 2 to 4; 5.26 to 5.61 across identical runs |
+| P08 | leverage | 0.670 | `practice-v10.log` | 5.26, AS-14404 clause | 0.916 (0.752) | first counter 5.40 with the falling-driver claims; final offer in round 3 to 4 |
 | P10 | secure_supply | 0.679 | `7c4f1855794797d6` | 31.50, 56 d, 36 m | 0.702 (0.686) | fully booked, final early |
 | P11 | quality_first | 0.710 | `3ac9ee6cf673cf7c` | 45.50, 300 ppm | 0.807 (0.314) | wants faster payment, which is fixed |
-| P18 | leverage | 0.485 | `6a39d7511267e0ff` | 5.30, AS-14404 clause | 0.677 (0.386) | final offer in round 2 to 3 |
+| P18 | leverage | 0.621 | `practice-v10.log` | 5.10, AS-14404 clause | 0.677 (0.386) | first counter 5.30 with the falling-driver claims, path 5.20, 5.10 repeats exactly |
 
 ## Score and terms
 
@@ -291,6 +291,21 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
 
 ## Agent experiments
 
+- 2026-10-10 `arena` **A supplier values an index clause on its rising driver far above what it
+  costs us (v11).** Nordmark agreed at once to a CU-NOTATION clause with a 5 % deadband at
+  358.00 and 90 days, 4.3 % below its fixed price of 374.06 at 90 days (teammate's run
+  `P02_491006cd111217a3`, score 0.670); the clause costs us only the 4 % index risk on the copper
+  share (0.8 % of spend), the case's path (+5 %) sits inside the deadband. The deal scored 0.67
+  and not more because 358 is below the relationship optimum: the charge was 59.7k, which puts
+  Nordmark's full cost near 368 (our should-cost says 374.95, above its own quote). Model that
+  fits every clause we have seen: the supplier values a clause at `material_share x (its driver's
+  12-month change - deadband)` of the price (Nordmark 8.5 %, Donautal and Werdenfels 0.4 to 2.7 %,
+  which is exactly our cost of their clause, so no trade there); we pay `material_share x (path -
+  deadband) + the index risk`. → `economics.clause_trade`: offer the clause with the largest net
+  gain (ties: the widest deadband) from round 1 at the price worth the same to the supplier as
+  our anchor, in relationship goals no lower than the relationship optimum (P02: 361.71 with the
+  full cost capped at the quote less the sustainable margin). P14 (copper, stabilise) gains 21 %
+  of the price by this rule, P16 (PPI-C241, leverage) 2 %.
 - 2026-10-10 `arena` **A falling cost driver over the best window moves the first counter (v10).**
   The claim bank only knew 12-month index changes, where the distributors' main driver AS-14404
   rose 5.9 %; over the window the arena checks (any two months up to 12 apart, ending within the

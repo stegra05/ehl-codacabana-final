@@ -141,6 +141,17 @@ class ClaimBank:
         )
         return {"kind": "notice", "ids": [doc, ctr], "text": text, "strength": 5}
 
+    def move12(self, series):
+        """The series' change over the last twelve months as a share (what suppliers cite), or None."""
+        ids = self.ids(f"idx:{series}@")
+        if not ids:
+            return None
+        m2 = ids[-1].split("@")[-1]
+        a, b = self.fact(f"idx:{series}@{months_back(m2, 12)}"), self.fact(ids[-1])
+        if not a or not b or not a.get("value") or not b.get("value"):
+            return None
+        return b["value"] / a["value"] - 1
+
     def index_change(self, series):
         """The largest fall of a series over any window of up to 12 months ending at its latest
         month (the window the arena checks). AS-14404 rose 5.9 % in twelve months but fell 5.5 %
