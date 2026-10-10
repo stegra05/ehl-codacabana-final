@@ -32,6 +32,9 @@ SERIES_NAME = {
 }
 
 
+COUNTRY_CURRENCY = {"PL": "PLN", "CZ": "CZK", "HU": "HUF", "CH": "CHF", "CN": "CNY", "TR": "TRY", "US": "USD"}
+
+
 def months_back(month, n):
     y, m = (int(x) for x in month.split("-"))
     m -= n
@@ -178,46 +181,6 @@ class ClaimBank:
                 )
         return out
 
-    def own_quote(self, part, sid, price):
-        """Its own cheapest quote for this part in the last six months of our data, cheaper than
-        what it asks now; its remark only when it does not argue its case."""
-        rows = self.query(
-            "SELECT id, quote_date, remarks FROM quotes WHERE part_id = ? AND supplier_id = ? AND quote_date >= ? "
-            "ORDER BY unit_price ASC, quote_date DESC LIMIT 1",
-            (part, sid, "2026-04-01"),
-        )
-        f = self.fact(rows[0]["id"]) if rows else None
-        if not f or not price or f["unit_price"] >= price * 0.99 or rows[0]["id"] in self.refs:
-            return None
-        remark = rows[0].get("remarks") or ""
-        if re.search(r"not possible|no room|not discounted|firm|frozen", remark, re.I):
-            remark = ""
-        note = f' ("{remark.rstrip(".")}")' if remark else ""
-        text = (
-            f"Your quote of {rows[0]['quote_date']} for this part was {money(f['unit_price'])} per unit"
-            f"{note} ({rows[0]['id']})."
-        )
-        return {"kind": "own_quote", "ids": [rows[0]["id"]], "text": text, "strength": 6}
-
-    def market_price(self, part, sid, price):
-        """Another supplier's latest order prices for this part, cheaper than this supplier's price."""
-        rows = self.query(
-            "SELECT id, supplier_id FROM po_lines WHERE part_id = ? AND supplier_id != ? "
-            "ORDER BY order_date DESC LIMIT 12",
-            (part, sid),
-        )
-        if not rows:
-            return None
-        other = rows[0]["supplier_id"]
-        facts = [(r["id"], self.fact(r["id"])) for r in rows if r["supplier_id"] == other][:2]
-        facts = [(i, f) for i, f in facts if f and f.get("unit_price")]
-        if len(facts) < 2 or not price or max(f["unit_price"] for _, f in facts) >= price * 0.99:
-            return None
-        ids = [i for i, _ in facts]
-        at = money(facts[0][1]["unit_price"])
-        text = f"We currently buy this part from another supplier at {at} ({', '.join(ids)})."
-        return {"kind": "market_price", "ids": ids, "text": text, "strength": 6}
-
     def signal_notes(self, sid):
         """Its own words in our notes that weaken its case: material bought forward at fixed prices,
         an offer to open its calculation. Context for the person reading, not a checked figure."""
@@ -253,6 +216,33 @@ class ClaimBank:
                 seen.add(c["kind"])
                 uniq.append(c)
         return uniq
+
+    def currency(self, sid):
+        """A supplier paying its costs in a currency that weakened against the euro earns more of it
+        per euro: the ECB rate (its currency per euro) rose."""
+        rows = self.query("SELECT country FROM suppliers WHERE id = ?", (sid,))
+        cur = COUNTRY_CURRENCY.get(rows[0]["country"]) if rows else None  # it invoices in EUR, pays costs locally
+        if not cur:
+            return None
+        ids = self.ids(f"idx:ECB-{cur}@")
+        if not ids:
+            return None
+        m2 = ids[-1].split("@")[-1]
+        m1 = months_back(m2, 12)
+        a, b = self.fact(f"idx:ECB-{cur}@{m1}"), self.fact(f"idx:ECB-{cur}@{m2}")
+        if not a or not b or not a.get("value"):
+            return None
+        pct = (b["value"] / a["value"] - 1) * 100
+        if pct < 0.5:
+            return None  # its currency got stronger: that argues its case
+        refs = f"idx:ECB-{cur}@{m1}, idx:ECB-{cur}@{m2}"
+        return {
+            "kind": "currency",
+            "ids": [f"idx:ECB-{cur}@{m1}", f"idx:ECB-{cur}@{m2}"],
+            "text": f"The euro rose {pct:.1f}% against the {cur} from {m1} to {m2} ({refs}), so your costs "
+            f"in {cur} take fewer euros.",
+            "strength": 4 + min(3.0, pct / 3),
+        }
 
     def scorecard(self, sid, quality):
         ids = self.ids(f"sc:{sid.split(':')[-1]}@")
@@ -301,8 +291,6 @@ class ClaimBank:
         for part in case.get("parts") or []:
             history = self.order_history(part, sid, quote) if single else None
             out += [c for c in (self.should_cost(part, sid, quote), history) if c]
-            if single:
-                out += [c for c in (self.own_quote(part, sid, quote), self.market_price(part, sid, quote)) if c]
             out += [c for c in (self.index_change(s) for s in self.drivers(part)) if c]
             out += self.rival_quote(part, sid, quote)
             if c := self.forecast(part):
@@ -310,6 +298,8 @@ class ClaimBank:
         if c := self.notice(sid):
             out.append(c)
         out += self.signal_notes(sid)
+        if c := self.currency(sid):
+            out.append(c)
         if c := self.scorecard(sid, quality):
             out.append(c)
         if self.foreign:

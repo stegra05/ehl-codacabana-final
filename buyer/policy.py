@@ -98,6 +98,10 @@ class Negotiator:
             ratio = max(ratio, 0.95)  # its list price does not move far; a deep cut only costs patience
         if "capacity_full" in signals:
             ratio, s.budget = max(ratio, 0.93), min(s.budget, 0.16)
+        if "approval_2pct" in signals:
+            # bigger steps go to its pricing committee: these suppliers ended early after deep
+            # anchors (P02, P07, P10, P18); a mild anchor and small gaps keep them conceding
+            ratio, s.budget = max(ratio, 0.92), min(s.budget, 0.18)
         if near_cost:
             ratio, s.budget = max(ratio, 0.97), min(s.budget, 0.14)
         current = case["buyer"].get("current_unit_price")
