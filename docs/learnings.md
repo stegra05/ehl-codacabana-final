@@ -110,6 +110,10 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
 
 ## Supplier behaviour
 
+- 2026-10-10 `arena` **Pushing past a final offer ends the case.** D01: one more sheet 0.1 below
+  its final 49.70 and the foundry walked away, no deal (sandbox `212404b7930bfc68`, "we have
+  reached the absolute limit"). → Accept a final offer that passes the gate; never push it.
+
 - 2026-10-10 `arena` **How it concedes (D01, controlled runs, sandbox):** a constant sheet gets
   no concession and a final offer in round 4 (`d2afbf478253fa57`); each round it concedes about
   min(0.8 x our move, a cap that shrinks by round: 0.5, 0.3, 0.2, 0.2, 0.1); a very low anchor
