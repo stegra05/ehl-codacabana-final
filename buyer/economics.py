@@ -38,6 +38,23 @@ def deal_cost(case, terms, std, est=None):
     return c if c < c_alt(case) else None
 
 
+def quoted_offer(case, terms, std=None):
+    """An outgoing sheet with exactly the quoted effective package, never snapped terms."""
+    effective = closing_terms(case, terms, std)
+    if any(effective.get(k) != v for k, v in case.get("fixed_terms", {}).items()):
+        return None
+    offer = {k: effective.get(k) for k in case["negotiable"]}
+    price = offer.get("unit_price")
+    if not isinstance(price, (int, float)) or not math.isfinite(price) or price <= 0:
+        return None
+    opts = case.get("term_options", {})
+    if any(opts.get(k) and v not in opts[k] for k, v in offer.items()):
+        return None
+    if closing_terms(case, offer, std) != effective:
+        return None
+    return offer if must_haves_ok(case, offer, std) else None
+
+
 def known_incoterm(case, terms):
     """`terms` with an Incoterm the case prices; an unknown one (a hidden case's quote) would be a
     KeyError in the kit, so it falls back to the costliest, as `closing_terms` does for a gap."""

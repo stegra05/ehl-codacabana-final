@@ -73,9 +73,9 @@ def test_close_never_beats_the_alternative():
     assert neg.close(threads)["message"]["action"]["type"] == "walk_away"
 
 
-def test_adopts_its_index_clause_only_when_its_sheet_costs_less():
+def test_price_cut_does_not_justify_costlier_index_package():
     """A supplier's index clause on a rising series is taken only when its sheet, clause included,
-    costs less than its last one; never when it breaks a must-have."""
+    costs less than our planned package; never when it breaks a must-have."""
     case = copy.deepcopy(load_cases()["case:S01"])
     clause = {"series": "WB-CU", "material_share": 0.2, "deadband_pct": 0, "base_month": "2026-08"}
     case["negotiable"].append("index_clause")
@@ -95,7 +95,7 @@ def test_adopts_its_index_clause_only_when_its_sheet_costs_less():
     neg.adopt(s, [{"term_sheet_id": "offer:S-2", "terms": {**quote, "unit_price": 15.80, "index_clause": clause}}])
     assert s.terms["index_clause"] is None  # a token price cut does not pay for the clause
     neg.adopt(s, [{"term_sheet_id": "offer:S-3", "terms": {**quote, "unit_price": 14.0, "index_clause": clause}}])
-    assert s.terms["index_clause"] == clause  # a real cut does
+    assert s.terms["index_clause"] is None  # a price cut alone does not justify worse terms
 
     case["buyer"]["must_haves"] = [{"field": "index_clause", "op": "==", "value": None}]
     neg, s = side(case)
