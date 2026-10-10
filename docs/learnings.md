@@ -1,9 +1,9 @@
 # Learnings
 
 What we know about the arena, its supplier bots and the data package, and what it means for the
-agent. Basis, Saturday 10 October: 62 practice sessions (15 probe, 47 with the price engine,
-v1 to v6), about 60 sandbox sessions including controlled experiments, the data package, and the
-practice records of all teams on `GET /v1/live`. Every euro figure and what-if score below was recomputed with `arena_kit.total_cost`. Evidence: `exports/` (every session, supplier thread,
+agent. Basis, Saturday 10 October: 15 practice sessions covering all 10 hosted cases and 12
+suppliers, 17 sandbox sessions, the team's simulator and sandbox experiments, and the data
+package. Every euro figure and what-if score below was recomputed with `arena_kit.total_cost`. Evidence: `exports/` (every session, supplier thread,
 e-mail and claim; schema in `exports/README.md`) and `analysis/explore.py` (the data package).
 
 Add findings to the matching section, newest first: date, tag, the finding, its evidence (case,
@@ -391,3 +391,16 @@ shows evidence.
   is possible but needs a rules check first.
 - Persona-specific wording beyond the generic paragraph (cash need, partnership 2022, reference
   customer) moves the round-1 counter.
+- Prices fall much further when every sheet stays below the supplier's price and concessions
+  are slow (house agent 0.75 on P08, ours 0.11 after agreeing in round 2).
+- Cash-short suppliers give more price for 14 to 30 days payment than the 0.67 % per 30 days it
+  costs us.
+- Citing the best rival offer moves RFQ bidders; our probe never cited offers.
+- Suppliers with "approval above 2 %" notes move at most 2 % per round.
+- Stale-costing suppliers concede after a verified falling-index claim; hedged suppliers answer
+  index claims with "not our reality" until the hedge ends.
+- The cost floor is full cost; the five that once sold below full cost may go lower.
+- A faster payment package beats a deeper price anchor for cash-short suppliers; test 20 / 30 %
+  openings against standard / early payment as a 2x2, several runs per credit stratum.
+- A `selective` rebuttal (naming the cost driver the supplier left out of its letter) moves more
+  than a plain index claim.
