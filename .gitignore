@@ -33,3 +33,7 @@ out/
 
 # Agent worktrees
 .claude/worktrees/
+
+# Negotiator
+/logs/
+/data/

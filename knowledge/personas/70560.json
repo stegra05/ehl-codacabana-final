@@ -1,0 +1,152 @@
+{
+ "supplier_id": "sup:70560",
+ "name": "Kabelwerk Rhönsberg GmbH",
+ "country": "DE",
+ "category": "electrical",
+ "abc_class": "A",
+ "importance": {
+  "tier": "strategic",
+  "reason": "electrical is a stabilise category",
+  "spend_eur_fy2026": 833607,
+  "spend_rank": 10,
+  "parts": [
+   "part:350040"
+  ],
+  "single_source_parts": [
+   "part:350040"
+  ],
+  "tooling_owned_by_supplier": [],
+  "category_goal": "stabilise"
+ },
+ "profile": {
+  "owner_type": "group",
+  "group_parent": null,
+  "founded": 1957,
+  "staff": 400,
+  "turnover_band": "50-100 M EUR",
+  "equity_ratio_pct": 32.3,
+  "credit_index": 149,
+  "credit_index_12m_ago": 149,
+  "scorecard": {
+   "id": "sc:70560@2026Q3",
+   "quarter": "2026Q3",
+   "colour": "green",
+   "otd_pct": 88.5,
+   "ppm": 111,
+   "open_8d_overdue": 0,
+   "score": 93.7
+  },
+  "we_pay_late_days": 2.2,
+  "standard_payment_days": 30,
+  "incoterm": "DAP",
+  "contract": {
+   "id": "ctr:4600070560",
+   "valid_to": "2026-12-31",
+   "notice_days": 60,
+   "payment_days": 30,
+   "index_clause": {
+    "id": "ctr:4600070560#3.2",
+    "series": "CU-NOTATION",
+    "material_share": 0.55,
+    "deadband_pct": 0
+   }
+  },
+  "settle": {
+   "renewals": 3,
+   "avg_asked_pct": 4.47,
+   "avg_settled_pct": 2.2
+  },
+  "quote_remarks": [
+   "Material covered until March 2027; price valid accordingly."
+  ]
+ },
+ "signals": [
+  "group-owned",
+  "notes mention approvals or head office",
+  "founded 1957",
+  "single source for part:350040"
+ ],
+ "archetype": "group_ladder",
+ "secondary": "near_monopolist",
+ "archetype_scores": {
+  "cash_short": 0.0,
+  "group_ladder": 0.7,
+  "family_memory": 0.1,
+  "near_monopolist": 0.6,
+  "capacity_full": 0.0,
+  "quality_troubled": 0.0,
+  "neutral": 0.0
+ },
+ "levers": [
+  "effective_date",
+  "payment_days",
+  "contract_months",
+  "lead_time_days",
+  "index_clause"
+ ],
+ "avoid": [
+  "big jumps the rep cannot sign without the boss"
+ ],
+ "tone": "warm",
+ "relationship": {
+  "protect": true,
+  "min_margin_pct": 8.0,
+  "max_price_pushes": 2,
+  "walk_allowed": false,
+  "cite_rivals": false
+ },
+ "estimate": {
+  "interest_rate": 0.08,
+  "country_factor": 1.0
+ },
+ "recent": {
+  "documents": [
+   {
+    "id": "doc:20260910-70560-P14",
+    "date": "2026-09-10",
+    "kind": "email",
+    "subject": "Renewal of framework agreement 4600070560"
+   },
+   {
+    "id": "doc:20260617-70560-M1",
+    "date": "2026-06-17",
+    "kind": "call_note",
+    "subject": "Material purchasing"
+   },
+   {
+    "id": "doc:20260415-70560-M2",
+    "date": "2026-04-15",
+    "kind": "meeting_note",
+    "subject": "Annual review"
+   },
+   {
+    "id": "doc:20251014-70560-N",
+    "date": "2025-10-14",
+    "kind": "email",
+    "subject": "Packaging"
+   }
+  ],
+  "news": []
+ },
+ "digest": null,
+ "learned": {
+  "cases": 0,
+  "deals": 0,
+  "walked_away": 0,
+  "final_offers": 0,
+  "avg_score": null,
+  "claims": {
+   "verified": 0,
+   "contradicted": 0,
+   "irrelevant": 0,
+   "duplicate": 0
+  },
+  "lever_answered": {},
+  "needs_approval_seen": 0,
+  "moods": {},
+  "notes": []
+ },
+ "negotiations": [],
+ "built": "2026-10-10T12:46:02+00:00",
+ "updated": "2026-10-10T12:46:02+00:00"
+}

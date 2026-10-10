@@ -1,0 +1,156 @@
+{
+ "supplier_id": "sup:70220",
+ "name": "CNC-Technik Obermaier & Huber GmbH",
+ "country": "DE",
+ "category": "machined parts",
+ "abc_class": "B",
+ "importance": {
+  "tier": "important",
+  "reason": "A supplier, high spend or single source",
+  "spend_eur_fy2026": 153472,
+  "spend_rank": 35,
+  "parts": [
+   "part:320030"
+  ],
+  "single_source_parts": [
+   "part:320030"
+  ],
+  "tooling_owned_by_supplier": [],
+  "category_goal": null
+ },
+ "profile": {
+  "owner_type": "founder",
+  "group_parent": null,
+  "founded": 2004,
+  "staff": 35,
+  "turnover_band": "2-5 M EUR",
+  "equity_ratio_pct": 31.1,
+  "credit_index": 245,
+  "credit_index_12m_ago": 245,
+  "scorecard": {
+   "id": "sc:70220@2026Q3",
+   "quarter": "2026Q3",
+   "colour": "amber",
+   "otd_pct": 56.0,
+   "ppm": 731,
+   "open_8d_overdue": 0,
+   "score": 74.3
+  },
+  "we_pay_late_days": 8.1,
+  "standard_payment_days": 30,
+  "incoterm": "EXW",
+  "contract": {
+   "id": "ctr:4600070220",
+   "valid_to": "2027-06-30",
+   "notice_days": 90,
+   "payment_days": 30,
+   "index_clause": null
+  },
+  "settle": {
+   "renewals": 3,
+   "avg_asked_pct": 2.07,
+   "avg_settled_pct": -1.37
+  },
+  "quote_remarks": []
+ },
+ "signals": [
+  "notes mention cash or liquidity",
+  "we pay it 8 days late on average",
+  "founder-owned",
+  "single source for part:320030",
+  "news: order book full or allocation",
+  "notes mention capacity or lead times",
+  "amber scorecard 2026Q3: OTD 56.0%, 731 ppm"
+ ],
+ "archetype": "capacity_full",
+ "secondary": "near_monopolist",
+ "archetype_scores": {
+  "cash_short": 0.3,
+  "group_ladder": 0.0,
+  "family_memory": 0.25,
+  "near_monopolist": 0.6,
+  "capacity_full": 0.7,
+  "quality_troubled": 0.3,
+  "neutral": 0.0
+ },
+ "levers": [
+  "volume_per_year",
+  "contract_months",
+  "lead_time_days",
+  "effective_date",
+  "payment_days",
+  "index_clause"
+ ],
+ "avoid": [
+  "squeezing price on a bottleneck"
+ ],
+ "tone": "warm",
+ "relationship": {
+  "protect": true,
+  "min_margin_pct": 5.0,
+  "max_price_pushes": 3,
+  "walk_allowed": true,
+  "cite_rivals": true
+ },
+ "estimate": {
+  "interest_rate": 0.08,
+  "country_factor": 1.0
+ },
+ "recent": {
+  "documents": [
+   {
+    "id": "doc:20260915-70220-P09",
+    "date": "2026-09-15",
+    "kind": "email",
+    "subject": "Capacity situation and delivery dates"
+   },
+   {
+    "id": "doc:20260511-70220-M1",
+    "date": "2026-05-11",
+    "kind": "email",
+    "subject": "Payment of invoices"
+   },
+   {
+    "id": "doc:20260224-70220-M2",
+    "date": "2026-02-24",
+    "kind": "meeting_note",
+    "subject": "Supplier day"
+   },
+   {
+    "id": "doc:20251207-70220-N",
+    "date": "2025-12-07",
+    "kind": "email",
+    "subject": "New contact person"
+   }
+  ],
+  "news": [
+   {
+    "id": "news:20260320-04",
+    "date": "2026-03-20",
+    "topic": "full_order_book",
+    "headline": "CNC-Technik Obermaier & Huber GmbH fully booked into next year"
+   }
+  ]
+ },
+ "digest": null,
+ "learned": {
+  "cases": 0,
+  "deals": 0,
+  "walked_away": 0,
+  "final_offers": 0,
+  "avg_score": null,
+  "claims": {
+   "verified": 0,
+   "contradicted": 0,
+   "irrelevant": 0,
+   "duplicate": 0
+  },
+  "lever_answered": {},
+  "needs_approval_seen": 0,
+  "moods": {},
+  "notes": []
+ },
+ "negotiations": [],
+ "built": "2026-10-10T12:46:02+00:00",
+ "updated": "2026-10-10T12:46:02+00:00"
+}

@@ -1,0 +1,179 @@
+{
+ "supplier_id": "sup:70650",
+ "name": "Verbindungstechnik Mairhofer GmbH",
+ "country": "DE",
+ "category": "C-parts",
+ "abc_class": "B",
+ "importance": {
+  "tier": "important",
+  "reason": "A supplier, high spend or single source",
+  "spend_eur_fy2026": 140220,
+  "spend_rank": 38,
+  "parts": [
+   "part:360010",
+   "part:360011",
+   "part:360012"
+  ],
+  "single_source_parts": [
+   "part:360011"
+  ],
+  "tooling_owned_by_supplier": [],
+  "category_goal": null
+ },
+ "profile": {
+  "owner_type": "family",
+  "group_parent": null,
+  "founded": 1983,
+  "staff": 40,
+  "turnover_band": "10-25 M EUR",
+  "equity_ratio_pct": 39.8,
+  "credit_index": 156,
+  "credit_index_12m_ago": 156,
+  "scorecard": {
+   "id": "sc:70650@2026Q3",
+   "quarter": "2026Q3",
+   "colour": "green",
+   "otd_pct": 84.1,
+   "ppm": 296,
+   "open_8d_overdue": 0,
+   "score": 90.6
+  },
+  "we_pay_late_days": 6.1,
+  "standard_payment_days": 30,
+  "incoterm": "DAP",
+  "contract": {
+   "id": "ctr:4600070650",
+   "valid_to": "2026-12-31",
+   "notice_days": 60,
+   "payment_days": 30,
+   "index_clause": null
+  },
+  "settle": {
+   "renewals": 9,
+   "avg_asked_pct": 2.53,
+   "avg_settled_pct": -0.09
+  },
+  "quote_remarks": [
+   "List conditions; supply from stock only.",
+   "List conditions; supply from stock only."
+  ]
+ },
+ "signals": [
+  "notes mention approvals or head office",
+  "family-owned",
+  "founded 1983",
+  "single source for part:360011",
+  "notes mention capacity or lead times"
+ ],
+ "archetype": "family_memory",
+ "secondary": "near_monopolist",
+ "archetype_scores": {
+  "cash_short": 0.0,
+  "group_ladder": 0.2,
+  "family_memory": 0.5,
+  "near_monopolist": 0.4,
+  "capacity_full": 0.2,
+  "quality_troubled": 0.0,
+  "neutral": 0.0
+ },
+ "levers": [
+  "contract_months",
+  "volume_per_year",
+  "effective_date",
+  "payment_days",
+  "lead_time_days",
+  "index_clause"
+ ],
+ "avoid": [
+  "threats",
+  "an aggressive tone",
+  "ignoring the history"
+ ],
+ "tone": "warm",
+ "relationship": {
+  "protect": true,
+  "min_margin_pct": 5.0,
+  "max_price_pushes": 3,
+  "walk_allowed": true,
+  "cite_rivals": true
+ },
+ "estimate": {
+  "interest_rate": 0.08,
+  "country_factor": 1.0
+ },
+ "recent": {
+  "documents": [
+   {
+    "id": "doc:20260817-70650-M1",
+    "date": "2026-08-17",
+    "kind": "email",
+    "subject": "Range changes"
+   },
+   {
+    "id": "doc:20260602-70650-M4",
+    "date": "2026-06-02",
+    "kind": "meeting_note",
+    "subject": "Account review"
+   },
+   {
+    "id": "doc:20260511-70650-M2",
+    "date": "2026-05-11",
+    "kind": "meeting_note",
+    "subject": "Customer portfolio"
+   },
+   {
+    "id": "doc:20260411-70650-M5",
+    "date": "2026-04-11",
+    "kind": "call_note",
+    "subject": "Capacity"
+   },
+   {
+    "id": "doc:20260327-70650-M3",
+    "date": "2026-03-27",
+    "kind": "meeting_note",
+    "subject": "Annual review"
+   },
+   {
+    "id": "doc:20260219-70650-M6",
+    "date": "2026-02-19",
+    "kind": "meeting_note",
+    "subject": "Customer portfolio"
+   },
+   {
+    "id": "doc:20251206-70650-N",
+    "date": "2025-12-06",
+    "kind": "email",
+    "subject": "Holiday shutdown"
+   }
+  ],
+  "news": [
+   {
+    "id": "news:20260803-21",
+    "date": "2026-08-03",
+    "topic": "refocus",
+    "headline": "Verbindungstechnik Mairhofer GmbH sharpens its focus"
+   }
+  ]
+ },
+ "digest": null,
+ "learned": {
+  "cases": 0,
+  "deals": 0,
+  "walked_away": 0,
+  "final_offers": 0,
+  "avg_score": null,
+  "claims": {
+   "verified": 0,
+   "contradicted": 0,
+   "irrelevant": 0,
+   "duplicate": 0
+  },
+  "lever_answered": {},
+  "needs_approval_seen": 0,
+  "moods": {},
+  "notes": []
+ },
+ "negotiations": [],
+ "built": "2026-10-10T12:46:02+00:00",
+ "updated": "2026-10-10T12:46:02+00:00"
+}

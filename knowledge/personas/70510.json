@@ -1,0 +1,150 @@
+{
+ "supplier_id": "sup:70510",
+ "name": "Antriebstechnik Nordmark AG",
+ "country": "DE",
+ "category": "electrical",
+ "abc_class": "A",
+ "importance": {
+  "tier": "strategic",
+  "reason": "electrical is a stabilise category",
+  "spend_eur_fy2026": 3213573,
+  "spend_rank": 1,
+  "parts": [
+   "part:350010",
+   "part:350011",
+   "part:350012",
+   "part:350013"
+  ],
+  "single_source_parts": [
+   "part:350011"
+  ],
+  "tooling_owned_by_supplier": [],
+  "category_goal": "stabilise"
+ },
+ "profile": {
+  "owner_type": "group",
+  "group_parent": "Nordmark Gruppe",
+  "founded": 1911,
+  "staff": 4800,
+  "turnover_band": ">1000 M EUR",
+  "equity_ratio_pct": 29.1,
+  "credit_index": 147,
+  "credit_index_12m_ago": 147,
+  "scorecard": {
+   "id": "sc:70510@2026Q3",
+   "quarter": "2026Q3",
+   "colour": "green",
+   "otd_pct": 90.4,
+   "ppm": 273,
+   "open_8d_overdue": 0,
+   "score": 93.8
+  },
+  "we_pay_late_days": 1.0,
+  "standard_payment_days": 30,
+  "incoterm": "DAP",
+  "contract": {
+   "id": "ctr:4600070510",
+   "valid_to": "2026-12-31",
+   "notice_days": 90,
+   "payment_days": 30,
+   "index_clause": null
+  },
+  "settle": {
+   "renewals": 6,
+   "avg_asked_pct": 2.35,
+   "avg_settled_pct": -0.0
+  },
+  "quote_remarks": []
+ },
+ "signals": [
+  "group-owned",
+  "parent: Nordmark Gruppe",
+  "notes mention approvals or head office",
+  "founded 1911",
+  "notes speak of partnership, loyalty or the past",
+  "single source for part:350011",
+  "notes mention capacity or lead times"
+ ],
+ "archetype": "group_ladder",
+ "secondary": "family_memory",
+ "archetype_scores": {
+  "cash_short": 0.0,
+  "group_ladder": 0.9,
+  "family_memory": 0.4,
+  "near_monopolist": 0.4,
+  "capacity_full": 0.2,
+  "quality_troubled": 0.0,
+  "neutral": 0.0
+ },
+ "levers": [
+  "effective_date",
+  "payment_days",
+  "contract_months",
+  "volume_per_year"
+ ],
+ "avoid": [
+  "big jumps the rep cannot sign without the boss"
+ ],
+ "tone": "warm",
+ "relationship": {
+  "protect": true,
+  "min_margin_pct": 8.0,
+  "max_price_pushes": 2,
+  "walk_allowed": false,
+  "cite_rivals": false
+ },
+ "estimate": {
+  "interest_rate": 0.08,
+  "country_factor": 1.0
+ },
+ "recent": {
+  "documents": [
+   {
+    "id": "doc:20260914-70510-P02",
+    "date": "2026-09-14",
+    "kind": "letter",
+    "subject": "Price adjustment from 01 January 2027"
+   },
+   {
+    "id": "doc:20260410-70510-M1",
+    "date": "2026-04-10",
+    "kind": "meeting_note",
+    "subject": "Annual review"
+   },
+   {
+    "id": "doc:20260227-70510-M2",
+    "date": "2026-02-27",
+    "kind": "meeting_note",
+    "subject": "Annual review"
+   },
+   {
+    "id": "doc:20251019-70510-N",
+    "date": "2025-10-19",
+    "kind": "email",
+    "subject": "Holiday shutdown"
+   }
+  ],
+  "news": []
+ },
+ "digest": null,
+ "learned": {
+  "cases": 0,
+  "deals": 0,
+  "walked_away": 0,
+  "final_offers": 0,
+  "avg_score": null,
+  "claims": {
+   "verified": 0,
+   "contradicted": 0,
+   "irrelevant": 0,
+   "duplicate": 0
+  },
+  "lever_answered": {},
+  "needs_approval_seen": 0,
+  "moods": {},
+  "notes": []
+ },
+ "negotiations": [],
+ "built": "2026-10-10T12:46:02+00:00",
+ "updated": "2026-10-10T12:46:02+00:00"
+}

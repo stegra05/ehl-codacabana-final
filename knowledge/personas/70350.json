@@ -1,0 +1,159 @@
+{
+ "supplier_id": "sup:70350",
+ "name": "Oberflächentechnik Weißacher GmbH",
+ "country": "DE",
+ "category": "sheet metal",
+ "abc_class": "B",
+ "importance": {
+  "tier": "important",
+  "reason": "A supplier, high spend or single source",
+  "spend_eur_fy2026": 217582,
+  "spend_rank": 32,
+  "parts": [
+   "part:330060"
+  ],
+  "single_source_parts": [
+   "part:330060"
+  ],
+  "tooling_owned_by_supplier": [],
+  "category_goal": null
+ },
+ "profile": {
+  "owner_type": "founder",
+  "group_parent": null,
+  "founded": 1990,
+  "staff": 30,
+  "turnover_band": "2-5 M EUR",
+  "equity_ratio_pct": 24.9,
+  "credit_index": 343,
+  "credit_index_12m_ago": 248,
+  "scorecard": {
+   "id": "sc:70350@2026Q3",
+   "quarter": "2026Q3",
+   "colour": "red",
+   "otd_pct": 53.8,
+   "ppm": 5556,
+   "open_8d_overdue": 0,
+   "score": 49.1
+  },
+  "we_pay_late_days": -6.7,
+  "standard_payment_days": 30,
+  "incoterm": "DAP",
+  "contract": {
+   "id": "ctr:4600070350",
+   "valid_to": "2027-06-30",
+   "notice_days": 90,
+   "payment_days": 30,
+   "index_clause": null
+  },
+  "settle": {
+   "renewals": 3,
+   "avg_asked_pct": 0.7,
+   "avg_settled_pct": -2.0
+  },
+  "quote_remarks": [
+   "Payment within 10 days requested."
+  ]
+ },
+ "signals": [
+  "equity ratio 24.9% (thin)",
+  "credit index worsened from 248 to 343",
+  "news: Credit agency lowers rating of Oberflächentechnik Weißacher GmbH (news:20260904-26)",
+  "quote remarks ask for fast payment",
+  "notes mention cash or liquidity",
+  "founder-owned",
+  "single source for part:330060",
+  "red scorecard 2026Q3: OTD 53.8%, 5556 ppm",
+  "5556 ppm"
+ ],
+ "archetype": "cash_short",
+ "secondary": "quality_troubled",
+ "archetype_scores": {
+  "cash_short": 1.3,
+  "group_ladder": 0.0,
+  "family_memory": 0.25,
+  "near_monopolist": 0.6,
+  "capacity_full": 0.0,
+  "quality_troubled": 0.8,
+  "neutral": 0.0
+ },
+ "levers": [
+  "payment_days",
+  "tooling_eur",
+  "ppm_commitment",
+  "chargeback_eur_per_complaint",
+  "unit_price"
+ ],
+ "avoid": [
+  "asking for longer payment terms"
+ ],
+ "tone": "firm",
+ "relationship": {
+  "protect": true,
+  "min_margin_pct": 5.0,
+  "max_price_pushes": 3,
+  "walk_allowed": true,
+  "cite_rivals": true
+ },
+ "estimate": {
+  "interest_rate": 0.15,
+  "country_factor": 1.0
+ },
+ "recent": {
+  "documents": [
+   {
+    "id": "doc:20260912-70350-M1",
+    "date": "2026-09-12",
+    "kind": "call_note",
+    "subject": "Liquidity"
+   },
+   {
+    "id": "doc:20260821-70350-M2",
+    "date": "2026-08-21",
+    "kind": "email",
+    "subject": "Payment of invoices"
+   },
+   {
+    "id": "doc:20260820-70350-P",
+    "date": "2026-08-20",
+    "kind": "email",
+    "subject": "Overdue invoices"
+   },
+   {
+    "id": "doc:20251014-70350-N",
+    "date": "2025-10-14",
+    "kind": "email",
+    "subject": "Holiday shutdown"
+   }
+  ],
+  "news": [
+   {
+    "id": "news:20260904-26",
+    "date": "2026-09-04",
+    "topic": "credit_downgrade",
+    "headline": "Credit agency lowers rating of Oberflächentechnik Weißacher GmbH"
+   }
+  ]
+ },
+ "digest": null,
+ "learned": {
+  "cases": 0,
+  "deals": 0,
+  "walked_away": 0,
+  "final_offers": 0,
+  "avg_score": null,
+  "claims": {
+   "verified": 0,
+   "contradicted": 0,
+   "irrelevant": 0,
+   "duplicate": 0
+  },
+  "lever_answered": {},
+  "needs_approval_seen": 0,
+  "moods": {},
+  "notes": []
+ },
+ "negotiations": [],
+ "built": "2026-10-10T12:46:02+00:00",
+ "updated": "2026-10-10T12:46:02+00:00"
+}

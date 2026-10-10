@@ -1,0 +1,156 @@
+{
+ "supplier_id": "sup:70540",
+ "name": "Konvertek Antriebselektronik GmbH",
+ "country": "AT",
+ "category": "electrical",
+ "abc_class": "A",
+ "importance": {
+  "tier": "strategic",
+  "reason": "electrical is a stabilise category",
+  "spend_eur_fy2026": 1267102,
+  "spend_rank": 5,
+  "parts": [
+   "part:350020",
+   "part:350021"
+  ],
+  "single_source_parts": [
+   "part:350021"
+  ],
+  "tooling_owned_by_supplier": [],
+  "category_goal": "stabilise"
+ },
+ "profile": {
+  "owner_type": "group",
+  "group_parent": null,
+  "founded": 1990,
+  "staff": 800,
+  "turnover_band": "100-250 M EUR",
+  "equity_ratio_pct": 38.4,
+  "credit_index": 178,
+  "credit_index_12m_ago": 178,
+  "scorecard": {
+   "id": "sc:70540@2026Q3",
+   "quarter": "2026Q3",
+   "colour": "green",
+   "otd_pct": 81.5,
+   "ppm": 0,
+   "open_8d_overdue": 0,
+   "score": 90.7
+  },
+  "we_pay_late_days": 1.9,
+  "standard_payment_days": 30,
+  "incoterm": "DAP",
+  "contract": {
+   "id": "ctr:4600070540",
+   "valid_to": "2027-06-30",
+   "notice_days": 90,
+   "payment_days": 30,
+   "index_clause": null
+  },
+  "settle": {
+   "renewals": 3,
+   "avg_asked_pct": 2.33,
+   "avg_settled_pct": 0.0
+  },
+  "quote_remarks": [
+   "Prices as per current list; discounts not possible this year (head-office directive)."
+  ]
+ },
+ "signals": [
+  "group-owned",
+  "quote remarks cite head office or approvals",
+  "notes mention approvals or head office",
+  "single source for part:350021",
+  "news: order book full or allocation"
+ ],
+ "archetype": "group_ladder",
+ "secondary": "capacity_full",
+ "archetype_scores": {
+  "cash_short": 0.0,
+  "group_ladder": 1.0,
+  "family_memory": 0.0,
+  "near_monopolist": 0.4,
+  "capacity_full": 0.5,
+  "quality_troubled": 0.0,
+  "neutral": 0.0
+ },
+ "levers": [
+  "effective_date",
+  "payment_days",
+  "contract_months",
+  "volume_per_year",
+  "lead_time_days"
+ ],
+ "avoid": [
+  "big jumps the rep cannot sign without the boss"
+ ],
+ "tone": "warm",
+ "relationship": {
+  "protect": true,
+  "min_margin_pct": 8.0,
+  "max_price_pushes": 2,
+  "walk_allowed": false,
+  "cite_rivals": false
+ },
+ "estimate": {
+  "interest_rate": 0.08,
+  "country_factor": 1.05
+ },
+ "recent": {
+  "documents": [
+   {
+    "id": "doc:20260906-70540-M1",
+    "date": "2026-09-06",
+    "kind": "email",
+    "subject": "Price list 2027"
+   },
+   {
+    "id": "doc:20260711-70540-M3",
+    "date": "2026-07-11",
+    "kind": "meeting_note",
+    "subject": "Annual review"
+   },
+   {
+    "id": "doc:20260223-70540-M2",
+    "date": "2026-02-23",
+    "kind": "meeting_note",
+    "subject": "Customer portfolio"
+   },
+   {
+    "id": "doc:20251005-70540-N",
+    "date": "2025-10-05",
+    "kind": "email",
+    "subject": "Holiday shutdown"
+   }
+  ],
+  "news": [
+   {
+    "id": "news:20260302-01",
+    "date": "2026-03-02",
+    "topic": "chip_shortage",
+    "headline": "Konvertek Antriebselektronik GmbH warns of longer delivery times"
+   }
+  ]
+ },
+ "digest": null,
+ "learned": {
+  "cases": 0,
+  "deals": 0,
+  "walked_away": 0,
+  "final_offers": 0,
+  "avg_score": null,
+  "claims": {
+   "verified": 0,
+   "contradicted": 0,
+   "irrelevant": 0,
+   "duplicate": 0
+  },
+  "lever_answered": {},
+  "needs_approval_seen": 0,
+  "moods": {},
+  "notes": []
+ },
+ "negotiations": [],
+ "built": "2026-10-10T12:46:02+00:00",
+ "updated": "2026-10-10T12:46:02+00:00"
+}

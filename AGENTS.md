@@ -22,5 +22,14 @@ Rules for AI coding agents working in this repo. Humans follow them too.
 
 ## Challenge
 
-Not revealed yet (kick-off Saturday 10:00). Once picked, put the official text in
-`docs/challenge.md` and summarise the domain and hard constraints here.
+Tacto Negotiation Arena (official brief: `docs/challenge.md`; API: `negotiation-agent/negotiation-arena-kit/brief/api.md`).
+We are the procurement team of Hollerau Pumpenwerke; our agent negotiates by e-mail with supplier
+bots and is scored on the total cost C of the accepted term sheet, per case and category goal.
+
+Hard constraints:
+- 60 seconds per message per thread, counted from the supplier's reply; three timeouts end a thread.
+- Live Final Sunday 12:00: five waves of hidden cases, 8 minutes each, all cases of a wave in parallel,
+  no human in the loop, the agent must not read the leaderboard or event feed. Code freeze at 12:00.
+- Only term sheets bind; cited data IDs are checked (a wrong figure costs trust); a broken must-have scores 0.
+- 200 practice sessions per rolling 24 hours; the sandbox (`case:D01`, `case:D02`) is free.
+- Keys stay in `.env`. Our code: `negotiator/` (agent), `knowledge/` (supplier personas, learned after each case).
