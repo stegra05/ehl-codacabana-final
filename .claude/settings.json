@@ -131,15 +131,23 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git pull *)",
+      "Bash(git fetch)",
+      "Bash(git fetch *)",
+      "Bash(git push)",
+      "Bash(git push *)",
       "Bash(git stash *)",
       "Bash(git worktree *)",
       "Bash(gh pr *)",
+      "Bash(gh issue *)",
       "Bash(gh run *)",
       "Bash(uv run *)",
       "Bash(uv sync *)",
       "Bash(uv add *)",
       "Bash(pnpm *)",
       "Bash(npx tsc *)"
+    ],
+    "ask": [
+      "Bash(gh pr merge *)"
     ],
     "deny": [
       "Read(./.env)",
