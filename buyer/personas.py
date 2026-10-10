@@ -1,26 +1,32 @@
 """What the data says about a supplier before the first move: owner type, the persona traits in
-its notes, letters, quote remarks and news, and from those its cost of money. Unknown suppliers
-(not in the package, e.g. the sandbox) get the neutral profile."""
+its notes, letters, quote remarks and news (the package and the Sunday release alike), and from
+those its cost of money. Unknown suppliers (not in the package, e.g. the sandbox) get the neutral
+profile; their own e-mails are scanned for the same traits as they arrive (`signals_in`)."""
 
 import re
-from pathlib import Path
 
+# One or two fixed phrases per trait in the generated texts, widened to the word forms seen across
+# the whole package (restructuring programme, lowered its rating, "nickel and alloys forward").
 SIGNALS = {
     "cash_need": r"pay earlier|bank is watching|cash and the banks|within 10 days|under pressure"
-    r"|restructures|short-time work|lowers rating|cash is tight|we like fast payers",
-    "spare_capacity": r"second shift has been on hold|take additional parts|looks for new customers|free capacity",
+    r"|restructur\w*|short-time work|lower\w* (its |their )?rating|cash is tight|we like fast payers"
+    r"|negotiat\w+ with (its|their) banks|lowers our margin|loss-making|liquidity|waiting for cash",
+    "spare_capacity": r"second shift has been on hold|take additional parts|looks for new customers"
+    r"|free (machine )?capacity|keep (the|our) machines (busy|running)",
     "capacity_full": r"order intake is very strong|binding 12-month commitment"
-    r"|cannot confirm your full forecast|fully booked|allocates volumes|factory is super busy",
-    "open_book": r"walk us through their calculation",
-    "stale_costing": r"not followed his material|own spreadsheet",
+    r"|cannot confirm your full forecast|fully booked|allocat\w+ (volumes|in line)|factory is super busy"
+    r"|high capacity utili[sz]ation|prioriti[sz]e customers with firm",
+    "open_book": r"walk (us|you) through (their|our) calculation",
+    "stale_costing": r"not followed (his|its|their) material|own spreadsheet",
     "partnership_2022": r"kept supplying at the old price",
     "reference_customer": r"important reference customer",
-    "approval_2pct": r"above 2 % need the approval",
+    "approval_2pct": r"above 2 ?% need the approval|pricing committee",
     "deprioritising_us": r"reviewing small accounts|not strategic|reorganising our range"
-    r"|supply from stock only|sharpens its focus",
+    r"|supply from stock only|sharpens its focus|focus on customers with volume",
     "price_frozen": r"no room on price|not discounted|price list applies to all|discounts not possible"
     r"|frozen all price reductions",
-    "hedged": r"bought their \w+ forward|covered at fixed prices|material covered until|secures power prices",
+    "hedged": r"bought (their|our) [\w ,]{1,40} forward|covered at fixed prices|material covered until"
+    r"|secures power prices|hedged",
     "complains_late_pay": r"invoices are overdue",
 }
 # Cost of money per year by owner type (seen in practice: groups 4 to 7 %, family firms 7 to 8.5 %,
@@ -33,6 +39,25 @@ def signals_in(text):
     return sorted(k for k, pat in SIGNALS.items() if re.search(pat, text or "", re.I))
 
 
+def supplier_texts(pkg, sid):
+    """Every text about this supplier: its letters, call and meeting notes and news, from the
+    package and the Sunday release (both reach `ids` and `document`), plus its quote remarks."""
+    texts = []
+    for ref in pkg.ids("doc:") + pkg.ids("news:"):
+        row = pkg.lookup(ref) or {}
+        if row.get("supplier") != sid and row.get("supplier_id") != sid:
+            continue
+        try:
+            texts.append(pkg.document(ref))
+        except Exception:  # noqa: BLE001 - a row without a readable file: its headline still counts
+            texts.append(" ".join(str(v) for k, v in row.items() if k in ("title", "headline", "body", "subject")))
+    try:
+        texts += [r.get("remarks") or "" for r in pkg.query("SELECT remarks FROM quotes WHERE supplier_id = ?", (sid,))]
+    except Exception:  # noqa: BLE001 - no SQLite
+        pass
+    return texts
+
+
 def profile(pkg, sid):
     """{owner_type, country, category, signals, rate, warm}; neutral when the package does not know it."""
     out = {"owner_type": None, "country": None, "category": None, "signals": [], "rate": DEFAULT_RATE, "warm": True}
@@ -41,17 +66,9 @@ def profile(pkg, sid):
     try:
         sup = pkg.query("SELECT country, category, skonto_days, skonto_pct FROM suppliers WHERE id = ?", (sid,))
         intel = pkg.query("SELECT owner_type, staff FROM supplier_intel WHERE supplier_id = ?", (sid,))
-        docs = pkg.query("SELECT file FROM documents WHERE supplier_id = ?", (sid,))
-        remarks = pkg.query("SELECT remarks FROM quotes WHERE supplier_id = ?", (sid,))
-        news = pkg.query("SELECT headline, body FROM news WHERE supplier_id = ?", (sid,))
     except Exception:  # noqa: BLE001 - no SQLite: neutral
         return out
-    texts = [r.get("remarks") or "" for r in remarks] + [f"{n['headline']}. {n['body']}" for n in news]
-    for d in docs:
-        path = Path(pkg.root) / (d.get("file") or "")
-        if d.get("file") and path.is_file():
-            texts.append(path.read_text(encoding="utf-8", errors="replace"))
-    sig = signals_in("\n".join(texts))
+    sig = signals_in("\n".join(supplier_texts(pkg, sid)))
     owner = intel[0]["owner_type"] if intel else None
     rate = RATE.get(owner, DEFAULT_RATE)
     if "cash_need" in sig:

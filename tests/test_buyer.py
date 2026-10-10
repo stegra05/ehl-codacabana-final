@@ -12,7 +12,7 @@ import uvicorn
 from arena_kit import ArenaClient, RemoteTable, complete_offer
 from arena_kit.sim import Sim, create_app, load_cases
 
-from buyer import economics
+from buyer import economics, runner
 from buyer.runner import play_case
 
 
@@ -33,9 +33,10 @@ def sim_url():
     thread.join()
 
 
-def test_buyer_closes_a_deal(sim_url):
+def test_buyer_closes_a_deal(sim_url, tmp_path, monkeypatch):
     key = ArenaClient(sim_url).register(f"test-{secrets.token_hex(3)}", "sim")["api_key"]
     client = ArenaClient(sim_url, key, rate=1000)
+    monkeypatch.setattr(runner, "RUNS", tmp_path)
     result = play_case(RemoteTable(client), "case:S01")
     assert result["deal"]
     assert 0 <= result["score"] <= 1

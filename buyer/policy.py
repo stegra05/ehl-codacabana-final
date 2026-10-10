@@ -12,6 +12,7 @@ What the suppliers showed (sandbox and practice, `docs/learnings.md`):
   or one that is fully booked: a final offer, or a walk-away;
 - a large first concession means a deep floor: then we hold low instead of meeting it."""
 
+import base64
 import logging
 import threading
 import time
@@ -20,9 +21,9 @@ from arena_kit.docs import standard_terms
 from arena_kit.play import latest, moves_left, standing
 
 from . import economics as eco
-from . import llm, writer
+from . import llm, reader, writer
 from .claims import ClaimBank, rival_offer
-from .personas import profile
+from .personas import profile, signals_in
 
 log = logging.getLogger("buyer")
 
@@ -37,7 +38,6 @@ MIN_MOVE = 0.002  # every sheet moves at least this share of the price
 FIRST_CLAIMS, LATER_CLAIMS = 3, 1
 DONE = {"agreed", "final_offer"}
 ENDED = {"walked_away", "no_bid"}
-QUESTION = "Could you share your cost breakdown for this part, so we understand the drivers together?"
 
 
 class Side:
@@ -63,6 +63,8 @@ class Side:
         self.tried = set()  # (field, value) we switched away from
         self.term_change = False  # its last counter changed our non-price terms
         self.last_reply = None
+        self.asks = []  # what its last e-mail asked of us (reader.asks)
+        self.attached = set()  # files we already sent it
 
 
 class Negotiator:
@@ -77,18 +79,21 @@ class Negotiator:
     # -- setup -------------------------------------------------------------------------------
     def setup(self, sid, events):
         case, s = self.case, Side(sid)
-        s.std = standard_terms(events) or {}
+        s.std = safe(lambda: standard_terms(events), {}) or {}
         sheet_id, quote = standing(events)
-        s.prof = profile(self.pkg, sid)
+        s.prof = safe(lambda: profile(self.pkg, sid), profile(None, sid))
+        self.read_signals(s, latest(events).get("body"))
         self.sides[sid] = s
         if not sheet_id or quote.get("unit_price") is None:
             s.state = "ended"
             return s
         part = (case.get("parts") or [None])[0]
-        full_cost, own_plant = self.full_cost(part, sid)
+        full_cost, own_plant = safe(lambda: self.full_cost(part, sid), (None, False))
         lead = quote.get("lead_time_days") or s.std.get("lead_time_days")
         overtime = 0.005 if "capacity_full" in s.prof["signals"] else 0.001
-        s.est = eco.estimate(case, s.std or quote, s.prof["rate"], full_cost, self.real_ppm(sid), lead, overtime)
+        s.est = eco.estimate(
+            case, s.std or quote, s.prof["rate"], full_cost, safe(lambda: self.real_ppm(sid)), lead, overtime
+        )
         q_price = quote["unit_price"]
         goal, signals = case["buyer"].get("category_goal"), s.prof["signals"]
         ratio = ANCHOR.get(goal, 0.85)
@@ -106,13 +111,15 @@ class Negotiator:
             ratio = min(ratio, current / q_price)  # a price increase opens at today's price at most
         ratio = max(ANCHOR_MIN, ratio)
         # terms planned at the price we open with: coverage pays off at a low price, not at the quote
-        planned = eco.plan_terms(case, s.std, s.est, quote, q_price * ratio)
-        s.terms = planned[0] if planned else eco.at_price(case, quote, q_price * ratio)
+        planned = safe(lambda: eco.plan_terms(case, s.std, s.est, quote, q_price * ratio))
+        s.terms = planned[0] if planned else eco.complete_offer(case, eco.at_price(case, quote, q_price * ratio))
         s.anchor = s.terms["unit_price"]
-        s.quote = round(eco.price_for_value(case, s.terms, s.est, eco.value(case, quote, s.est)), 2)
+        s.quote = safe(
+            lambda: round(eco.price_for_value(case, s.terms, s.est, eco.value(case, quote, s.est)), 2), q_price
+        )
         if full_cost and not near_cost:
-            s.target = eco.relationship_optimum(case, s.terms, s.std, s.est, full_cost * 0.85, s.quote)
-        s.claims = self.bank.for_supplier(sid, q_price)
+            s.target = safe(lambda: eco.relationship_optimum(case, s.terms, s.std, s.est, full_cost * 0.85, s.quote))
+        s.claims = safe(lambda: self.bank.for_supplier(sid, q_price), [])
         self.note(
             sid,
             "setup",
@@ -152,7 +159,46 @@ class Negotiator:
         f = self.bank.fact(ids[-1]) if ids else None
         return f.get("ppm") if f else None
 
+    def restore(self, sid, events):
+        """A resumed session (a crash, a restart): rebuild what we sent and what it answered from
+        the thread, so the next move continues the path instead of opening at the anchor again."""
+        s = self.sides[sid]
+        ours = [m for m in events if m.get("from") == "buyer" and m.get("term_sheets")]
+        if s.state == "ended" or not ours:
+            return
+        s.terms = eco.complete_offer(self.case, ours[-1]["term_sheets"][0]["terms"])
+        theirs = None
+        for m in events:
+            if m.get("from") == "buyer":
+                self.used.update(m.get("refs") or [])
+                if m.get("term_sheets"):
+                    price = self.their_price(s, m["term_sheets"][0]["terms"])
+                    s.ours.append(price)
+                    s.gaps.append(max(0.0, (theirs - price) / theirs) if theirs else 0.0)
+            else:
+                sheets = m.get("term_sheets") or []
+                if sheets and sheets[0].get("terms", {}).get("unit_price") is not None:
+                    theirs = self.their_price(s, sheets[0]["terms"])
+                    if s.ours:
+                        s.theirs.append(theirs)
+        if events and events[-1].get("from") != "buyer" and s.theirs:
+            s.theirs.pop()  # the latest reply is read by move() like any fresh reply
+        self.note(sid, "restore", ours=s.ours, theirs=s.theirs, terms=s.terms)
+
     # -- reading its reply -------------------------------------------------------------------
+    def read_signals(self, s, body):
+        """Persona traits in its own e-mail (a supplier the package does not know, or news since):
+        merged into the profile; a cash need raises what money now is worth to it."""
+        new = [k for k in signals_in(body) if k not in s.prof["signals"]]
+        if not new:
+            return
+        s.prof["signals"] = sorted(s.prof["signals"] + new)
+        if "cash_need" in new:
+            s.prof["rate"] = round(s.prof["rate"] + 0.05, 3)
+            if s.est:
+                s.est["interest_rate"] = s.prof["rate"]
+        self.note(s.sid, "signals", new=new)
+
     def their_price(self, s, terms):
         """Its sheet as a price at our planned terms (same value to it)."""
         same = all(terms.get(k) == v for k, v in s.terms.items() if k != "unit_price" and k in terms)
@@ -226,6 +272,8 @@ class Negotiator:
             s.term_change = any(sheets[0]["terms"].get(k, v) != v for k, v in terms_before.items() if k != "unit_price")
             s.theirs.append(self.their_price(s, sheets[0]["terms"]))
             s.last_reply = last
+            s.asks = reader.asks(last.get("body"))
+            self.read_signals(s, last.get("body"))
         theirs = s.theirs[-1]
         if s.state in ("mirror", "closing"):  # we sent its own sheet or our target: done
             s.state = "done"
@@ -238,15 +286,15 @@ class Negotiator:
             return self.send(s, [eco.at_price(case, s.terms, max(s.target, theirs))], [], events, theirs)
         if s.ours and theirs <= s.ours[-1]:  # it came below what we offered: take it
             return self.finish(s, sheets, events, theirs, moves_left(case, events))
-        price, n_claims, question = self.next_price(s, theirs)
+        price, n_claims = self.next_price(s, theirs)
         claims = self.pick(s, n_claims, threads)
-        return self.send(s, [eco.at_price(case, s.terms, price)], claims, events, theirs, question)
+        return self.send(s, [eco.at_price(case, s.terms, price)], claims, events, theirs)
 
     def next_price(self, s, theirs):
         """Our next price at s.terms: open at the anchor; then a share of the gap, held low after a
         large concession, and within the patience budget."""
         if not s.ours:
-            return s.anchor, FIRST_CLAIMS, QUESTION
+            return s.anchor, FIRST_CLAIMS
         last = s.ours[-1]
         gap = (theirs - last) / theirs
         conceded = (s.theirs[-2] - theirs) / s.theirs[-2] if len(s.theirs) > 1 else 0.0
@@ -262,7 +310,7 @@ class Negotiator:
         price = theirs * (1 - new_gap)
         price = max(price, last * (1 + MIN_MOVE))
         price = min(price, theirs * 0.998)
-        return round(max(price, last), 2), LATER_CLAIMS, None
+        return round(max(price, last), 2), LATER_CLAIMS
 
     def finish(self, s, sheets, events, theirs, left):
         """Its final word, its agreement or our last message: if one of its alternatives costs us
@@ -304,13 +352,32 @@ class Negotiator:
                 break
         return out
 
-    def facts(self, s, sheets, claims, moved):
-        """Plain statements the model may use, true by construction."""
+    def facts(self, s, sheets, claims, moved, statements, attachments):
+        """Plain statements the model may use, true by construction; its asks come first so the
+        paragraph answers them (P11 froze at 45.50 after five unanswered asks for faster payment)."""
         case, out = self.case, []
         fixed = case.get("fixed_terms") or {}
+        payment_fixed = "payment_days" not in case["negotiable"] or fixed.get("payment_days")
+        if "payment" in s.asks:
+            if payment_fixed:
+                out.append(
+                    "they asked for faster payment: payment terms are fixed in this agreement and cannot change, "
+                    "say so plainly and kindly, and point to what we do give (we pay reliably on the due date, "
+                    "our full volume, the contract term)"
+                )
+            else:
+                out.append("they asked for faster payment: our proposal below sets the payment term we can offer")
+        if "volume" in s.asks or statements:
+            out.append(
+                "they asked which volume we commit to: the binding volume figure stands right after this paragraph"
+            )
+        if attachments:
+            out.append(
+                "they asked for proof of our forecast: the forecast is attached to this e-mail as a file, say so"
+            )
         if "volume_per_year" not in case["negotiable"] or fixed.get("volume_per_year"):
             out.append("our order volume is fixed: it is our full demand for this part over the term, all with them")
-        if "payment_days" not in case["negotiable"]:
+        if payment_fixed and "payment" not in s.asks:
             out.append("payment terms are fixed for this agreement; we pay reliably on the due date")
         if "contract_months" in case["negotiable"]:
             out.append("we offer a long contract term, which gives them planning security")
@@ -325,38 +392,103 @@ class Negotiator:
         out.append("the proposal with all terms follows after the data (do not repeat it)")
         return out
 
-    def send(self, s, sheets, claims, events, theirs, question=None):
+    def statements(self, s, sheets):
+        """Code sentences with figures that answer its asks: the binding volume, in round 1 and
+        whenever it asks ("Which volume can you commit to?" came 152 times; a figure was "taken
+        into account", a description was not)."""
+        case = self.case
+        if not ("volume" in s.asks or not s.ours):
+            return []
+        fixed = case.get("fixed_terms") or {}
+        sheet = sheets[0]
+        volume = sheet.get("volume_per_year") or fixed.get("volume_per_year") or case["buyer"]["need_per_year"]
+        months = sheet.get("contract_months") or fixed.get("contract_months")
+        term = f"for the {months}-month term" if months else "for this agreement"
+        full = " our full demand for this part," if volume >= case["buyer"]["need_per_year"] else ""
+        return [f"We confirm a binding volume of {volume} units a year {term},{full} all placed with you."]
+
+    def attachments(self, s):
+        """Its proof asked for, as a file it reads: the forecast rows of the part (figures from the
+        data, nothing the arena checks as a claim)."""
+        if "proof" not in s.asks or "forecast" in s.attached:
+            return []
+        rows = []
+        for part in self.case.get("parts") or []:
+            for ref in self.bank.ids(f"fc:{part.split(':')[-1]}@"):
+                f = self.bank.fact(ref)
+                if f and f.get("volume_per_year") is not None:
+                    rows.append((ref.split("@")[-1], part, f["volume_per_year"], f.get("change_pct")))
+        if not rows:
+            return []
+        s.attached.add("forecast")
+        lines = ["month,part,volume_per_year,change_pct"] + [",".join(str(x) for x in r) for r in rows]
+        content = base64.b64encode("\n".join(lines).encode()).decode()
+        return [{"name": "forecast.csv", "type": "csv", "content_b64": content}]
+
+    def send(self, s, sheets, claims, events, theirs):
         first = not s.ours
         moved = len(s.theirs) > 1 and s.theirs[-1] < s.theirs[-2] - 0.005
         price = sheets[0]["unit_price"]
         keys = [(s.sid, i) if c.get("rival") else i for c in claims for i in c["ids"]]
         s.pending = {"state": s.prev_state, "keys": keys}
+        statements = self.statements(s, sheets)
+        attachments = self.attachments(s)
         if s.state not in ("mirror",):
             s.ours.append(price)
             s.gaps.append(max(0.0, (theirs - price) / theirs) if theirs else 0.0)
             s.pending["appended"] = True
         tone = "warm" if s.prof.get("warm", True) else "friendly and businesslike"
-        asked = len(s.ours) in (1, 3)
+        facts = self.facts(s, sheets, claims, moved, statements, attachments)
         para = llm.paragraph(
-            self.complete,
-            writer.brief(
-                self.case, s.prof, latest(events).get("body"), self.facts(s, sheets, claims, moved), tone, asked
-            ),
+            self.complete, writer.brief(self.case, s.prof, latest(events).get("body"), facts, tone, first)
         )
         body = writer.email(
-            self.case, sheets, claims, question, first=first, moved=moved, warm=s.prof.get("warm", True), paragraph=para
+            self.case,
+            sheets,
+            claims,
+            statements,
+            first=first,
+            moved=moved,
+            warm=s.prof.get("warm", True),
+            paragraph=para,
         )
         refs = sorted({i for c in claims for i in c["ids"]})
-        self.note(s.sid, "send", state=s.state, theirs=theirs, ours=price, claims=[c["kind"] for c in claims])
-        subject = latest(events).get("subject") or f"Re: {self.case['title']}"
-        if not subject.lower().startswith("re:"):
-            subject = f"Re: {subject}"
+        self.note(
+            s.sid,
+            "send",
+            state=s.state,
+            theirs=theirs,
+            ours=price,
+            claims=[c["kind"] for c in claims],
+            asks=s.asks,
+            attached=[a["name"] for a in attachments],
+        )
+        message = {
+            "subject": reply_subject(events, self.case),
+            "body": body,
+            "term_sheets": [{"terms": t} for t in sheets],
+            "refs": refs,
+        }
+        if attachments:
+            message["attachments"] = attachments
+        return {"message": message}
+
+    def fallback_move(self, sid, threads):
+        """After an error in move(): our last sheet again with the template e-mail, so the thread
+        never falls silent; without a sheet of ours yet, a short question."""
+        s = self.sides.get(sid)
+        events = threads[sid]
+        if not s or not s.ours or not s.terms:
+            return {"message": keepalive_message(events)}
+        sheets = [eco.at_price(self.case, s.terms, s.ours[-1])]
+        body = writer.email(self.case, sheets, [], [], warm=s.prof.get("warm", True))
+        self.note(sid, "fallback", ours=s.ours[-1])
         return {
             "message": {
-                "subject": subject[:300],
+                "subject": reply_subject(events, self.case),
                 "body": body,
                 "term_sheets": [{"terms": t} for t in sheets],
-                "refs": refs,
+                "refs": [],
             }
         }
 
@@ -428,6 +560,23 @@ class Negotiator:
             sid,
             {k: v for k, v in entry.items() if k not in ("claims", "std", "profile")},
         )
+
+
+def safe(fn, default=None):
+    """`fn()`, or `default` when it raises: a hidden case may lack a field the data code expects,
+    and a missing claim or profile must never cost the move."""
+    try:
+        return fn()
+    except Exception:  # noqa: BLE001 - logged, the move goes on with the default
+        log.exception("skipped: %s", getattr(fn, "__name__", fn))
+        return default
+
+
+def reply_subject(events, case):
+    subject = latest(events).get("subject") or f"Re: {case['title']}"
+    if not subject.lower().startswith("re:"):
+        subject = f"Re: {subject}"
+    return subject[:300]
 
 
 def keepalive_message(events):

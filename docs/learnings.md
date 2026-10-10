@@ -110,6 +110,50 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
 
 ## Supplier behaviour
 
+- 2026-10-10 `arena` **The round-1 counter is a cap plus claims, not a reaction to the anchor.**
+  D01 (quote 52.90), 30 sandbox runs: anchors 44.0 to 48.5 without claims all got 51.30 (-3.0 %);
+  a should-cost claim alone 51.00, the order prices alone 50.30, notice or scorecard alone 51.30,
+  all three 50.00; the same three claims at anchor 48.88 got 50.40. An insulting anchor (37.03)
+  got less (52.30), a shallow one (50.60) 51.40. Words ("what would you need") left the counter at
+  51.30 and moved the final (49.40 against 50.00). Distributors (P08, P18): anchor 0.787 of the
+  quote got -8 to -10 % in 13 runs; the same sheets and claims gave 5.43 in one run and 5.57 in
+  another (supplier-side noise of about 1 %); the order prices and the scorecard "do not change
+  our calculation", the forecast is "taken into account" without a visible effect. → Open near
+  0.8 of the quote in leverage cases (deeper buys nothing and costs patience), put the claims
+  that count into round 1, and treat single-run differences under 2 % as noise.
+- 2026-10-10 `arena` **After round 1 each supplier concedes a capped step per round and stops
+  after a fixed number of counters.** D01: caps of about 1.6 %, 0.8 %, 0.6 %, 0.4 %, 0.2 % in
+  rounds 2 to 6 (0.8 x our move below the cap), final offer in round 6 at the latest or right
+  after a move of ours under 0.1 %. Donautal and Werdenfels: 3 counters (r2 +0.04 to +0.20, r3
+  0 to +0.15), final in round 2 after a +1 % move, in round 3 after 30 % of the gap, in round 4
+  after three 30 % moves (P08 `f9e9b6dc7ed8e47d`); a move of 55 % of the gap got a hold and a
+  higher price (P08 `5d30fbf219bdc50a` 5.55 to 5.58, P18 `f038c7d05bfee4d6`). Leitner (P07):
+  3 counters of 3.5 %, 2.2 %, 1.1 %, final in round 3 in all 5 runs. Nordmark (P02): 4 counters
+  of 0.93, 0.88, 0.30, 0.07 EUR at a cumulative gap of only 0.03, its reason "as you cannot
+  commit to a binding higher volume, our flexibility is exhausted". Kalwisz (P11): three steps
+  of 0.50 then holds at 45.50 "for 300 ppm and 0 chargeback" (it priced 300 ppm at +0.50 over
+  1500 ppm, `587fe8dcbf9f6c9c`). Ravensteiner (P10): 2 counters. → The round count, not the
+  gap, ends most threads: make every round count, move 25 to 35 % of the gap, never under 1 %
+  and never over 50 %.
+- 2026-10-10 `rules` **What C_best is made of** (price at which a term combination reaches
+  C_best, relationship charge 0): P08 5.10 fixed at 90 days, 24 or 36 months (5.06 with the 5 %
+  deadband clause, about 4.94 with the 0 % clause); P18 4.73 fixed (4.69 at 5 % deadband); P02
+  368.34 at 90 days without a clause; P11 43.91 with chargeback 500 (43.77 at 300 ppm, 0); P10
+  28.21 at 23400 units, 24 months, 42 days (27.50 at 56 days); P07 5.03 at 90 days. The records
+  on `/v1/live` decode to P08 5.35 fixed or 5.30 at a 5 % deadband or 5.21 at 0 % (ours: 5.35 at
+  0 %), P18 5.23 fixed or 5.07 at 0 % (ours 5.30 at 0 %), P02 about 369.5 (ours 371.88), P11
+  about 44.9 (ours 45.50). Donautal priced the 5 % deadband at +0.12 on 5.45, exactly our cost
+  of the clause at the case's +6 % path, so the clause type is no arbitrage: the gap is price.
+- 2026-10-10 `arena` **The asks the bots repeat** (829 supplier e-mails): "Which volume can you
+  commit to?" 152, "A binding higher volume would help us" 62, faster payment 69 (Kalwisz five
+  times in one thread, then "you just ignore it" and a final offer), proof of the forecast or
+  "Which figures is that based on? Please send us the data." 30. A volume confirmation in words
+  registered: "We appreciate the confirmation of the full volume commitment, which allows us to
+  review our pricing" (D02 `7e0d70250aee7673`), "please provide the binding volume figures so we
+  can properly account for this" (D01 `101f032a24f98a58`). → `buyer/reader.py` reads the asks;
+  the e-mail states the binding volume with the figure, answers a fixed payment term plainly and
+  attaches the forecast rows when proof is asked (v8, effect to be measured).
+
 - 2026-10-10 `arena` **Pushing past a final offer ends the case.** D01: one more sheet 0.1 below
   its final 49.70 and the foundry walked away, no deal (sandbox `212404b7930bfc68`, "we have
   reached the absolute limit"). → Accept a final offer that passes the gate; never push it.
@@ -224,6 +268,17 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
   plus tooling 1,500 and 2,376 ppm).
 
 ## Agent experiments
+
+- 2026-10-10 `rules` **v8 (robustness and the reader), no quota spent.** All 21 case files
+  (the nine never hosted included) and both sandbox cases play through `arena-sim` with the
+  agent and no guarded error (`tests/test_cases.py`). New: every move and setup is guarded (a
+  failed move resends our last sheet, a third failure closes the thread on the best standing
+  sheet), the final's poll loop never raises and a crashed case is resumed once with its path
+  rebuilt from the thread (`Negotiator.restore`), the Sunday release's letters and news reach the
+  persona profile through the kit's `ids` and `document`, supplier e-mails are scanned for the
+  same traits, quotes and orders priced per 100 or 1000 are compared per piece and cited as
+  recorded, an unknown Incoterm or a scorecard without a quarter no longer breaks a move, the
+  cost-breakdown question (answered "we do not share" 12 of 12 times) is gone.
 
 - 2026-10-10 `arena` **The price engine (branch `steffen/price-engine`), practice v1 to v6** (47
   sessions): v1 (terms by C, goal anchors, 30 % path, claims) took the mean of best scores from

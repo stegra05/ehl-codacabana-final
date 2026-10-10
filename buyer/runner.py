@@ -15,7 +15,7 @@ from pathlib import Path
 from arena_kit.client import ArenaError
 from arena_kit.play import ENDED, RemoteTable, fetch_documents, latest, moves_left, quota_used_up
 
-from .policy import Negotiator, deadline_near, keepalive_message
+from .policy import Negotiator, Side, deadline_near, keepalive_message
 
 log = logging.getLogger("buyer")
 RUNS = Path("logs/runs")
@@ -31,7 +31,14 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
             fetch_documents(table, m)
     neg = Negotiator(case, pkg, complete)
     for sid, events in threads.items():
-        neg.setup(sid, events)
+        try:
+            neg.setup(sid, events)
+            if any(m.get("from") == "buyer" for m in events):  # resumed: continue the path
+                neg.restore(sid, events)
+        except Exception:  # one supplier's data must not lose the case
+            log.exception("%s %s: setup failed", case_id, sid)
+            neg.sides.setdefault(sid, Side(sid)).state = "done"
+    failed = dict.fromkeys(threads, 0)
     replied = {sid: time.monotonic() for sid in threads}
     # round 1 goes out cheapest quote first: if a clock runs out, it is the least promising one's
     order = sorted(threads, key=lambda sid: neg.sides[sid].quote or float("inf"))
@@ -62,7 +69,15 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
             message = keepalive_message(threads[sid])
         else:
             sid = todo[0]
-            move = neg.move(sid, threads)
+            try:
+                move = neg.move(sid, threads)
+            except Exception:  # a field the policy did not expect: the thread must not fall silent
+                log.exception("%s %s: move failed", case_id, sid)
+                failed[sid] += 1
+                if failed[sid] > 2:
+                    neg.sides[sid].state = "done"
+                    continue
+                move = neg.fallback_move(sid, threads)
             if move is None:
                 continue
             message = move["message"]
@@ -90,10 +105,10 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
                     fetch_documents(table, m)
                 except ArenaError as e:
                     log.warning("%s: document not fetched: %s", case_id, e)
-        decision = neg.close(threads)
         try:
+            decision = neg.close(threads)
             result = table.close(decision["supplier_id"], decision["message"])
-        except ArenaError as e:
+        except Exception as e:  # noqa: BLE001 - a case must end with a decision
             log.warning("%s: close failed (%s), accepting a standing sheet", case_id, e)
             result = table.close(*neg.fallback_close(threads))
     save(table.session_id, case_id, neg, result)
@@ -130,24 +145,29 @@ def play_all(client, case_ids, pkg=None, parallel=8, complete=None):
         return dict(pool.map(one, case_ids))
 
 
-def play_waves(client, pkg=None, waves=5, parallel=10, poll=5.0, complete=None):
-    """The Live Final: wait for each wave, play its cases in parallel within the wave's cap."""
+def play_waves(client, pkg=None, waves=5, parallel=10, poll=2.0, complete=None):
+    """The Live Final: wait for each wave, play its cases in parallel within the wave's cap. No
+    human may restart it, so nothing here raises: a failed poll is polled again, a crashed case is
+    resumed once (the arena names the running session on a second open)."""
     started, closed, caps = {}, set(), {}
 
     def one(case, deadline):
-        try:
-            return play_case(RemoteTable(client, case), case["case_id"], pkg, deadline, complete)
-        except Exception as e:  # one broken case must not stop the others
-            log.exception("%s failed", case["case_id"])
-            return e
+        for attempt in range(2):
+            try:
+                return play_case(RemoteTable(client, case), case["case_id"], pkg, deadline, complete)
+            except Exception as e:  # noqa: BLE001 - one broken case must not stop the others
+                log.exception("%s failed (attempt %d)", case["case_id"], attempt + 1)
+                err = e
+                time.sleep(2)
+        return err
 
     with ThreadPoolExecutor(max_workers=parallel) as pool:
         while len(closed) < waves or not all(f.done() for f in started.values()):
             try:
                 cases = client.cases("final")
-            except ArenaError as e:
-                if e.status != 403:  # 403: no wave has started yet
-                    raise
+            except Exception as e:  # noqa: BLE001 - 403 before the first wave, a network blip: poll again
+                if not (isinstance(e, ArenaError) and e.status == 403):
+                    log.warning("case list: %s", e)
                 cases = []
             for case in cases:
                 if not case.get("open"):

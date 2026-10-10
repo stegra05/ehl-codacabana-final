@@ -36,10 +36,20 @@ def acceptable(case, terms, std, est=None):
     )
 
 
+def known_incoterm(case, terms):
+    """`terms` with an Incoterm the case prices; an unknown one (a hidden case's quote) would be a
+    KeyError in the kit, so it falls back to the costliest, as `closing_terms` does for a gap."""
+    freight = case["buyer"]["freight_eur_per_unit"]
+    if terms.get("incoterm") in freight or "incoterm" not in terms:
+        return terms
+    return {**terms, "incoterm": max(freight, key=freight.get)}
+
+
 def estimate(case, std, rate, full_cost=None, ppm=None, lead=None, overtime=0.0):
     """Our view of the supplier for `supplier_value` and the relationship term. `lead`: the lead
     time it quoted; `overtime`: what each day faster costs it, as a share of the price."""
-    est = {"standard": closing_terms(case, {}, std), "interest_rate": rate, "lead": lead, "overtime": overtime}
+    standard = known_incoterm(case, closing_terms(case, {}, known_incoterm(case, std or {})))
+    est = {"standard": standard, "interest_rate": rate, "lead": lead, "overtime": overtime}
     if ppm is not None:
         est["ppm"] = ppm
     if full_cost:
@@ -51,7 +61,7 @@ def value(case, terms, est):
     """What a sheet is worth to the supplier per unit, in cash at its standard terms, less the
     overtime a faster delivery than it quoted costs it (fully booked suppliers: about 0.5 % of
     the price per day, P05 and P10)."""
-    v = supplier_value(case, terms, est)
+    v = supplier_value(case, known_incoterm(case, terms), est)
     lead, quoted = terms.get("lead_time_days"), est.get("lead")
     if est.get("overtime") and lead is not None and quoted and lead < quoted:
         v -= est["overtime"] * terms["unit_price"] * (quoted - lead)

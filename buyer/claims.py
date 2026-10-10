@@ -32,9 +32,6 @@ SERIES_NAME = {
 }
 
 
-COUNTRY_CURRENCY = {"PL": "PLN", "CZ": "CZK", "HU": "HUF", "CH": "CHF", "CN": "CNY", "TR": "TRY", "US": "USD"}
-
-
 def months_back(month, n):
     y, m = (int(x) for x in month.split("-"))
     m -= n
@@ -45,6 +42,14 @@ def months_back(month, n):
 
 def money(x):
     return f"EUR {x:.2f}"
+
+
+def per_unit(fact):
+    """Pieces a recorded price covers: 15 of 108 quotes and some orders are priced per 100 or 1000."""
+    try:
+        return int(fact.get("price_unit") or 1) or 1
+    except (TypeError, ValueError):
+        return 1
 
 
 class ClaimBank:
@@ -110,13 +115,16 @@ class ClaimBank:
         if len(facts) < 2:
             return None
         prices = [f["unit_price"] for _, f in facts]
-        if quote and min(prices) >= quote:
-            return None
+        unit = per_unit(facts[0][1])
+        if quote and min(prices) / unit >= quote:
+            return None  # the figure stays as recorded (per 100 or 1000 where priced so): that is what is checked
         ids = [i for i, _ in facts]
+        each = f" per {unit} units" if unit != 1 else ""
         if len(set(prices)) == 1:
-            text = f"Our last {len(ids)} orders for this part were at {money(prices[0])} ({', '.join(ids)})."
+            text = f"Our last {len(ids)} orders for this part were at {money(prices[0])}{each} ({', '.join(ids)})."
         else:
-            text = f"Our last orders for this part were at {' and '.join(money(p) for p in prices)} ({', '.join(ids)})."
+            listed = " and ".join(money(p) for p in prices)
+            text = f"Our last orders for this part were at {listed}{each} ({', '.join(ids)})."
         return {"kind": "order_history", "ids": ids, "text": text, "strength": 4}
 
     def notice(self, sid):
@@ -169,12 +177,16 @@ class ClaimBank:
         out = []
         for ref in self.refs:
             f = self.fact(ref) if ref.startswith("quote:") else None
-            if f and f.get("part") == part and f.get("supplier") != sid and price and f["unit_price"] < price:
+            if not f or f.get("part") != part or f.get("supplier") == sid or not price or not f.get("unit_price"):
+                continue
+            unit = per_unit(f)
+            if f["unit_price"] / unit < price:
+                each = f"per {unit} units" if unit != 1 else "per unit"
                 out.append(
                     {
                         "kind": "rival",
                         "ids": [ref],
-                        "text": f"We hold another quote for this part at {money(f['unit_price'])} per unit ({ref}).",
+                        "text": f"We hold another quote for this part at {money(f['unit_price'])} {each} ({ref}).",
                         "strength": 6,
                         "rival": True,
                     }
@@ -217,33 +229,6 @@ class ClaimBank:
                 uniq.append(c)
         return uniq
 
-    def currency(self, sid):
-        """A supplier paying its costs in a currency that weakened against the euro earns more of it
-        per euro: the ECB rate (its currency per euro) rose."""
-        rows = self.query("SELECT country FROM suppliers WHERE id = ?", (sid,))
-        cur = COUNTRY_CURRENCY.get(rows[0]["country"]) if rows else None  # it invoices in EUR, pays costs locally
-        if not cur:
-            return None
-        ids = self.ids(f"idx:ECB-{cur}@")
-        if not ids:
-            return None
-        m2 = ids[-1].split("@")[-1]
-        m1 = months_back(m2, 12)
-        a, b = self.fact(f"idx:ECB-{cur}@{m1}"), self.fact(f"idx:ECB-{cur}@{m2}")
-        if not a or not b or not a.get("value"):
-            return None
-        pct = (b["value"] / a["value"] - 1) * 100
-        if pct < 0.5:
-            return None  # its currency got stronger: that argues its case
-        refs = f"idx:ECB-{cur}@{m1}, idx:ECB-{cur}@{m2}"
-        return {
-            "kind": "currency",
-            "ids": [f"idx:ECB-{cur}@{m1}", f"idx:ECB-{cur}@{m2}"],
-            "text": f"The euro rose {pct:.1f}% against the {cur} from {m1} to {m2} ({refs}), so your costs "
-            f"in {cur} take fewer euros.",
-            "strength": 4 + min(3.0, pct / 3),
-        }
-
     def scorecard(self, sid, quality):
         ids = self.ids(f"sc:{sid.split(':')[-1]}@")
         if not ids:
@@ -252,14 +237,15 @@ class ClaimBank:
         if f is None:  # demo world: cite without a figure
             text = f"We have reviewed your delivery performance in our supplier scorecard ({ids[-1]})."
             return {"kind": "scorecard", "ids": [ids[-1]], "text": text, "strength": 2}
+        quarter = f.get("quarter") or ids[-1].split("@")[-1]
         if quality:
             if (f.get("ppm") or 0) < 1000:
                 return None
-            text = f"Your deliveries ran at {f['ppm']} ppm in {f['quarter']} ({ids[-1]})."
+            text = f"Your deliveries ran at {f['ppm']} ppm in {quarter} ({ids[-1]})."
         else:
             if (f.get("otd_pct") or 100) >= 90:
                 return None
-            text = f"Your on-time delivery was {f['otd_pct']}% in {f['quarter']} ({ids[-1]})."
+            text = f"Your on-time delivery was {f['otd_pct']}% in {quarter} ({ids[-1]})."
         return {"kind": "scorecard", "ids": [ids[-1]], "text": text, "strength": 2}
 
     def demo_refs(self):
@@ -298,8 +284,6 @@ class ClaimBank:
         if c := self.notice(sid):
             out.append(c)
         out += self.signal_notes(sid)
-        if c := self.currency(sid):
-            out.append(c)
         if c := self.scorecard(sid, quality):
             out.append(c)
         if self.foreign:

@@ -12,8 +12,8 @@ FIELDS = {
     "ppm_commitment": lambda v: f"{v} ppm",
     "chargeback_eur_per_complaint": lambda v: f"chargeback EUR {v:.0f} per complaint",
     "index_clause": lambda v: (
-        f"price follows {v['series']} on {round(v['material_share'] * 100)}% of the price, "
-        f"deadband {v['deadband_pct']}%"
+        f"price follows {v.get('series')} on {round((v.get('material_share') or 0) * 100)}% of the price, "
+        f"deadband {v.get('deadband_pct') or 0}%"
         if v
         else "fixed price"
     ),
@@ -39,9 +39,10 @@ def describe(case, sheet):
 ASK = "What would you need from us to move further on the price? We are open to discussing any term that helps you."
 
 
-def email(case, sheets, claims, question=None, first=False, moved=False, warm=True, paragraph=None):
-    """The e-mail: our words (the model's paragraph, else the template's), then the data
-    arguments and the proposal exactly as code computed them."""
+def email(case, sheets, claims, statements=(), first=False, moved=False, warm=True, paragraph=None):
+    """The e-mail: our words (the model's paragraph, else the template's), then the code sentences
+    that answer its asks (figures without IDs), the data arguments and the proposal exactly as code
+    computed them."""
     lines = ["Dear Sir or Madam,", ""]
     if first:
         lines.append("Thank you for your offer and for the time your team has put into it.")
@@ -58,6 +59,9 @@ def email(case, sheets, claims, question=None, first=False, moved=False, warm=Tr
         )
     else:
         lines.append("We want an agreement that works for both sides.")
+    if statements:
+        lines.append("")
+        lines += list(statements)
     if claims:
         lines.append("")
         lines += [c["text"] for c in claims]
@@ -69,8 +73,6 @@ def email(case, sheets, claims, question=None, first=False, moved=False, warm=Tr
         lines += [f"- Option {chr(65 + i)}: {describe(case, s)}" for i, s in enumerate(sheets)]
     if first and not paragraph:
         lines += ["", ASK]
-    if question:
-        lines += ["", question]
     lines += ["", "Kind regards,", "Hollerau Pumpenwerke, Purchasing"]
     return "\n".join(lines)
 
