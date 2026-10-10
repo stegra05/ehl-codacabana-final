@@ -1,11 +1,16 @@
 """The negotiation policy, per supplier thread: plan the non-price terms by C at the supplier's
-own valuation, open below its quote, then move a share of the gap to its counter each round so
-it keeps conceding, with verified claims spread over the rounds. Close on its final offer, its
-agreement or the round limit; in relationship goals stop at the price where C is lowest.
+own valuation, open below its quote, then move toward its counter round by round so it keeps
+conceding, with verified claims spread over the rounds. Close on its final offer, its agreement or
+the round limit; in relationship goals stop at the price where C is lowest.
 
-Evidence (sandbox D01, `docs/learnings.md`): suppliers concede only after a move from us, agree as
-soon as our sheet reaches the counter they would make, and every verified claim they take into
-account lowers where they stop."""
+What the suppliers showed (sandbox and practice, `docs/learnings.md`):
+- they concede only after a move from us and agree as soon as our sheet reaches the counter they
+  would make, so our sheet stays below their counter until the end;
+- every verified claim they take into account lowers where they stop, most of it in round 1;
+- patience runs out at a cumulative gap of about 40 % between our sheets and their counters
+  (summed per round, relative to their price), much earlier for a supplier selling near its cost
+  or one that is fully booked: a final offer, or a walk-away;
+- a large first concession means a deep floor: then we hold low instead of meeting it."""
 
 import logging
 import threading
@@ -24,8 +29,11 @@ log = logging.getLogger("buyer")
 FRACTION = 0.3  # share of the gap to the supplier's counter we move per round
 # Opening price as a share of its quote at our terms, by category goal. Practice C_best sat 12 to
 # 22 % below the quote in leverage, routine and secure-supply cases, 1.5 to 3 % in stabilise ones.
-ANCHOR = {"leverage": 0.78, "routine": 0.8, "secure_supply": 0.85, "quality_first": 0.88, "stabilise": 0.92}
+ANCHOR = {"leverage": 0.78, "routine": 0.82, "secure_supply": 0.88, "quality_first": 0.88, "stabilise": 0.92}
 ANCHOR_MIN = 0.75  # never open lower than this share (an insult costs patience)
+BUDGET = 0.34  # patience: the cumulative relative gap we show over the case
+DEEP = 0.06  # a first concession this large (share of its quote) means a deep floor
+MIN_MOVE = 0.002  # every sheet moves at least this share of the price
 FIRST_CLAIMS, LATER_CLAIMS = 3, 1
 DONE = {"agreed", "final_offer"}
 ENDED = {"walked_away", "no_bid"}
@@ -42,11 +50,14 @@ class Side:
         self.est = {}
         self.terms = {}  # our planned non-price terms (with a price placeholder)
         self.quote = None  # its opening price at our terms
+        self.anchor = None
         self.target = None  # relationship goals: the price with the lowest C
+        self.budget = BUDGET
         self.claims = []
-        self.ours = []  # our prices, one per message with a sheet
+        self.ours = []  # our prices at s.terms, one per message with a sheet
         self.theirs = []  # its price at our terms, one per reply
-        self.state = "open"  # open | done | ended
+        self.gaps = []  # relative gap of each of our sheets to its counter
+        self.state = "open"  # open | mirror | closing | done | ended
         self.last_reply = None
 
 
@@ -65,17 +76,27 @@ class Negotiator:
         s.std = standard_terms(events) or {}
         sheet_id, quote = standing(events)
         s.prof = profile(self.pkg, sid)
+        self.sides[sid] = s
         if not sheet_id or quote.get("unit_price") is None:
             s.state = "ended"
-            self.sides[sid] = s
             return s
         part = (case.get("parts") or [None])[0]
-        full_cost = self.full_cost(part, sid)
-        s.est = eco.estimate(case, s.std or quote, s.prof["rate"], full_cost, self.real_ppm(sid))
+        full_cost, own_plant = self.full_cost(part, sid)
+        lead = quote.get("lead_time_days") or s.std.get("lead_time_days")
+        overtime = 0.005 if "capacity_full" in s.prof["signals"] else 0.001
+        s.est = eco.estimate(case, s.std or quote, s.prof["rate"], full_cost, self.real_ppm(sid), lead, overtime)
         q_price = quote["unit_price"]
-        ratio = ANCHOR.get(case["buyer"].get("category_goal"), 0.85)
-        if "price_frozen" in s.prof["signals"]:
+        goal, signals = case["buyer"].get("category_goal"), s.prof["signals"]
+        ratio = ANCHOR.get(goal, 0.85)
+        near_cost = bool(own_plant and full_cost >= 0.98 * q_price)  # it sells at our cost estimate
+        if goal in eco.RELATIONSHIP_GOALS:
+            s.budget = 0.22
+        if "price_frozen" in signals:
             ratio = max(ratio, 0.95)  # its list price does not move far; a deep cut only costs patience
+        if "capacity_full" in signals:
+            ratio, s.budget = max(ratio, 0.93), min(s.budget, 0.16)
+        if near_cost:
+            ratio, s.budget = max(ratio, 0.97), min(s.budget, 0.14)
         current = case["buyer"].get("current_unit_price")
         if case.get("type") == "price_increase" and current:
             ratio = min(ratio, current / q_price)  # a price increase opens at today's price at most
@@ -85,10 +106,9 @@ class Negotiator:
         s.terms = planned[0] if planned else eco.at_price(case, quote, q_price * ratio)
         s.anchor = s.terms["unit_price"]
         s.quote = round(eco.price_for_value(case, s.terms, s.est, eco.value(case, quote, s.est)), 2)
-        if full_cost:
+        if full_cost and not near_cost:
             s.target = eco.relationship_optimum(case, s.terms, s.std, s.est, full_cost * 0.85, s.quote)
-        s.claims = self.bank.for_supplier(sid, quote["unit_price"])
-        self.sides[sid] = s
+        s.claims = self.bank.for_supplier(sid, q_price)
         self.note(
             sid,
             "setup",
@@ -96,25 +116,31 @@ class Negotiator:
             std=s.std,
             profile=s.prof,
             full_cost=full_cost,
+            near_cost=near_cost,
             terms=s.terms,
             quote_at_terms=s.quote,
             anchor=s.anchor,
             target=s.target,
+            budget=s.budget,
             claims=[c["text"] for c in s.claims],
         )
         return s
 
     def full_cost(self, part, sid):
-        """The should-cost of the part (this supplier's plant first): full cost without margin."""
-        best = None
-        for ref in self.bank.ids("cost:"):
+        """(should-cost of the part, whether it models this supplier's own plant): full cost
+        without margin. A generic estimate (a German cost base) says little about one supplier."""
+        rows = self.bank.query("SELECT id, supplier_id, unit_cost FROM should_cost WHERE part_id = ?", (part,))
+        own = [r for r in rows if r.get("supplier_id") == sid]
+        if own:
+            return own[0]["unit_cost"], True
+        generic = [r for r in rows if not r.get("supplier_id")]
+        if generic:
+            return generic[0]["unit_cost"], False
+        for ref in self.bank.ids("cost:"):  # the case's own facts (no table rows)
             f = self.bank.fact(ref)
             if f and f.get("part") == part and f.get("unit_cost"):
-                if ref.endswith("-" + sid.split(":")[-1]):
-                    return f["unit_cost"]
-                if "-" not in ref.split(":")[-1]:
-                    best = f["unit_cost"]
-        return best
+                return f["unit_cost"], f.get("supplier") == sid
+        return None, False
 
     def real_ppm(self, sid):
         """The defect rate it really delivers (latest scorecard), what a chargeback costs it."""
@@ -122,29 +148,7 @@ class Negotiator:
         f = self.bank.fact(ids[-1]) if ids else None
         return f.get("ppm") if f else None
 
-    def adopt(self, s, terms):
-        """Its counter changed some of our non-price terms: take them over when they cost us little
-        (it answered what it values), keep ours when they would cost us more than 0.5 %."""
-        changed = {
-            k: v for k, v in terms.items() if k != "unit_price" and k in s.terms and s.terms[k] != v and v is not None
-        }
-        if not changed or not s.ours:
-            return
-        new = {**s.terms, **changed}
-        if not eco.must_haves_ok(self.case, new, s.std):
-            return
-        v = eco.value(self.case, eco.at_price(self.case, s.terms, s.ours[-1]), s.est)
-        ours_new = eco.price_for_value(self.case, new, s.est, v)
-        c_old = eco.cost(self.case, eco.at_price(self.case, s.terms, s.ours[-1]), s.std, s.est)
-        c_new = eco.cost(self.case, eco.at_price(self.case, new, ours_new), s.std, s.est)
-        if c_new > c_old * 1.005:
-            self.note(s.sid, "keep_terms", theirs=changed)
-            return
-        s.terms = new
-        s.ours[-1] = round(ours_new, 2)
-        self.note(s.sid, "adopt_terms", changed=changed, ours=s.ours[-1])
-
-    # -- one move ----------------------------------------------------------------------------
+    # -- reading its reply -------------------------------------------------------------------
     def their_price(self, s, terms):
         """Its sheet as a price at our planned terms (same value to it)."""
         same = all(terms.get(k) == v for k, v in s.terms.items() if k != "unit_price" and k in terms)
@@ -153,6 +157,48 @@ class Negotiator:
         v = eco.value(self.case, terms, s.est)
         return round(eco.price_for_value(self.case, s.terms, s.est, v), 2)
 
+    def switch(self, s, new, why):
+        """Plan new non-price terms; our last price moves to the same value for the supplier."""
+        if s.ours:
+            v = eco.value(self.case, eco.at_price(self.case, s.terms, s.ours[-1]), s.est)
+            s.ours[-1] = round(eco.price_for_value(self.case, new, s.est, v), 2)
+        if s.theirs:
+            v = eco.value(self.case, eco.at_price(self.case, s.terms, s.theirs[-1]), s.est)
+            s.theirs[-1] = round(eco.price_for_value(self.case, new, s.est, v), 2)
+        s.terms = {**new}
+        self.note(s.sid, "switch_terms", why=why, terms={k: v for k, v in new.items() if k != "unit_price"})
+
+    def adopt(self, s, sheets):
+        """Its reply changed some of our non-price terms (in its counter or an alternative): it told
+        us what it values. Take a sheet's terms over when C at its price beats C of our plan at
+        our counterpart of that price; when it insists on an index clause, take the clause that
+        costs us least."""
+        if not s.ours:
+            return
+        case = self.case
+        standing_terms = sheets[0]["terms"]
+        clause = standing_terms.get("index_clause")
+        if "index_clause" in s.terms and s.terms["index_clause"] is None and clause:
+            planned = eco.plan_terms(
+                case, s.std, s.est, standing_terms, standing_terms["unit_price"], require_clause=True
+            )
+            if planned:
+                self.switch(s, {**s.terms, "index_clause": planned[0]["index_clause"]}, "clause required")
+        best_c = eco.cost(case, eco.at_price(case, s.terms, self.their_price(s, standing_terms)), s.std, s.est)
+        for sheet in sheets:
+            terms = sheet["terms"]
+            changed = {k: v for k, v in terms.items() if k != "unit_price" and k in s.terms and s.terms[k] != v}
+            if not changed or (changed.get("index_clause") and s.terms.get("index_clause") is None):
+                continue
+            new = {**s.terms, **changed}
+            if not eco.must_haves_ok(case, new, s.std):
+                continue
+            c = eco.cost(case, eco.at_price(case, new, terms["unit_price"]), s.std, s.est)
+            if c < best_c - 1.0:
+                best_c = c
+                self.switch(s, new, f"its sheet {changed} costs us less")
+
+    # -- one move ----------------------------------------------------------------------------
     def move(self, sid, threads):
         """The next message to this supplier: {"message": ...}, or None when the thread is done."""
         case, s, events = self.case, self.sides[sid], threads[sid]
@@ -161,40 +207,70 @@ class Negotiator:
         if s.state == "ended" or status in ENDED:
             s.state = "ended"
             return None
-        sheet_id, terms = standing(events)
-        if not sheet_id or terms.get("unit_price") is None:
-            s.state = "ended"
+        sheets = [sh for sh in last.get("term_sheets") or [] if sh.get("terms", {}).get("unit_price") is not None]
+        if not sheets:
+            s.state = "ended" if not standing(events)[0] else "done"
             return None
         s.std = standard_terms(events) or s.std
-        if s.last_reply is not last:
-            self.adopt(s, terms)
-        theirs = self.their_price(s, terms)
-        if not s.theirs or s.last_reply is not last:
-            s.theirs.append(theirs)
+        fresh = s.last_reply is not last
+        if fresh:
+            self.adopt(s, sheets)
+            s.theirs.append(self.their_price(s, sheets[0]["terms"]))
             s.last_reply = last
+        theirs = s.theirs[-1]
+        if s.state in ("mirror", "closing"):  # we sent its own sheet or our target: done
+            s.state = "done"
+            return None
         if status in DONE or moves_left(case, events) <= 0:
-            s.state = "done"
-            return None
-        if s.state == "closing":  # we offered the target price; whatever it answered, we are done
-            s.state = "done"
-            return None
+            return self.finish(s, sheets, events, theirs, moves_left(case, events))
         if s.target and theirs <= s.target * 1.002:
             # relationship goal: below the target a lower price costs more than it saves
             s.state = "closing"
             return self.send(s, [eco.at_price(case, s.terms, max(s.target, theirs))], [], events, theirs)
         if s.ours and theirs <= s.ours[-1]:  # it came below what we offered: take it
-            s.state = "done"
-            return None
-        if not s.ours:
-            price = s.anchor
-            n_claims, question = FIRST_CLAIMS, QUESTION
-        else:
-            price = s.ours[-1] + FRACTION * (theirs - s.ours[-1])
-            n_claims, question = LATER_CLAIMS, None
-        price = min(price, theirs * 0.998)
-        price = round(max(price, s.ours[-1] if s.ours else 0.0), 2)
-        claims = self.pick(s, n_claims, threads)
+            return self.finish(s, sheets, events, theirs, moves_left(case, events))
+        price, n_claims, question = self.next_price(s, theirs)
+        claims = self.pick(
+            s, n_claims, {k: v for k, v in self.threads_view.items()} if hasattr(self, "threads_view") else {}
+        )
         return self.send(s, [eco.at_price(case, s.terms, price)], claims, events, theirs, question)
+
+    def next_price(self, s, theirs):
+        """Our next price at s.terms: open at the anchor; then a share of the gap, held low after a
+        large concession, and within the patience budget."""
+        if not s.ours:
+            return s.anchor, FIRST_CLAIMS, QUESTION
+        last = s.ours[-1]
+        gap = (theirs - last) / theirs
+        conceded = (s.theirs[-2] - theirs) / s.theirs[-2] if len(s.theirs) > 1 else 0.0
+        share = FRACTION
+        if len(s.ours) == 1 and conceded >= DEEP:
+            share = 0.08  # a deep floor: it moves fast on its own; meeting it now would stop it
+        left = max(0.0, s.budget - sum(s.gaps))
+        new_gap = min(gap * (1 - share), left / 2)
+        if s.budget < 0.2:  # a touchy supplier: small, steady gaps
+            new_gap = min(new_gap, 0.015)
+        price = theirs * (1 - new_gap)
+        price = max(price, last * (1 + MIN_MOVE))
+        price = min(price, theirs * 0.998)
+        return round(max(price, last), 2), LATER_CLAIMS, None
+
+    def finish(self, s, sheets, events, theirs, left):
+        """Its final word, its agreement or our last message: if one of its alternatives costs us
+        less than its standing sheet, send that sheet back so it agrees to it; else done."""
+        case = self.case
+        std = s.std
+        c_stand = eco.cost(case, sheets[0]["terms"], std, s.est)
+        alts = [(eco.cost(case, sh["terms"], std, s.est), sh) for sh in sheets[1:]]
+        alts = [(c, sh) for c, sh in alts if eco.must_haves_ok(case, sh["terms"], std)]
+        if alts and left > 0:
+            c, sh = min(alts, key=lambda r: r[0])
+            if c < c_stand - 1.0:
+                s.state = "mirror"
+                terms = {k: v for k, v in sh["terms"].items() if k in case["negotiable"]}
+                return self.send(s, [eco.complete_offer(case, terms)], [], events, theirs)
+        s.state = "done"
+        return None
 
     def pick(self, s, n, threads):
         """The next unused claims for this supplier, rival offers in an RFQ first."""
@@ -221,12 +297,15 @@ class Negotiator:
     def send(self, s, sheets, claims, events, theirs, question=None):
         first = not s.ours
         moved = len(s.theirs) > 1 and s.theirs[-1] < s.theirs[-2] - 0.005
-        s.ours.append(sheets[0]["unit_price"])
+        price = sheets[0]["unit_price"]
+        if s.state not in ("mirror",):
+            s.ours.append(price)
+            s.gaps.append(max(0.0, (theirs - price) / theirs) if theirs else 0.0)
         body = writer.email(
             self.case, sheets, claims, question, first=first, moved=moved, warm=s.prof.get("warm", True)
         )
         refs = sorted({i for c in claims for i in c["ids"]})
-        self.note(s.sid, "send", theirs=theirs, ours=sheets[0]["unit_price"], claims=[c["kind"] for c in claims])
+        self.note(s.sid, "send", state=s.state, theirs=theirs, ours=price, claims=[c["kind"] for c in claims])
         subject = latest(events).get("subject") or f"Re: {self.case['title']}"
         if not subject.lower().startswith("re:"):
             subject = f"Re: {subject}"
@@ -241,19 +320,19 @@ class Negotiator:
 
     # -- close -------------------------------------------------------------------------------
     def best_offer(self, threads):
-        """(C, supplier, term_sheet_id) of the cheapest acceptable standing sheet, alternatives included."""
+        """(C, supplier, term_sheet_id) of the cheapest acceptable standing sheet (only a standing
+        sheet can be accepted; alternatives were sent back to become standing)."""
         best = None
         for sid, events in threads.items():
-            last = latest(events)
-            if last.get("status") in ENDED:
+            if latest(events).get("status") in ENDED:
                 continue
-            std = standard_terms(events) or self.sides.get(sid, Side(sid)).std
-            for sheet in last.get("term_sheets") or []:
-                terms, oid = sheet.get("terms") or {}, sheet.get("term_sheet_id")
-                if oid and eco.acceptable(self.case, terms, std):
-                    c = eco.cost(self.case, terms, std, self.sides[sid].est if sid in self.sides else None)
-                    if best is None or c < best[0]:
-                        best = (c, sid, oid)
+            oid, terms = standing(events)
+            side = self.sides.get(sid) or Side(sid)
+            std = standard_terms(events) or side.std
+            if oid and eco.acceptable(self.case, terms, std):
+                c = eco.cost(self.case, terms, std, side.est)
+                if best is None or c < best[0]:
+                    best = (c, sid, oid)
         return best
 
     def close(self, threads):
@@ -281,11 +360,6 @@ def keepalive_message(events):
     return {"subject": subject[:300], "body": writer.keepalive(), "term_sheets": []}
 
 
-def done(threads):
-    return all(latest(ev).get("status") in ENDED | DONE for ev in threads.values())
-
-
 def deadline_near(deadline, margin=90):
     cap = deadline() if callable(deadline) else deadline
     return bool(cap) and time.time() > cap - margin
-

@@ -36,9 +36,10 @@ def acceptable(case, terms, std, est=None):
     )
 
 
-def estimate(case, std, rate, full_cost=None, ppm=None):
-    """Our view of the supplier for `supplier_value` and the relationship term."""
-    est = {"standard": closing_terms(case, {}, std), "interest_rate": rate}
+def estimate(case, std, rate, full_cost=None, ppm=None, lead=None, overtime=0.0):
+    """Our view of the supplier for `supplier_value` and the relationship term. `lead`: the lead
+    time it quoted; `overtime`: what each day faster costs it, as a share of the price."""
+    est = {"standard": closing_terms(case, {}, std), "interest_rate": rate, "lead": lead, "overtime": overtime}
     if ppm is not None:
         est["ppm"] = ppm
     if full_cost:
@@ -47,8 +48,14 @@ def estimate(case, std, rate, full_cost=None, ppm=None):
 
 
 def value(case, terms, est):
-    """What a sheet is worth to the supplier per unit, in cash at its standard terms."""
-    return supplier_value(case, terms, est)
+    """What a sheet is worth to the supplier per unit, in cash at its standard terms, less the
+    overtime a faster delivery than it quoted costs it (fully booked suppliers: about 0.5 % of
+    the price per day, P05 and P10)."""
+    v = supplier_value(case, terms, est)
+    lead, quoted = terms.get("lead_time_days"), est.get("lead")
+    if est.get("overtime") and lead is not None and quoted and lead < quoted:
+        v -= est["overtime"] * terms["unit_price"] * (quoted - lead)
+    return v
 
 
 def price_for_value(case, terms, est, target):
@@ -71,10 +78,11 @@ def options(case):
 
 
 # Where a value costs us nothing more, the side the supplier prefers: a later delivery needs no
-# overtime, a longer contract and a larger volume give it security, a looser defect commitment and
-# a smaller chargeback cost it less.
+# overtime, a longer contract and a larger volume give it security (months beyond our horizon
+# cost us nothing), a looser defect commitment and a smaller chargeback cost it less.
 FRIENDLY = {
     "lead_time_days": 1,
+    "contract_months": 1,
     "volume_per_year": 1,
     "ppm_commitment": 1,
     "chargeback_eur_per_complaint": -1,
@@ -82,21 +90,22 @@ FRIENDLY = {
 }
 
 
-def friendliness(case, terms):
-    """Higher is better for the supplier; a contract as long as our horizon, no longer."""
-    months = -abs((terms.get("contract_months") or 0) - 12 * case["buyer"]["horizon_years"])
-    return (months, *(FRIENDLY[f] * (terms.get(f) or 0) for f in FRIENDLY if f in terms))
+def friendliness(terms):
+    """Higher is better for the supplier."""
+    return tuple(FRIENDLY[f] * (terms.get(f) or 0) for f in FRIENDLY if f in terms)
 
 
-def plan_terms(case, std, est, ref_terms, ref_price, keep=None):
+def plan_terms(case, std, est, ref_terms, ref_price, keep=None, require_clause=False):
     """The non-price terms that cost us least once the supplier prices them at its own valuation:
     for every allowed combination, the price worth the same to it as `ref_price` at `ref_terms`,
-    then C at that price; among equal C, the supplier's favourite. `keep` pins fields.
-    Returns (terms with that price, C)."""
+    then C at that price; among equal C, the supplier's favourite. `keep` pins fields;
+    `require_clause`: the supplier insists on an index clause. Returns (terms with that price, C)."""
     target = value(case, {**ref_terms, "unit_price": ref_price}, est)
     rows = []
     for combo in options(case) or [{}]:
         if keep and any(combo.get(k, v) != v for k, v in keep.items()):
+            continue
+        if require_clause and not combo.get("index_clause"):
             continue
         terms = complete_offer(case, {**ref_terms, **combo, **(keep or {}), "unit_price": ref_price})
         terms["unit_price"] = round(price_for_value(case, terms, est, target), 2)
@@ -107,7 +116,7 @@ def plan_terms(case, std, est, ref_terms, ref_price, keep=None):
         return None
     low = min(c for c, _ in rows)
     ties = [(c, t) for c, t in rows if c <= low + max(1.0, abs(low) * 1e-5)]
-    c, terms = max(ties, key=lambda r: friendliness(case, r[1]))
+    c, terms = max(ties, key=lambda r: friendliness(r[1]))
     return terms, c
 
 
