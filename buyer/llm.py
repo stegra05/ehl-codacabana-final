@@ -14,7 +14,6 @@ import httpx
 log = logging.getLogger("buyer")
 TIMEOUT_S = 15.0
 MIN_S = 2.0  # less time than this left on the clocks: the template, no model call
-FULL = os.environ.get("LLM_WRITER", "").lower() == "full"  # the model writes the whole prose
 # A late call is abandoned, not interrupted: it finishes in the background (httpx timeout) while
 # the move goes out with the template.
 POOL = ThreadPoolExecutor(max_workers=32, thread_name_prefix="writer")
@@ -82,55 +81,4 @@ def paragraph(complete, brief, timeout=TIMEOUT_S):
         log.warning("writer paragraph dropped: %r", text[:200])
         return None
     log.info("writer paragraph in %.1fs", time.monotonic() - t0)
-    return text
-
-
-FULL_SYSTEM = """You are a senior buyer at Hollerau Pumpenwerke, a German pump maker, writing to a supplier by
-e-mail. Write the e-mail body from the greeting to just before our proposal: 120 to 220 words, plain
-text, no lists, no sign-off (code appends our data lines, the proposal in detail and the sign-off).
-Greet the person who signed their e-mail by name if it is signed, else "Dear Sir or Madam"; never a
-placeholder.
-
-Write like a person who read their e-mail: answer what they asked and the reasons they gave, say what
-we offer them in return for the price we ask (the trade: volume, term, payment, risk sharing, a tight
-or loose quality commitment, whatever the facts list), acknowledge their situation where the notes give
-one, and lead into the proposal and the data that follow. Use only the facts under WHAT WE CAN SAY and
-the figures listed under FIGURES YOU MAY USE (quote them exactly; never any other number). Cite no data
-IDs yourself; code adds them. Never mention urgency, deadlines, a budget, alternatives or their absence,
-a target price, or walking away. Never invent facts, promises or commitments. Ask at most one short
-question, and only if QUESTION ALLOWED is yes. Tone as given."""
-
-NUMBER = re.compile(r"\d[\d.,]*")
-ANY_ID = re.compile(r"\b(?:idx|quote|offer|sc|qn|po|cost|fc|news|doc|ctr):[\w.:@#/-]*\w")
-LEAK = re.compile(
-    r"urgent|urgency|deadline|budget|no alternative|walk away|other options|last chance|desperate|must close|"
-    r"time pressure|target price",
-    re.I,
-)
-
-
-def figures(text):
-    """The numeric tokens of a text, normalised (no thousands separators, no trailing dot)."""
-    return {t.replace(",", "").rstrip(".") for t in NUMBER.findall(text or "")}
-
-
-def full_email(complete, brief, allowed_text, timeout=TIMEOUT_S):
-    """The model's prose for the whole e-mail within `timeout`, or None. Every figure in it must
-    appear in `allowed_text` (what code put on the table: our sheets, claims, statements, its own
-    e-mail); no data ID, no leak."""
-    if complete is None or timeout < MIN_S:
-        return None
-    t0 = time.monotonic()
-    try:
-        text = (POOL.submit(complete, FULL_SYSTEM, brief).result(timeout=min(timeout, TIMEOUT_S)) or "").strip()
-    except Exception as e:  # noqa: BLE001 - a slow or broken model must not cost the move
-        log.warning("full writer failed after %.1fs: %s", time.monotonic() - t0, e)
-        return None
-    text = "\n".join(" ".join(line.split()) for line in text.splitlines()).strip()
-    allowed = figures(allowed_text)
-    bad = [f for f in figures(text) if f not in allowed]
-    if not text or len(text) > 2200 or bad or ANY_ID.search(text) or LEAK.search(text):
-        log.warning("full writer dropped (bad figures %s): %r", bad, text[:160])
-        return None
-    log.info("full writer in %.1fs", time.monotonic() - t0)
     return text

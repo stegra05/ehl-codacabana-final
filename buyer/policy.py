@@ -504,39 +504,21 @@ class Negotiator:
             s.pending["appended"] = True
         tone = "warm" if s.prof.get("warm", True) else "friendly and businesslike"
         facts = self.facts(s, sheets, claims, moved, statements, attachments)
-        body = None
-        if llm.FULL:
-            brief, allowed = writer.full_brief(
-                self.case,
-                s.prof,
-                latest(events).get("body"),
-                facts,
-                tone,
-                first,
-                sheets,
-                claims,
-                statements,
-                len(s.ours) + 1,
-            )
-            prose = llm.full_email(self.complete, brief, allowed, self.writer_s)
-            if prose:
-                body = writer.email_full(self.case, sheets, claims, statements, prose)
-        if body is None:
-            para = llm.paragraph(
-                self.complete,
-                writer.brief(self.case, s.prof, latest(events).get("body"), facts, tone, first),
-                self.writer_s,
-            )
-            body = writer.email(
-                self.case,
-                sheets,
-                claims,
-                statements,
-                first=first,
-                moved=moved,
-                warm=s.prof.get("warm", True),
-                paragraph=para,
-            )
+        para = llm.paragraph(
+            self.complete,
+            writer.brief(self.case, s.prof, latest(events).get("body"), facts, tone, first),
+            self.writer_s,
+        )
+        body = writer.email(
+            self.case,
+            sheets,
+            claims,
+            statements,
+            first=first,
+            moved=moved,
+            warm=s.prof.get("warm", True),
+            paragraph=para,
+        )
         refs = sorted({i for c in claims for i in c["ids"]})
         self.note(
             s.sid,

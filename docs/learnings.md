@@ -327,12 +327,12 @@ Best score per hosted case, Saturday 22:30: mean about 0.77 (P02 0.733 and P18 0
 ## Agent experiments
 
 - 2026-10-10 `arena` **A model-written e-mail (whole prose, figures and IDs guarded) changed no
-  outcome.** `LLM_WRITER=full` on branch `steffen/elicit`: the model writes the body from the
-  greeting to the proposal, every figure must be one code put on the table, IDs and leaks are
-  blocked, 2.2 to 2.8 s per call. Two runs each: P02 0.733 and P18 0.630 to the cent as with the
+  outcome.** Tried on branch `steffen/elicit` (commit `086acb8`, removed again): the model wrote
+  the body from the greeting to the proposal, every figure had to be one code put on the table,
+  IDs and leaks were blocked, 2.2 to 2.8 s per call. Two runs each: P02 0.733 and P18 0.630 to the cent as with the
   template, P11 45.50 again (floor), P08 0.60 and 0.57 against 0.56 with the template and the
   same menu (spread of identical runs 0.47 to 0.67). → Wording moves these bots within their
-  noise band only; the sheets, the claims and their caps decide. The mode stays off by default.
+  noise band only; the sheets, the claims and their caps decide. Not worth the code.
 
 - 2026-10-10 `arena` **Round-1 clause menu (branch `steffen/elicit`).** The planned sheet plus
   the index clause with the largest deadband at equal C for us, in a relationship goal priced at
