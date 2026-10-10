@@ -37,3 +37,6 @@ out/
 # Arena: data package (`uv run arena data`) and session logs (`uv run buyer pull`)
 /data/
 /logs/
+
+# Simulator benchmark runs (analysis/bench_sim.py)
+/logs/bench/

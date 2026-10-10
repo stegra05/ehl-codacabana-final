@@ -16,9 +16,13 @@ from arena_kit.data import DataPackage
 from arena_kit.play import hosted, play_waves
 
 from . import llm, runner
+from .policy import Negotiator
+from .reasoner import Reasoner
 
 LOGS = Path("logs/sessions")
-AGENTS = ("buyer", "naive")  # our policy (`policy.py`, played by `runner.py`) or the kit's baseline
+# our code policy (`policy.py`), the same policy with a model reading replies and choosing among the
+# code's moves (`reasoner.py`), or the kit's baseline
+AGENTS = ("buyer", "reasoner", "naive")
 
 
 def load_package(path):
@@ -86,6 +90,7 @@ def main(argv=None):
     if args.cmd == "pull":
         return pull(client, args.set)
     naive = args.agent == "naive"
+    negotiator = Reasoner if args.agent == "reasoner" else Negotiator
     pkg = None if naive else load_package(args.data)
     complete = None if naive or args.no_llm else llm.complete_from_env()
     if args.cmd == "play":
@@ -94,7 +99,7 @@ def main(argv=None):
             if naive:
                 result = play(table, args.case_id, NaiveAgent())
             else:
-                result = runner.play_case(table, args.case_id, pkg, complete=complete)
+                result = runner.play_case(table, args.case_id, pkg, complete=complete, negotiator=negotiator)
         except ArenaError as e:  # e.g. not hosted, the quota, a paused key: the arena says why
             raise SystemExit(str(e)) from None
         print(json.dumps(summary(result), indent=2))
@@ -106,7 +111,7 @@ def main(argv=None):
         if naive:
             out = play_waves(client, NaiveAgent, args.waves, parallel)
         else:
-            out = runner.play_waves(client, pkg, args.waves, parallel, complete=complete)
+            out = runner.play_waves(client, pkg, args.waves, parallel, complete=complete, negotiator=negotiator)
         for case_id, result in out.items():
             print(case_id, result if isinstance(result, Exception) else summary(result))
     else:
@@ -117,7 +122,7 @@ def main(argv=None):
         if naive:
             out = play_all(lambda: RemoteTable(client), ids, NaiveAgent, parallel)
         else:
-            out = runner.play_all(client, ids, pkg, parallel, complete=complete)
+            out = runner.play_all(client, ids, pkg, parallel, complete=complete, negotiator=negotiator)
         for case_id, result in out.items():
             print(case_id, result if isinstance(result, Exception) else summary(result))
         scores = [r["score"] for r in out.values() if isinstance(r, dict) and r.get("score") is not None]

@@ -3,6 +3,8 @@ person would (its questions, its points, its situation). Code writes everything 
 checked: figures, data IDs, the proposal. A paragraph with any digit, data ID or leak is dropped
 and the template stands in. Hard timeout: the move goes out without the model if it is late."""
 
+import functools
+import inspect
 import logging
 import os
 import re
@@ -50,16 +52,35 @@ def complete_from_env():
     base = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1").rstrip("/")
     client = httpx.Client(timeout=TIMEOUT_S, headers={"Authorization": f"Bearer {key}"})
 
-    effort = os.environ.get("LLM_EFFORT", "low")
+    default_effort = os.environ.get("LLM_EFFORT", "low")
 
-    def complete(system, user):
+    def complete(system, user, effort=None):
         messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
-        body = {"model": model, "messages": messages, "reasoning_effort": effort}
+        body = {"model": model, "messages": messages, "reasoning_effort": effort or default_effort}
         r = client.post(f"{base}/chat/completions", json=body)
         r.raise_for_status()
         return r.json()["choices"][0]["message"]["content"]
 
     return complete
+
+
+# The reasoner's reads and choices are short JSON answers: without reasoning they take 1 to 3 s
+# (gpt-6-luna), with "low" 3 to 15 s, past the share of the clock they get.
+FAST_EFFORT = os.environ.get("LLM_FAST_EFFORT", "none")
+
+
+def fast(complete):
+    """`complete` bound to the fast effort when it takes one (the team's model); a test double or
+    another provider's callable is used as it is."""
+    if complete is None:
+        return None
+    try:
+        takes_effort = "effort" in inspect.signature(complete).parameters
+    except (TypeError, ValueError):
+        takes_effort = False
+    if not takes_effort:
+        return complete
+    return functools.partial(complete, effort=FAST_EFFORT)
 
 
 def paragraph(complete, brief, timeout=TIMEOUT_S):

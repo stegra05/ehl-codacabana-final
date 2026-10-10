@@ -216,3 +216,73 @@ def relationship_optimum(case, terms, std, est, lo, hi):
         if c < best_c - 1e-6:
             best_p, best_c = p, c
     return round(best_p, 2)
+
+
+# -- bounds and trades for a thread: the arithmetic the reasoner may choose within -----------------
+
+
+def price_for_cost(case, terms, std, est, target, hi):
+    """The price at `terms` where our C equals `target` (C rises with price), at most `hi`."""
+    if cost(case, at_price(terms, hi), std, est) <= target:
+        return hi
+    lo = 0.0
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        if cost(case, at_price(terms, mid), std, est) < target:
+            lo = mid
+        else:
+            hi = mid
+    return hi
+
+
+def ceiling(case, terms, std, est, quote):
+    """The most we pay for `terms`: the price where C reaches the alternative's C, never above the
+    supplier's quote at these terms. Without an alternative the quote is the ceiling."""
+    alt = c_alt(case)
+    if math.isinf(alt):
+        return round(quote, 2)
+    return round(price_for_cost(case, terms, std, est, alt, quote), 2)
+
+
+def supplier_floor(case, est):
+    """Where the supplier's own economics stop it, per unit at our terms: its full cost plus the
+    sustainable margin in relationship goals, its full cost elsewhere. None without an estimate."""
+    full = est.get("full_cost")
+    if not full:
+        return None
+    margin = case["buyer"].get("sustainable_margin_pct") or 0
+    if case["buyer"].get("category_goal") in RELATIONSHIP_GOALS:
+        return round(full * (1 + margin / 100), 2)
+    return round(full, 2)
+
+
+def indifference_price(case, terms, new_terms, price, std, est):
+    """The price at `new_terms` where our C equals C at (`terms`, `price`): what a term is worth
+    to us in price. Above it the trade costs us, below it the trade pays."""
+    target = cost(case, at_price(terms, price), std, est)
+    return math.floor(price_for_cost(case, new_terms, std, est, target, price * 2) * 100) / 100
+
+
+def lever_trades(case, terms, price, std, est, fields=None):
+    """For each option of each negotiable term (or of `fields`) other than the current value: the
+    package, the price at which we are indifferent to the trade (`ours`), and the price at which
+    the supplier gets the same value as from the current sheet (`theirs`, our estimate of what it
+    would ask). A trade has surplus when `theirs` is below `ours`: we can offer a price between the
+    two and both sides gain. Sorted by surplus, largest first. Only packages that keep every
+    must-have."""
+    opts = case.get("term_options") or {}
+    fields = [f for f in (fields or case["negotiable"]) if f != "unit_price" and opts.get(f) and f in terms]
+    target_value = value(case, at_price(terms, price), est)
+    out = []
+    for field in fields:
+        for option in opts[field]:
+            if option == terms.get(field):
+                continue
+            new = {**terms, field: option}
+            if not must_haves_ok(case, at_price(new, price), std):
+                continue
+            ours = indifference_price(case, terms, new, price, std, est)
+            theirs = round(price_for_value(case, new, est, target_value), 2)
+            trade = {"field": field, "value": option, "terms": new, "ours": ours, "theirs": theirs}
+            out.append({**trade, "surplus": ours - theirs})
+    return sorted(out, key=lambda t: -t["surplus"])

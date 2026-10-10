@@ -36,7 +36,8 @@ def writer_budget(sid, replied, live, send_s, now):
     return min(llm.TIMEOUT_S, *left)
 
 
-def play_case(table, case_id, pkg=None, deadline=None, complete=None):
+def play_case(table, case_id, pkg=None, deadline=None, complete=None, negotiator=Negotiator):
+    """One case to its result. `negotiator`: the policy class (`Negotiator`, or `reasoner.Reasoner`)."""
     opened = time.monotonic()  # the supplier clocks run from their first e-mail, before our setup
     case, threads = table.open(case_id)
     if getattr(table, "done", None):  # resumed a case that had already ended
@@ -44,7 +45,7 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
     for events in threads.values():
         for m in events:
             fetch_documents(table, m)
-    neg = Negotiator(case, pkg, complete)
+    neg = negotiator(case, pkg, complete)
     for sid, events in threads.items():
         try:
             neg.setup(sid, events)
@@ -182,7 +183,7 @@ def play_all(client, case_ids, pkg=None, parallel=8, complete=None):
         return dict(pool.map(one, case_ids))
 
 
-def play_waves(client, pkg=None, waves=5, parallel=10, poll=2.0, complete=None):
+def play_waves(client, pkg=None, waves=5, parallel=10, poll=2.0, complete=None, negotiator=Negotiator):
     """The Live Final: wait for each wave, play its cases in parallel within the wave's cap. No
     human may restart it, so nothing here raises: a failed poll is polled again, a crashed case is
     resumed once (the arena names the running session on a second open)."""
@@ -191,7 +192,7 @@ def play_waves(client, pkg=None, waves=5, parallel=10, poll=2.0, complete=None):
     def one(case, deadline):
         for attempt in range(2):
             try:
-                return play_case(RemoteTable(client, case), case["case_id"], pkg, deadline, complete)
+                return play_case(RemoteTable(client, case), case["case_id"], pkg, deadline, complete, negotiator)
             except Exception as e:  # noqa: BLE001 - one broken case must not stop the others
                 log.exception("%s failed (attempt %d)", case["case_id"], attempt + 1)
                 err = e

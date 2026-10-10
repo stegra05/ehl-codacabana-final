@@ -371,6 +371,39 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
 
 ## Agent experiments
 
+- 2026-10-11 `rules` **The reasoner (branch `julian/reasoner`, `--agent reasoner`), simulator only, no
+  quota spent.** The code policy with the model reading each reply into a schema (asks, levers,
+  refused terms, counted and dismissed claim kinds; `buyer/reader.py`, patterns as the fallback)
+  and choosing among code-computed moves (`buyer/reasoner.py`). `gpt-6-luna` without reasoning:
+  reader 0.9 s median, 1.8 s max; chooser 1.1 s median, 3.5 s max (82 decisions); with
+  `reasoning_effort` low the chooser took 3 to 15 s and timed out on the 15 s client limit, so the
+  reasoner's calls run at `LLM_FAST_EFFORT` (none). On the reader the fast setting read an unseen
+  wording ("a quicker settlement of our invoices", "a longer framework, say three years", "cannot
+  accept a chargeback") into the right fields. Simulator, all 21 case files
+  (`analysis/bench_sim.py`): code policy 0.802, reasoner 0.802 when the price step is the code's;
+  0.729 when the model could choose a 15 % step (it did 75 times in 82 decisions and the scripted
+  final offers came while we were far away). → Pacing stays with the code; the model decides trades
+  for the levers the supplier named and the number of claims. The simulator's supplier reacts to
+  price only, so this is a regression check, not a tactic measurement; the comparison against the
+  practice benchmark (best mean 0.787, PR 18 run 0.727) needs the 09:00 pre-flight.
+- 2026-10-11 `arena` **What we did wrong on P08, P11 and P18** (all 66 sessions). (1) We spent
+  claim slots on kinds the supplier told us it ignores: "price history data you cited; it holds,
+  but it does not change our calculation" 22, 20 and 16 times, in every session of all three
+  cases, while "volume change ... we took it into account" came 16, 20 and 15 times; the bank
+  ranked order prices (4) above the forecast (2). (2) The bank ran dry: 4 to 5 claims, 3 in round
+  1; from round 3 every P11 message carried no reference and Kalwisz said why: "I didn't see any
+  new data attached to justify a lower price", "we cannot go any lower without new data", then
+  `final_offer` at 45.50 (each counted item before had bought a 0.50 step). (3) The supplier named
+  its lever and we answered "fixed": Kalwisz "Faster payment is welcome; we can reflect it in the
+  price" 57 times, "would help us more than anything" 24; it complains about our behaviour, not the
+  term ("you say you pay reliably, but we often see late payments"): we paid 126 of its last 135
+  invoices late, 8.8 days on average (`invoices`). → Forecast 3, order history 2.5 in the bank;
+  the bank re-ranks in-session from the reply (counted first, dismissed last); scorecard quarters
+  and quality notifications as further claims; one forecast per bundle (P07's second and third came
+  back `duplicate`); when payment is fixed and the supplier asks for cash, a code sentence commits
+  us to paying on the due date with our own lateness figures (true by the data, nothing the sheet
+  cannot keep; the earlier "we pay reliably" was false and is gone).
+
 - 2026-10-10 `rules` **The Live Final per-case path ran on the sandbox** (Saturday 22:30): D01
   through `RemoteTable(client, case)` with a wave deadline of 480 s, as `play_waves` calls it:
   deal 49.70, score 0.988, 113 s. The wave loop itself is covered by `tests/test_waves.py`.

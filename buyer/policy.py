@@ -15,14 +15,13 @@ What the suppliers showed (sandbox and practice, `docs/learnings.md`):
 import base64
 import functools
 import logging
-import re
 import time
 
 from arena_kit.docs import standard_terms
 from arena_kit.play import ENDED, latest, live_threads, moves_left, standing
 
 from . import economics as eco
-from . import llm, writer
+from . import llm, reader, writer
 from .claims import ClaimBank, rival_offer
 from .personas import profile, signals_in
 
@@ -38,29 +37,6 @@ DEEP = 0.06  # a first concession this large (share of its quote) means a deep f
 MIN_MOVE = 0.002  # every sheet moves at least this share of the price
 FIRST_CLAIMS, LATER_CLAIMS = 3, 1
 DONE = {"agreed", "final_offer"}
-
-# What the supplier's e-mail asks of us
-ASKS = {
-    # a binding volume figure; stated in words with the figure, it was "taken into account" (D01, D02)
-    "volume": r"volume (can )?you (can )?commit|binding (higher )?volume|higher (order )?volume|volume figures"
-    r"|confirm .{0,40}volume|anticipated (order )?volume",
-    # proof of the forecast or of figures we mentioned without an ID
-    "proof": r"proof of|send us the data|figures is that based|provide the (volume|forecast|binding)"
-    r"|forecast data|volume data",
-    # it wants to be paid sooner
-    "payment": r"faster payment|pay(ment)? (terms )?(earlier|faster|sooner|within)|need .{0,12}days payment"
-    r"|shorter payment|quicker payment|cash flow",
-    # it asks for our current price level or our target
-    "target": r"what price|which price|your target|price you have in mind",
-}
-
-
-def asks(body):
-    """The kinds of ask in a supplier e-mail, in a fixed order. The bots write their asks in a few
-    fixed sentences ("Which volume can you commit to?", "Please send us the data."), so plain
-    patterns read them; no model, no latency."""
-    text = body or ""
-    return [k for k, pat in ASKS.items() if re.search(pat, text, re.I)]
 
 
 class Side:
@@ -87,7 +63,16 @@ class Side:
         self.pending = None  # the message in flight: what to undo if it times out
         self.term_change = False  # its last counter changed our non-price terms
         self.last_reply = None
-        self.asks = []  # what its last e-mail asked of us (asks)
+        self.asks = []  # what its last e-mail asked of us (reader)
+        self.read = dict(reader.EMPTY)  # the reading of its last e-mail
+        self.counted = set()  # claim kinds it said it took into account
+        self.dismissed = set()  # claim kinds it said do not change its calculation
+        self.levers = []  # terms it said would improve its price, latest first
+        self.refused = set()  # terms it said it cannot change
+        self.ceiling = None  # the most we pay at s.terms: C reaches the alternative's
+        self.floor = None  # where its own economics stop it (our estimate), at s.terms
+        self.pay_record = None  # (invoices, paid late, days late on average) with this supplier
+        self.trade = None  # the term we traded in this move, for the e-mail
         self.attached = set()  # files we already sent it
 
 
@@ -156,6 +141,9 @@ class Negotiator:
             # us more than it saves, and pushing on made Nordmark withdraw (P02 v1)
             s.target = safe(lambda: eco.relationship_optimum(case, s.terms, s.std, s.est, full_cost * 0.85, s.quote))
         safe(lambda: self.trade_clause(s, quote, full_cost))
+        s.ceiling = safe(lambda: eco.ceiling(case, s.terms, s.std, s.est, s.quote), s.quote)
+        s.floor = eco.supplier_floor(case, s.est)
+        s.pay_record = safe(lambda: self.bank.payment_record(sid))
         s.claims = safe(lambda: self.bank.for_supplier(sid, q_price), [])
         self.note(
             sid,
@@ -169,6 +157,8 @@ class Negotiator:
             quote_at_terms=s.quote,
             anchor=s.anchor,
             target=s.target,
+            ceiling=s.ceiling,
+            floor=s.floor,
             budget=s.budget,
             claims=[c["text"] for c in s.claims],
         )
@@ -269,6 +259,26 @@ class Negotiator:
                 s.est["interest_rate"] = s.prof["rate"]
         self.note(s.sid, "signals", new=new)
 
+    def read_reply(self, s, last):
+        """What its e-mail tells us (`reader`): asks, levers, refusals and which of our claim kinds
+        it counted or dismissed. The code policy reads with the patterns; the reasoner with the
+        model first."""
+        s.read = reader.read(None, last.get("body"))
+        self.absorb(s)
+
+    def absorb(self, s):
+        s.asks = list(s.read.get("asks") or [])
+        s.counted |= set(s.read.get("counted") or [])
+        s.dismissed |= set(s.read.get("dismissed") or [])
+        s.counted -= s.dismissed
+        s.levers = list(s.read.get("levers") or []) + [f for f in s.levers if f not in (s.read.get("levers") or [])]
+        s.refused |= set(s.read.get("refused") or [])
+        cash = s.read.get("cash") or "payment_days" in s.levers or "payment" in s.asks
+        if cash and "cash_need" not in s.prof["signals"]:
+            self.read_signals(s, "cash is tight")  # a supplier asking to be paid sooner values money now
+        if any(s.read.get(k) for k in ("levers", "refused", "counted", "dismissed")):
+            self.note(s.sid, "read", **{k: s.read[k] for k in ("levers", "refused", "counted", "dismissed")})
+
     def their_price(self, s, terms):
         """Its sheet as a price at our planned terms (same value to it)."""
         same = all(terms.get(k) == v for k, v in s.terms.items() if k != "unit_price" and k in terms)
@@ -334,7 +344,7 @@ class Negotiator:
             s.theirs.append(self.their_price(s, sheets[0]["terms"]))
             s.last_sheet = sheets[0]["terms"]
             s.last_reply = last
-            s.asks = asks(last.get("body"))
+            self.read_reply(s, last)
             self.read_signals(s, last.get("body"))
             economics_changed = s.terms != terms_before or s.est != estimate_before or s.std != std_before
             if s.target is not None and economics_changed:
@@ -359,6 +369,10 @@ class Negotiator:
             return self.send(s, [eco.at_price(s.terms, max(s.target, theirs))], [], events, theirs)
         if s.ours and theirs <= s.ours[-1]:  # it came below what we offered: take it
             return self.finish(s, sheets, events, theirs, left)
+        return self.decide(s, sheets, events, theirs, left, threads)
+
+    def decide(self, s, sheets, events, theirs, left, threads):
+        """The code policy's move: a share of the gap at the planned terms, with the next claims."""
         price, n_claims = self.next_price(s, theirs)
         claims = self.pick(s, n_claims, threads)
         return self.send(s, [eco.at_price(s.terms, price)], claims, events, theirs)
@@ -413,7 +427,9 @@ class Negotiator:
 
     def pick(self, s, n, threads):
         """The next unused claims for this supplier: in an RFQ the cheapest rival offer first (a new
-        offer is a new argument every round), then its own claims, strongest first."""
+        offer is a new argument every round), then its own claims, strongest first; kinds it said
+        it took into account before the rest, kinds it dismissed last (the distributors told us 22
+        times that order prices do not change their calculation; the forecast counted every time)."""
         out = []
         rivals = []
         for other, events in threads.items():
@@ -424,7 +440,8 @@ class Negotiator:
                 price = self.their_price(s, t)
                 if price < s.theirs[-1]:
                     rivals.append((price, rival_offer(other, oid, t["unit_price"])))
-        pool = [c for _, c in sorted(rivals, key=lambda r: r[0])[:1]] + s.claims
+        ranked = sorted(s.claims, key=lambda c: (c["kind"] in s.dismissed, c["kind"] not in s.counted, -c["strength"]))
+        pool = [c for _, c in sorted(rivals, key=lambda r: r[0])[:1]] + ranked
         for c in pool:
             key = [(s.sid, i) if c.get("rival") else i for i in c["ids"]]
             if any(k in self.used for k in key):
@@ -491,8 +508,10 @@ class Negotiator:
             ours=price,
             claims=[c["kind"] for c in claims],
             asks=s.asks,
+            trade=s.trade,
             attached=[a["name"] for a in attachments],
         )
+        s.trade = None
         message = {
             "subject": writer.reply_subject(events, self.case),
             "body": body,

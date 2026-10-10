@@ -102,14 +102,26 @@ OWNERS = {
 }
 
 
+# Who we are in the e-mail, by what the case is for us (the category goal).
+PERSONA = {
+    "leverage": "a buyer with options who stays courteous and lets the data and the market speak",
+    "routine": "a pragmatic buyer who wants a quick, clean agreement at a fair price",
+    "quality_first": "a buyer whose plant has suffered from defects and who ties price to performance",
+    "stabilise": "a long-term partner who wants the supplier healthy and the price fair for both",
+    "secure_supply": "a buyer for whom delivery security comes first and who pays for reliability",
+}
+
+
 def brief(case, prof, last_body, facts, tone, question_allowed):
     """What the model needs for the paragraph: who the supplier is, what it wrote, what we may say."""
     who = OWNERS.get(prof.get("owner_type"), "a supplier")
     if prof.get("country") and prof.get("country") != "DE":
         who += f" based in {prof['country']}"
     traits = [TRAITS[s] for s in prof.get("signals", []) if s in TRAITS]
+    goal = case["buyer"].get("category_goal")
     out = [
-        f"CASE: {case.get('title')} (we are the buyer; goal: {case['buyer'].get('category_goal')})",
+        f"CASE: {case.get('title')} (we are the buyer; goal: {goal})",
+        f"WE ARE: {PERSONA.get(goal, 'a professional buyer')}; Hollerau Pumpenwerke, Purchasing.",
         f"SUPPLIER: {who}." + (f" From our notes: {'; '.join(traits)}." if traits else ""),
         f"ITS LAST E-MAIL:\n{(last_body or '')[:1800]}",
         "WHAT WE CAN SAY:",
@@ -140,8 +152,21 @@ def facts(case, s, claims, moved, statements, attachments, traded):
                 "say so plainly and kindly, and point to what we do give ("
                 "our full volume, the contract term)"
             )
+            if s.pay_record and s.pay_record[1]:
+                out.append(
+                    "we have paid some of their invoices after the due date; the sentence right after this "
+                    "paragraph commits us to paying on the due date from now on (do not repeat the figures)"
+                )
         else:
             out.append("they asked for faster payment: our proposal below sets the payment term we can offer")
+    if s.trade:
+        field, said = s.trade
+        out.append(
+            f"they said a different {field.replace('_', ' ')} would improve their price"
+            + (" (in their words: " + said + ")" if said else "")
+            + f"; our proposal below takes them up on it: it changes the {field.replace('_', ' ')} and the "
+            "price reflects that trade; say so without any figure"
+        )
     if "volume" in s.asks or any("binding volume" in text for text in statements):
         out.append("they asked which volume we commit to: the binding volume figure stands right after this paragraph")
     if attachments:
@@ -178,6 +203,14 @@ def statements(case, s, sheets):
     if "payment" in s.asks and ("payment_days" not in case["negotiable"] or "payment_days" in fixed):
         days = closing_terms(case, sheets[0], s.std).get("payment_days")
         out.append(f"Payment is fixed at {days} days under this agreement and cannot be shortened.")
+        if s.pay_record and s.pay_record[1]:
+            # what a cash-short supplier can hold us to without a change to the sheet: paying on time.
+            # True by our own records (Kalwisz: 126 of 135 invoices late, "we often see late payments").
+            n, late, avg = s.pay_record
+            out.append(
+                f"Our records show we paid {late} of your last {n} invoices after the due date, on average "
+                f"{avg:.0f} days late; from now on we will pay every invoice on the due date."
+            )
     if not ("volume" in s.asks or not s.ours):
         return out
     sheet = sheets[0]

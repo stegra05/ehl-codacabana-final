@@ -60,9 +60,10 @@ supplier bots (LLM personas with hidden economics) and closes one term sheet per
 | `docs/learnings.md` | **read first**: what we know about the arena, suppliers and data, with evidence |
 | `docs/design.md` | the agent we are building: modules, data, policy, build order |
 | `docs/challenge.md`, `api.md`, `submission.md` | Tacto's brief, API and cost formula, hand-in (upstream copies) |
-| `buyer/policy.py`, `runner.py` | the price engine: per-thread policy and the supplier's asks; the loop that plays a case and the Live Final waves (`docs/design.md`, Implemented) |
+| `buyer/policy.py`, `runner.py` | the price engine: per-thread policy; the loop that plays a case and the Live Final waves (`docs/design.md`, Implemented) |
+| `buyer/reader.py`, `reasoner.py` | the supplier's reply as a schema (model first, patterns as fallback); `--agent reasoner`: the model chooses among code-computed moves (trades for the levers the supplier named, claims), code owns prices, floors and ceilings |
 | `buyer/economics.py`, `claims.py`, `personas.py`, `writer.py`, `llm.py` | C and term planning, claim bank, persona signals, e-mail composition, model paragraph |
-| `buyer/cli.py` | `buyer play`, `buyer run`, `buyer pull`, `--agent naive` |
+| `buyer/cli.py` | `buyer play`, `buyer run`, `buyer pull`, `--agent buyer|reasoner|naive` |
 | `tests/` | end to end against `arena-sim`, no network, no model |
 | `exports/` | Saturday probe sessions as CSV/JSONL; schema in `exports/README.md` |
 | `analysis/explore.py` | data package exploration: profiles, persona signals, report page |
@@ -86,7 +87,9 @@ uv run arena-sim serve --no-clock --data data/package   # local API, scripted su
 uv run --with pandas python analysis/explore.py # data package -> analysis/out/
 ```
 
-`--agent naive` plays the kit's baseline instead of ours.
+`--agent naive` plays the kit's baseline instead of ours; `--agent reasoner` our policy with the model
+reading replies and choosing trades and claims. `uv run python analysis/bench_sim.py --model` plays
+every case file on the simulator with both, no quota.
 
 ## Working on the negotiation agent
 
