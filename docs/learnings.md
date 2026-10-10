@@ -113,6 +113,27 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
 
 ## Supplier behaviour
 
+- 2026-10-10 `arena` **Nordmark picks the clause sheet, and the distributors price a deadband at
+  our cost.** Offered a fixed sheet and a clause sheet in one message, Nordmark picked the clause
+  (`91d2b5ad7501ce55`); from an anchor of 345 with the clause it countered 351.05, 349.85, 349.35,
+  349.05 and withdrew (`ea485d8c4db527aa`, score 0). Donautal prices the AS-14404 deadband at our
+  cost (5.45 at 0 % against 5.57 at 5 %); a 5 % clause sheet sent to the distributors got a first
+  counter 1.5 to 2 % above the 0 % clause they add themselves (P08 5.60 to 5.64, P18 5.50 against
+  5.40 and 5.30, six runs on `steffen/elicit`). → Trade a clause only where its value to the
+  supplier beats our cost (`economics.clause_trade`); let a distributor's own clause stand.
+- 2026-10-10 `arena` **How many counters a supplier gives depends on our path; how much it moves
+  per counter is its own.** 115 practice threads: Nordmark 1 to 6 counters, Donautal 2 to 6,
+  Werdenfels 2 to 6, Kalwisz 4 to 6. Its move as a share of our previous move (median, rounds 3
+  on): Brandlhuber 0.62, Donautal 0.44, Werdenfels 0.45, Leitner 0.36, Nordmark 0.15, Kalwisz
+  0.0, Selvbrunn and Wälzlager 0.0. A slow walk on P08 (12 % of the gap per round,
+  `50502ff781d898c6`) got five counters and 5.31; the standard walk four and 5.33 to 5.39:
+  the schedule shrinks to the same floor. Giving Donautal its clause in round 1, two clause
+  sheets, a fixed 24-month ask at 5.35 (refused: "cannot maintain a fixed price for a 24-month
+  term") and a forecast-volume statement all ended 5.36 to 5.39. Kalwisz's floor is 45.50 at 300
+  and at 800 ppm (`1f36a83c6e80e818`, `a74b89173c96c23c`). → An opponent model of the arena's
+  rules is identifiable from two replies, but on these suppliers it would reproduce the caps we
+  already feed; the gap on P08, P18 and P11 is not in the path.
+
 - 2026-10-10 `arena` **The round-1 counter is a cap plus claims, not a reaction to the anchor.**
   D01 (quote 52.90), 30 sandbox runs: anchors 44.0 to 48.5 without claims all got 51.30 (-3.0 %);
   a should-cost claim alone 51.00, the order prices alone 50.30, notice or scorecard alone 51.30,
@@ -306,6 +327,20 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
   our anchor, in relationship goals no lower than the relationship optimum (P02: 361.71 with the
   full cost capped at the quote less the sustainable margin). P14 (copper, stabilise) gains 21 %
   of the price by this rule, P16 (PPI-C241, leverage) 2 %.
+- 2026-10-10 `arena` **A model-written e-mail (whole prose, figures and IDs guarded) changed no
+  outcome.** Tried on branch `steffen/elicit` (commit `086acb8`, not merged): the model wrote
+  the body from the greeting to the proposal, every figure had to be one code put on the table,
+  IDs and leaks were blocked, 2.2 to 2.8 s per call. Two runs each: P02 0.733 and P18 0.630 to the
+  cent as with the template, P11 45.50 again (floor), P08 0.60 and 0.57 against 0.56 with the
+  template (spread of identical runs 0.47 to 0.67). → Wording moves these bots within their
+  noise band only; the sheets, the claims and their caps decide. Not worth the code.
+- 2026-10-10 `arena` **Round-1 clause menu (branch `steffen/elicit`, not merged).** The planned
+  sheet plus the clause with the largest deadband at equal C for us, priced at the relationship
+  optimum, skipped where the supplier's letter proposes a clause. P02 0.733 at 362.02, agreed in
+  round 1 (`7196cc241752a806`, three identical runs), the same as `clause_trade` (0.735); sent to
+  the distributors as well, P18 0.630 at 5.20 (`7826bde84e0fd3e0`) and P08 0.56 at 5.46
+  (`8839210e24f47e37`), both inside their spread. → `clause_trade` kept: it reaches the same P02
+  deal and excludes the distributors by value, without a rule on the letter.
 - 2026-10-10 `arena` **A falling cost driver over the best window moves the first counter (v10).**
   The claim bank only knew 12-month index changes, where the distributors' main driver AS-14404
   rose 5.9 %; over the window the arena checks (any two months up to 12 apart, ending within the
@@ -439,8 +474,9 @@ shows evidence.
 
 ## Hypotheses (untested in the arena)
 
-- Records on P02 (0.85) and P08 (0.73) come from a lower round-1 counter, not from later rounds:
-  our later rounds converge to the same price whatever the gap (P02 371.9 in v4 to v6).
+- The P08 record (0.92) comes from a lower round-1 counter, not from later rounds: our later
+  rounds converge to the same price whatever the gap. (P02's gap is the clause, see Agent
+  experiments.)
 - Three sheets of equal C for us in round 1 reveal what each lever is worth to the supplier
   (payment, lead time, ppm) and could lift P10 and P11.
 - The close response of a final case carries `c_best`; calibrating anchors between waves from it
