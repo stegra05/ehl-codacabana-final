@@ -1,0 +1,41 @@
+{
+  "commit": "096079554215b3c736d16e994389ac655f9b8874",
+  "model": "gpt-6-luna",
+  "completed": 3,
+  "rows": [
+    {
+      "case": "case:P01",
+      "session": "c61d8aa6c88bf5ac",
+      "score": 0.977899710624052,
+      "previous": 0.8981606966931385,
+      "delta": 0.07973901393091354,
+      "previous_session": "4f234bc3a5fee132",
+      "previous_best": 0.99862421783879,
+      "deal": true,
+      "cost": 1098074.7
+    },
+    {
+      "case": "case:P02",
+      "session": "f683e8b925c5b914",
+      "score": 0.7347381731929096,
+      "previous": 0.27543595565602425,
+      "delta": 0.4593022175368853,
+      "previous_session": "b3daba378f139d09",
+      "previous_best": 0.7347381731929096,
+      "deal": true,
+      "cost": 2248075.11
+    },
+    {
+      "case": "case:P03",
+      "session": "0502cc62028239ac",
+      "score": 0.9228331929713948,
+      "previous": 0.9228331929713948,
+      "delta": 0.0,
+      "previous_session": "d0dbeb2b5fb4acb8",
+      "previous_best": 0.9299668646202875,
+      "deal": true,
+      "cost": 3935069.22
+    }
+  ],
+  "mean": 0.8784903589294522
+}
