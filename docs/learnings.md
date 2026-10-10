@@ -57,8 +57,7 @@ Hypotheses. Correct or delete entries that turn out wrong.
   proposals in 52 stress runs (48 impossible constraints, four payment floors).
   These preexisting proposal failures remain unresolved. No hosted sessions or
   model calls were used. This is regression evidence, not hosted score evidence
-  or proof against overfitting. Local reproducibility bundle:
-  `/private/tmp/general-offer-pr-evidence` (not a repository dependency).
+  or proof against overfitting.
 - 2026-10-10 `rules` A rejected local candidate adopted any cheaper successive
   counter even when it surrendered valuable non-price conditions. It worsened
   225 of 576 simulations. The retained change requires the complete quoted
@@ -95,10 +94,12 @@ Hypotheses. Correct or delete entries that turn out wrong.
 7. **Only a supplier's standing sheet can be accepted** (an alternative returns 422). A better
    alternative is sent back as our sheet; it agrees and becomes standing (P10).
 8. **Raw-material distributors refuse a fixed price beyond 12 months and refuse any deadband**
-   (P08, P18): take their clause and negotiate the price; insisting on a deadband stalled them.
-   But only when their sheet with the clause costs us less than their last one: Nordmark's copper
-   clause came alone and cost 1.8 % of spend, score 0 (P02 `680eb11405186b42`,
-   `d52ccdd3d2e07b3f`). That rule separates all 24 P02, P08 and P18 sessions correctly.
+   (P08, P18), but keeping our fixed-price sheet while they counter with their clause gets more
+   than taking it: from the same opening and first counter, P18 closed at 5.00 with the clause
+   (0.688, `e86f454a59ff98f0`) against 5.10 in four sessions that took it (0.621, `436cda73`,
+   `d7ef7720`, `9b63768b`, `e64ffdb4`); P08 at 5.25 (0.659, `22f82a186bc4fb08`) against 5.30 to
+   5.38 (0.515 to 0.604). One session each. Adopt a quoted package only when it costs less than
+   our plan at the same value to the supplier; a price cut alone does not pay for the clause.
 9. **RFQ: the arena answers one call per session at a time** and each thread's 60 s clock runs
    from its reply, so sends are serialized by deadline; the cheapest rival offer is a new,
    verified claim to every other bidder every round (P05 0.83, D02 0.73).

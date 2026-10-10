@@ -439,8 +439,8 @@ class Negotiator:
                 "instead of a fixed price we propose an index clause with a deadband on their main cost driver, "
                 "so both sides share the material risk; in return the price basis reflects that"
             )
-        if any(c["kind"] == "forecast" for c in claims):
-            out.append("the cited forecast below describes our expected demand; do not add unsupported trends")
+        if any(c["kind"] == "forecast" for c in claims) or any(c["kind"] == "forecast" for c in s.claims):
+            out.append("our demand forecast for this part is rising")  # a forecast claim exists only when it rises
         if s.ours and len(s.ours) > 1 and s.ours[-1] > s.ours[-2]:
             out.append("our proposal moves toward them again")
         if moved:

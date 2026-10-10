@@ -28,7 +28,7 @@ An active relationship target is recalculated only when package economics or
 the supplier estimate change, with the previous target inside the search range.
 An opening quote cannot bypass the planned anchor and claims, and proximity above
 the target does not trigger early closing. Fixed-payment answers are code-written even
-without a model; forecast prose is tied to claims actually cited in that message.
+without a model.
 Supplier-equivalent values remain estimates, not observed acceptance thresholds.
 
 ## Principle
