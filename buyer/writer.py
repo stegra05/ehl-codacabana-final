@@ -25,6 +25,12 @@ def describe(case, sheet):
     for field in case["negotiable"]:
         if field != "unit_price" and field in sheet and field in FIELDS:
             parts.append(FIELDS[field](sheet[field]))
+    fixed = case.get("fixed_terms") or {}
+    volume = sheet.get("volume_per_year") or fixed.get("volume_per_year") or case["buyer"]["need_per_year"]
+    months = sheet.get("contract_months") or fixed.get("contract_months")
+    span = f" over {months} months" if months else ""
+    if "volume_per_year" not in case["negotiable"]:
+        parts.append(f"for our full demand of {volume} units a year{span}")
     return ", ".join(parts)
 
 

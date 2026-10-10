@@ -181,17 +181,16 @@ class Negotiator:
         case = self.case
         standing_terms = sheets[0]["terms"]
         clause = standing_terms.get("index_clause")
-        if "index_clause" in s.terms and s.terms["index_clause"] is None and clause:
-            planned = eco.plan_terms(
-                case, s.std, s.est, standing_terms, standing_terms["unit_price"], require_clause=True
-            )
-            if planned:
-                self.switch(s, {**s.terms, "index_clause": planned[0]["index_clause"]}, "clause required")
+        if "index_clause" in s.terms and s.terms["index_clause"] != clause and clause:
+            # it will not sell this term at a fixed price (raw-material distributors), and it
+            # refuses a deadband: we take its clause and keep negotiating the price
+            self.switch(s, {**s.terms, "index_clause": clause}, "its index clause")
         best_c = eco.cost(case, eco.at_price(case, s.terms, self.their_price(s, standing_terms)), s.std, s.est)
         for sheet in sheets:
             terms = sheet["terms"]
             changed = {k: v for k, v in terms.items() if k != "unit_price" and k in s.terms and s.terms[k] != v}
-            if not changed or (changed.get("index_clause") and s.terms.get("index_clause") is None):
+            changed.pop("index_clause", None)
+            if not changed:
                 continue
             new = {**s.terms, **changed}
             if not eco.must_haves_ok(case, new, s.std):

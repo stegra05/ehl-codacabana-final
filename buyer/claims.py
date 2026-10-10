@@ -178,6 +178,82 @@ class ClaimBank:
                 )
         return out
 
+    def own_quote(self, part, sid, price):
+        """Its own cheapest quote for this part in the last six months of our data, cheaper than
+        what it asks now; its remark only when it does not argue its case."""
+        rows = self.query(
+            "SELECT id, quote_date, remarks FROM quotes WHERE part_id = ? AND supplier_id = ? AND quote_date >= ? "
+            "ORDER BY unit_price ASC, quote_date DESC LIMIT 1",
+            (part, sid, "2026-04-01"),
+        )
+        f = self.fact(rows[0]["id"]) if rows else None
+        if not f or not price or f["unit_price"] >= price * 0.99 or rows[0]["id"] in self.refs:
+            return None
+        remark = rows[0].get("remarks") or ""
+        if re.search(r"not possible|no room|not discounted|firm|frozen", remark, re.I):
+            remark = ""
+        note = f' ("{remark.rstrip(".")}")' if remark else ""
+        text = (
+            f"Your quote of {rows[0]['quote_date']} for this part was {money(f['unit_price'])} per unit"
+            f"{note} ({rows[0]['id']})."
+        )
+        return {"kind": "own_quote", "ids": [rows[0]["id"]], "text": text, "strength": 6}
+
+    def market_price(self, part, sid, price):
+        """Another supplier's latest order prices for this part, cheaper than this supplier's price."""
+        rows = self.query(
+            "SELECT id, supplier_id FROM po_lines WHERE part_id = ? AND supplier_id != ? "
+            "ORDER BY order_date DESC LIMIT 12",
+            (part, sid),
+        )
+        if not rows:
+            return None
+        other = rows[0]["supplier_id"]
+        facts = [(r["id"], self.fact(r["id"])) for r in rows if r["supplier_id"] == other][:2]
+        facts = [(i, f) for i, f in facts if f and f.get("unit_price")]
+        if len(facts) < 2 or not price or max(f["unit_price"] for _, f in facts) >= price * 0.99:
+            return None
+        ids = [i for i, _ in facts]
+        at = money(facts[0][1]["unit_price"])
+        text = f"We currently buy this part from another supplier at {at} ({', '.join(ids)})."
+        return {"kind": "market_price", "ids": ids, "text": text, "strength": 6}
+
+    def signal_notes(self, sid):
+        """Its own words in our notes that weaken its case: material bought forward at fixed prices,
+        an offer to open its calculation. Context for the person reading, not a checked figure."""
+        out = []
+        for d in self.query(
+            "SELECT id, date, kind, file FROM documents WHERE supplier_id = ? ORDER BY date DESC", (sid,)
+        ):
+            path = self.pkg.root / (d.get("file") or "") if self.pkg else None
+            text = path.read_text(encoding="utf-8", errors="replace") if path and path.is_file() else ""
+            if re.search(r"covered at fixed prices|bought their \w+ forward|material covered until", text, re.I):
+                out.append(
+                    {
+                        "kind": "hedged",
+                        "ids": [d["id"]],
+                        "text": f"Your letter of {d['date']} ({d['id']}) says your material is covered at fixed "
+                        "prices, so recent index movements do not reach your costs yet.",
+                        "strength": 5,
+                    }
+                )
+            if re.search(r"walk us through their calculation", text, re.I):
+                out.append(
+                    {
+                        "kind": "open_book",
+                        "ids": [d["id"]],
+                        "text": f"In our call of {d['date']} ({d['id']}) you offered to walk us through your "
+                        "calculation; we would welcome that now.",
+                        "strength": 4,
+                    }
+                )
+        seen, uniq = set(), []
+        for c in out:
+            if c["kind"] not in seen:
+                seen.add(c["kind"])
+                uniq.append(c)
+        return uniq
+
     def scorecard(self, sid, quality):
         ids = self.ids(f"sc:{sid.split(':')[-1]}@")
         if not ids:
@@ -225,12 +301,15 @@ class ClaimBank:
         for part in case.get("parts") or []:
             history = self.order_history(part, sid, quote) if single else None
             out += [c for c in (self.should_cost(part, sid, quote), history) if c]
+            if single:
+                out += [c for c in (self.own_quote(part, sid, quote), self.market_price(part, sid, quote)) if c]
             out += [c for c in (self.index_change(s) for s in self.drivers(part)) if c]
             out += self.rival_quote(part, sid, quote)
             if c := self.forecast(part):
                 out.append(c)
         if c := self.notice(sid):
             out.append(c)
+        out += self.signal_notes(sid)
         if c := self.scorecard(sid, quality):
             out.append(c)
         if self.foreign:
