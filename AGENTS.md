@@ -15,7 +15,8 @@ Hackathon repo, EHL Grand Finale, Munich, 10 to 11 Oct 2026. Code freeze and Liv
   complexity.
 - Keep components modular and concerns separated.
 - Read `arena_kit` (in `.venv`) before writing a helper: cost function, quote parsing, data lookup
-  and runners exist. We wrap the kit, never patch it.
+  and runners exist. We wrap the kit, never patch it. Guide:
+  https://github.com/tacto-ai/negotiation-arena-kit/tree/main/starter-kit
 - Never commit secrets. Keys live in `.env`. Never print, log or paste the arena key anywhere.
 - All changes go through a PR against `main`, reviewed by one teammate. Branch `<firstname>/<topic>`.
   Agents may commit, push their branch and `gh pr create`; never push to `main`, force-push or merge.
@@ -31,8 +32,9 @@ supplier bots (LLM personas with hidden economics) and closes one term sheet per
   over the horizon (price, uncovered need, payment, freight, lead time, quality, tooling, index
   clause, relationship charge), computed exactly by `arena_kit.total_cost`. No deal scores the
   alternative (0 if none). A broken must-have scores 0.
-- **Live Final**: five waves of hidden cases, 8 minutes each, a wave's cases in parallel. New
-  suppliers; up to a third mix supplier and case types practice never shows.
+- **Live Final**: five waves of hidden cases, 8 minutes each, a wave's cases in parallel. Wave
+  score = mean case score x 100; total = sum. New suppliers; up to a third mix supplier and case
+  types practice never shows; some cite the Sunday 08:00 data release.
 
 **Hard rules, breaking one can disqualify us:**
 - No human in the loop during the final. The runner starts before 12:00 and is left alone.
@@ -91,6 +93,8 @@ uv run --with pandas python analysis/explore.py # data package -> analysis/out/
   comes from code next to its data ID.
 - **Never accept** a sheet that breaks a must-have or costs more than the alternative. Price
   unstated fields at the supplier's standard terms (`arena_kit.docs.standard_terms`).
+- **Read the supplier.** What moves it is in the data (call notes, letters, news, quote remarks,
+  payment history, scorecards). Trade what is cheap for us for what it values.
 - **Score every lever per case.** The same term helps in one case and hurts in the next
   (coverage, payment days, start date, index clause, contract length).
 - **Generalise.** No logic keyed on case or supplier IDs; runtime knowledge from the data package

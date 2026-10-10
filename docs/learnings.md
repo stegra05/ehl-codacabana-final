@@ -2,8 +2,8 @@
 
 What we know about the arena, its supplier bots and the data package, and what it means for the
 agent. Basis, Saturday 10 October: 15 practice sessions covering all 10 hosted cases and 12
-suppliers, 17 sandbox sessions, the team's simulator and sandbox experiments, and the data package. Every euro figure and what-if score below
-was recomputed with `arena_kit.total_cost`. Evidence: `exports/` (every session, supplier thread,
+suppliers, 17 sandbox sessions, the team's simulator and sandbox experiments, and the data
+package. Every euro figure and what-if score below was recomputed with `arena_kit.total_cost`. Evidence: `exports/` (every session, supplier thread,
 e-mail and claim; schema in `exports/README.md`) and `analysis/explore.py` (the data package).
 
 Add findings to the matching section, newest first: date, tag, the finding, its evidence (case,
@@ -93,7 +93,7 @@ C_best.
 
   | Goal | Fallback risk | Relationship charge | Push for |
   |---|---|---|---|
-  | `leverage` | 3 % | no | price: rival quotes, should-cost, indices |
+  | `leverage` | 3 % (D02: 5 %) | no | price: rival quotes, should-cost, indices |
   | `routine` | 5 % | no | price and a quick close; small stakes |
   | `quality_first` | 8 % | no | low `ppm_commitment`, chargeback at least `cost_per_defect` |
   | `stabilise` | 10 % | yes, sustainable margin 0.5 to 8 % | structure: term, start date, payment, fair clause |
@@ -214,8 +214,10 @@ C_best.
   prefers (35 days' lead time instead of 21, which the job shop priced as overtime). Latency
   11 to 19 s per move (reader plus writer, `claude-opus-5-5` at low effort), stance call 9 to 11 s
   once per case. Cheaper variants need engineering approval and never became a binding sheet.
+  Every score above matches a session in `uv run buyer pull --set sandbox`.
 - 2026-10-10 `arena` **Opening 20 % below beat 30 %** on the sandbox with a guarded, cost-ranked
-  `NaiveAgent` (PR #7): D01 0.93 against 0.86, D02 0.38 against 0.30.
+  `NaiveAgent` (PR #7): D01 0.93 against 0.86, D02 0.38 against 0.30 (one run each, matched
+  in the pulled sandbox sessions).
 - 2026-10-10 `rules` **The kit's `NaiveAgent` accepts bad deals** on the local simulator: 32 of 152
   agreements broke a must-have, 28 cost more than the alternative. Adding the `must_haves_ok` and
   C_alt guards removed both. Adaptive concessions (by supplier movement and messages left) beat
