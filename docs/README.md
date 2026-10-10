@@ -14,3 +14,8 @@ these copies when it changes.
   dossiers, calculations, validation and simulator experiments.
 - [Understanding anchor and gap](anchor-gap.md): local strategy labels, a worked
   example and limits of the naive negotiation rule.
+
+- [Round 2 findings and limitations](round2-method.md): supplier holdout, evidence
+  ablations, aggressive anchors, hosted D01/D02 scores and adaptive concessions.
+- [Recorded research summary](research/round2-summary.json): aggregate outcomes,
+  separate official scores and source hashes; no session credentials or raw logs.
