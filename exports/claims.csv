@@ -1,0 +1,58 @@
+set,case_id,session_id,supplier_id,round,type,refs,asserted,result
+practice,case:P01,ef0c817c9d497953,sup:70110,4,index_change,idx:PPI-D351@2025-08 idx:PPI-D351@2026-08,"{""change_pct"": -3.7}",verified
+practice,case:P01,ef0c817c9d497953,sup:70110,4,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",verified
+practice,case:P01,ef0c817c9d497953,sup:70110,4,notice_period,doc:20260911-70110-P01 ctr:4600070110,"{""days"": 51.0}",verified
+practice,case:P02,680eb11405186b42,sup:70510,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",verified
+practice,case:P02,680eb11405186b42,sup:70510,5,delivery_record,sc:70510@2026Q3 sc:70510@2026Q2 sc:70510@2026Q1 sc:70510@2025Q4,"{""otd_pct"": 89.2}",verified
+practice,case:P02,680eb11405186b42,sup:70510,5,should_cost,cost:350011,"{""unit_cost"": 374.95}",verified
+practice,case:P02,d52ccdd3d2e07b3f,sup:70510,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",verified
+practice,case:P02,d52ccdd3d2e07b3f,sup:70510,5,delivery_record,sc:70510@2026Q3 sc:70510@2026Q2 sc:70510@2026Q1 sc:70510@2025Q4,"{""otd_pct"": 89.2}",verified
+practice,case:P02,d52ccdd3d2e07b3f,sup:70510,5,should_cost,cost:350011,"{""unit_cost"": 374.95}",verified
+practice,case:P03,3986e97af2cfe3b0,sup:70530,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",verified
+practice,case:P03,3986e97af2cfe3b0,sup:70530,5,delivery_record,sc:70530@2026Q3 sc:70530@2026Q2 sc:70530@2026Q1 sc:70530@2025Q4,"{""otd_pct"": 88.3}",verified
+practice,case:P03,3986e97af2cfe3b0,sup:70530,5,should_cost,cost:350020,"{""unit_cost"": 403.21}",verified
+practice,case:P04,7f7dc7e83a9ad486,sup:70620,5,index_change,idx:PPI-C2815@2025-08 idx:PPI-C2815@2026-08,"{""change_pct"": 0.8}",verified
+practice,case:P04,7f7dc7e83a9ad486,sup:70620,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",verified
+practice,case:P04,7f7dc7e83a9ad486,sup:70620,5,delivery_record,sc:70620@2026Q3 sc:70620@2026Q2 sc:70620@2026Q1 sc:70620@2025Q4,"{""otd_pct"": 85.4}",verified
+practice,case:P04,cb1eb418a0b85c17,sup:70620,5,index_change,idx:PPI-C2815@2025-08 idx:PPI-C2815@2026-08,"{""change_pct"": 0.8}",verified
+practice,case:P04,cb1eb418a0b85c17,sup:70620,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",verified
+practice,case:P04,cb1eb418a0b85c17,sup:70620,5,delivery_record,sc:70620@2026Q3 sc:70620@2026Q2 sc:70620@2026Q1 sc:70620@2025Q4,"{""otd_pct"": 85.4}",verified
+practice,case:P05,9798d98c2cb96b24,sup:70210,5,index_change,idx:PPI-D351@2025-08 idx:PPI-D351@2026-08,"{""change_pct"": -3.7}",duplicate
+practice,case:P05,9798d98c2cb96b24,sup:70210,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",duplicate
+practice,case:P05,9798d98c2cb96b24,sup:70210,5,delivery_record,sc:70210@2026Q3 sc:70210@2026Q2 sc:70210@2026Q1 sc:70210@2025Q4,"{""otd_pct"": 83.0}",verified
+practice,case:P05,9798d98c2cb96b24,sup:70240,5,index_change,idx:PPI-D351@2025-08 idx:PPI-D351@2026-08,"{""change_pct"": -3.7}",verified
+practice,case:P05,9798d98c2cb96b24,sup:70240,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",verified
+practice,case:P05,9798d98c2cb96b24,sup:70240,5,delivery_record,sc:70240@2026Q3 sc:70240@2026Q2 sc:70240@2026Q1 sc:70240@2025Q4,"{""otd_pct"": 74.9}",verified
+practice,case:P05,d35aae9c5bc1d039,sup:70210,5,index_change,idx:PPI-D351@2025-08 idx:PPI-D351@2026-08,"{""change_pct"": -3.7}",verified
+practice,case:P05,d35aae9c5bc1d039,sup:70210,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",verified
+practice,case:P05,d35aae9c5bc1d039,sup:70210,5,delivery_record,sc:70210@2026Q3 sc:70210@2026Q2 sc:70210@2026Q1 sc:70210@2025Q4,"{""otd_pct"": 83.0}",verified
+practice,case:P05,d35aae9c5bc1d039,sup:70240,6,index_change,idx:PPI-D351@2025-08 idx:PPI-D351@2026-08,"{""change_pct"": -3.7}",duplicate
+practice,case:P05,d35aae9c5bc1d039,sup:70240,6,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",duplicate
+practice,case:P05,d35aae9c5bc1d039,sup:70240,6,delivery_record,sc:70240@2026Q3 sc:70240@2026Q2 sc:70240@2026Q1 sc:70240@2025Q4,"{""otd_pct"": 74.9}",verified
+practice,case:P05,d35aae9c5bc1d039,sup:70250,5,index_change,idx:PPI-D351@2025-08 idx:PPI-D351@2026-08,"{""change_pct"": -3.7}",duplicate
+practice,case:P05,d35aae9c5bc1d039,sup:70250,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",duplicate
+practice,case:P05,d35aae9c5bc1d039,sup:70250,5,delivery_record,sc:70250@2026Q3 sc:70250@2026Q2 sc:70250@2026Q1 sc:70250@2025Q4,"{""otd_pct"": 93.0}",verified
+practice,case:P07,28f7425128e20c30,sup:70610,5,index_change,idx:PPI-C2594@2025-08 idx:PPI-C2594@2026-08,"{""change_pct"": 1.7}",verified
+practice,case:P07,28f7425128e20c30,sup:70610,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",verified
+practice,case:P07,28f7425128e20c30,sup:70610,5,delivery_record,sc:70610@2026Q3 sc:70610@2026Q2 sc:70610@2026Q1 sc:70610@2025Q4,"{""otd_pct"": 88.3}",verified
+practice,case:P08,dd2d942c3be1f0d6,sup:70710,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",verified
+practice,case:P08,dd2d942c3be1f0d6,sup:70710,5,delivery_record,sc:70710@2026Q3 sc:70710@2026Q2 sc:70710@2026Q1 sc:70710@2025Q4,"{""otd_pct"": 89.2}",verified
+practice,case:P08,dd2d942c3be1f0d6,sup:70710,5,volume_change,fc:370010@2026-09,"{""change_pct"": 1.9}",verified
+practice,case:P10,d0a64f6e04f984b6,sup:70410,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",verified
+practice,case:P10,d0a64f6e04f984b6,sup:70410,5,delivery_record,sc:70410@2026Q3 sc:70410@2026Q2 sc:70410@2026Q1 sc:70410@2025Q4,"{""otd_pct"": 80.7}",verified
+practice,case:P10,d0a64f6e04f984b6,sup:70410,5,should_cost,cost:340010,"{""unit_cost"": 24.31}",verified
+practice,case:P11,587fe8dcbf9f6c9c,sup:70140,4,index_change,idx:PPI-D351@2025-08 idx:PPI-D351@2026-08,"{""change_pct"": -3.7}",verified
+practice,case:P11,587fe8dcbf9f6c9c,sup:70140,4,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",verified
+practice,case:P11,587fe8dcbf9f6c9c,sup:70140,4,quality_record,sc:70140@2026Q3 sc:70140@2026Q2 sc:70140@2026Q1 sc:70140@2025Q4,"{""ppm"": 2637.0}",verified
+practice,case:P11,587fe8dcbf9f6c9c,sup:70140,5,index_change,idx:PPI-D351@2025-08 idx:PPI-D351@2026-08,"{""change_pct"": -3.7}",duplicate
+practice,case:P11,587fe8dcbf9f6c9c,sup:70140,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",duplicate
+practice,case:P11,587fe8dcbf9f6c9c,sup:70140,5,quality_record,sc:70140@2026Q3 sc:70140@2026Q2 sc:70140@2026Q1 sc:70140@2025Q4,"{""ppm"": 2637.0}",duplicate
+practice,case:P11,f99fb6c24caa89e9,sup:70140,4,index_change,idx:PPI-D351@2025-08 idx:PPI-D351@2026-08,"{""change_pct"": -3.7}",verified
+practice,case:P11,f99fb6c24caa89e9,sup:70140,4,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",verified
+practice,case:P11,f99fb6c24caa89e9,sup:70140,4,quality_record,sc:70140@2026Q3 sc:70140@2026Q2 sc:70140@2026Q1 sc:70140@2025Q4,"{""ppm"": 2.637}",contradicted
+practice,case:P11,f99fb6c24caa89e9,sup:70140,5,index_change,idx:PPI-D351@2025-08 idx:PPI-D351@2026-08,"{""change_pct"": -3.7}",duplicate
+practice,case:P11,f99fb6c24caa89e9,sup:70140,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",duplicate
+practice,case:P11,f99fb6c24caa89e9,sup:70140,5,quality_record,sc:70140@2026Q3 sc:70140@2026Q2 sc:70140@2026Q1 sc:70140@2025Q4,"{""ppm"": 2.637}",contradicted
+practice,case:P18,f860ab9fbea61f2a,sup:70740,5,index_change,idx:LCI-C@2025-06 idx:LCI-C@2026-06,"{""change_pct"": 2.7}",verified
+practice,case:P18,f860ab9fbea61f2a,sup:70740,5,delivery_record,sc:70740@2026Q3 sc:70740@2026Q2 sc:70740@2026Q1 sc:70740@2025Q4,"{""otd_pct"": 82.5}",verified
+practice,case:P18,f860ab9fbea61f2a,sup:70740,5,volume_change,fc:370010@2026-09,"{""change_pct"": 1.9}",verified
