@@ -1,6 +1,7 @@
-"""End to end: our agent plays a case against arena-sim over HTTP, no network, no model."""
+"""End to end: our agent plays a case against arena-sim over HTTP, no network, no model; and the
+term planner on a simulator case."""
 
-import json
+import copy
 import secrets
 import socket
 import threading
@@ -8,10 +9,11 @@ import time
 
 import pytest
 import uvicorn
-from arena_kit import ArenaClient, RemoteTable, play
+from arena_kit import ArenaClient, RemoteTable, complete_offer
 from arena_kit.sim import Sim, create_app, load_cases
 
-from buyer.agent import agent_factory
+from buyer import economics
+from buyer.runner import play_case
 
 
 @pytest.fixture
@@ -31,18 +33,23 @@ def sim_url():
     thread.join()
 
 
-def scripted(system, user):
-    """A stand-in model: asks for a lower price, accepts once the supplier stops moving."""
-    sid = ":".join(user.split("THREAD ")[1].split(":")[:2])
-    if any(f"status {s}" in user for s in ("final_offer", "agreed")) or user.count("--- buyer") >= 8:
-        return json.dumps({"supplier_id": sid, "action": "accept"})
-    body = "Thank you for your quote. Could you send us a cost breakdown?"
-    return json.dumps({"supplier_id": sid, "action": "send", "body": body, "term_sheets": [{"unit_price": 1.0}]})
-
-
 def test_buyer_closes_a_deal(sim_url):
     key = ArenaClient(sim_url).register(f"test-{secrets.token_hex(3)}", "sim")["api_key"]
     client = ArenaClient(sim_url, key, rate=1000)
-    result = play(RemoteTable(client), "case:S01", agent_factory("buyer", complete=scripted)())
+    result = play_case(RemoteTable(client), "case:S01")
     assert result["deal"]
     assert 0 <= result["score"] <= 1
+
+
+def test_terms_cover_the_need_when_the_price_is_low():
+    """A 12-month contract leaves half a 2-year need to the fallback: at a low price we cover it."""
+    case = copy.deepcopy(load_cases()["case:S01"])
+    case["buyer"]["horizon_years"] = 2
+    case["negotiable"].append("contract_months")
+    case["fixed_terms"].pop("contract_months")
+    case["term_options"]["contract_months"] = [12, 24]
+    est = economics.estimate(case, {}, 0.07)
+    quote = complete_offer(case, {"unit_price": case["buyer"]["current_unit_price"], "contract_months": 12})
+    terms, c = economics.plan_terms(case, {}, est, quote, quote["unit_price"] * 0.8)
+    assert terms["contract_months"] == 24
+    assert c < economics.cost(case, {**quote, "unit_price": terms["unit_price"]}, {}, est)

@@ -1,0 +1,255 @@
+"""Data arguments, each one sentence with its figure next to its IDs, computed the way the arena
+checks them (`docs/api.md`, What counts). Only arguments that push the price our way are kept;
+a rising index or a should-cost above the quote would argue the supplier's case.
+
+In the sandbox the case's refs point into a demo world our package does not hold: those are cited
+without a figure, so the arena checks them against their own value."""
+
+import re
+
+ID_RE = re.compile(r"\b(?:idx|quote|offer|sc|qn|po|cost|fc|news|doc|ctr):[\w.:@#/-]*\w")
+SERIES_NAME = {
+    "PPI-C2451": "Producer prices for iron castings",
+    "PPI-C2452": "Producer prices for steel castings",
+    "PPI-C2562": "Producer prices for machining",
+    "PPI-C2594": "Producer prices for fasteners",
+    "PPI-C2711": "Producer prices for electric motors",
+    "PPI-C2611": "Producer prices for electronic components",
+    "PPI-C2815": "Producer prices for bearings and gears",
+    "PPI-C241": "Producer prices for basic iron and steel",
+    "PPI-C2431": "Producer prices for cold-drawn bars",
+    "PPI-C2219": "Producer prices for rubber products",
+    "PPI-D351": "Electricity producer prices",
+    "PPI-D35": "Energy supply producer prices",
+    "LCI-C": "Manufacturing labour costs",
+    "WB-CU": "Copper",
+    "WB-NI": "Nickel",
+    "WB-AL": "Aluminium",
+    "WB-NGEU": "European natural gas",
+    "CU-NOTATION": "The copper notation",
+    "AS-14404": "The 1.4404 alloy surcharge",
+    "AS-14301": "The 1.4301 alloy surcharge",
+}
+
+
+def months_back(month, n):
+    y, m = (int(x) for x in month.split("-"))
+    m -= n
+    while m <= 0:
+        m, y = m + 12, y - 1
+    return f"{y}-{m:02d}"
+
+
+def money(x):
+    return f"EUR {x:.2f}"
+
+
+class ClaimBank:
+    """Arguments for one case. `pkg` is the data package (or None); the case's own `facts` win."""
+
+    def __init__(self, pkg, case):
+        self.pkg, self.case = pkg, case
+        self.facts = case.get("facts") or {}
+        self.refs = list(case.get("refs") or [])
+        # a case whose refs the package does not know (the sandbox's demo world)
+        self.foreign = bool(self.refs) and pkg is not None and not any(pkg.lookup(r) for r in self.refs)
+
+    def fact(self, ref):
+        if ref in self.facts:
+            return self.facts[ref]
+        return None if self.foreign or self.pkg is None else self.pkg.lookup(ref)
+
+    def ids(self, prefix):
+        out = set() if self.foreign or self.pkg is None else set(self.pkg.ids(prefix))
+        out |= {k for k in self.facts if k.startswith(prefix)}
+        out |= {r for r in self.refs if r.startswith(prefix)}
+        return sorted(out)
+
+    def query(self, sql, params=()):
+        if self.foreign or self.pkg is None:
+            return []
+        try:
+            return self.pkg.query(sql, params)
+        except Exception:  # noqa: BLE001 - a package without SQLite: facts only
+            return []
+
+    # -- single arguments ------------------------------------------------------------------
+    def should_cost(self, part, sid, quote):
+        best = None
+        for ref in self.ids("cost:"):
+            f = self.fact(ref)
+            if not f or f.get("part") != part or not f.get("unit_cost"):
+                continue
+            if ref.endswith("-" + sid.split(":")[-1]):
+                best = (ref, f)
+                break
+            if best is None and "-" not in ref.split(":")[-1]:
+                best = (ref, f)
+        if not best:
+            return None
+        ref, f = best
+        if quote and f["unit_cost"] >= quote * 0.98:
+            return None  # above or near its price: argues its case
+        return {
+            "kind": "should_cost",
+            "ids": [ref],
+            "text": f"Our bottom-up should-cost estimate for this part is {money(f['unit_cost'])} per unit ({ref}).",
+            "strength": 5,
+        }
+
+    def order_history(self, part, sid, quote):
+        rows = self.query(
+            "SELECT id FROM po_lines WHERE part_id = ? AND supplier_id = ? ORDER BY order_date DESC LIMIT 3",
+            (part, sid),
+        )
+        facts = [(r["id"], self.fact(r["id"])) for r in rows]
+        facts = [(i, f) for i, f in facts if f and f.get("unit_price")]
+        if len(facts) < 2:
+            return None
+        prices = [f["unit_price"] for _, f in facts]
+        if quote and min(prices) >= quote:
+            return None
+        ids = [i for i, _ in facts]
+        if len(set(prices)) == 1:
+            text = f"Our last {len(ids)} orders for this part were at {money(prices[0])} ({', '.join(ids)})."
+        else:
+            text = f"Our last orders for this part were at {' and '.join(money(p) for p in prices)} ({', '.join(ids)})."
+        return {"kind": "order_history", "ids": ids, "text": text, "strength": 4}
+
+    def notice(self, sid):
+        doc = self.case.get("trigger_doc")
+        f = self.fact(doc) if doc else None
+        if not f or f.get("days") is None:
+            return None
+        ctr = next((r for r in self.refs if r.startswith("ctr:") and "#" not in r), None)
+        c = self.fact(ctr) if ctr else None
+        if not c or c.get("days") is None or f["days"] >= c["days"]:
+            return None
+        text = (
+            f"Your letter gives {f['days']} days' notice ({doc}); our agreement provides for {c['days']} days ({ctr})."
+        )
+        return {"kind": "notice", "ids": [doc, ctr], "text": text, "strength": 5}
+
+    def index_change(self, series):
+        ids = self.ids(f"idx:{series}@")
+        if not ids:
+            return None
+        m2 = ids[-1].split("@")[-1]
+        m1 = months_back(m2, 12)
+        a, b = self.fact(f"idx:{series}@{m1}"), self.fact(f"idx:{series}@{m2}")
+        if not a or not b or not a.get("value"):
+            return None
+        pct = (b["value"] / a["value"] - 1) * 100
+        if pct > -0.5:
+            return None  # a rising driver confirms the supplier's case
+        name = SERIES_NAME.get(series, f"The index {series}")
+        return {
+            "kind": "index",
+            "ids": [f"idx:{series}@{m1}", f"idx:{series}@{m2}"],
+            "text": f"{name} changed {pct:.1f}% from {m1} to {m2} (idx:{series}@{m1}, idx:{series}@{m2}).",
+            "strength": 3 + min(3.0, abs(pct) / 3),
+        }
+
+    def drivers(self, part):
+        return [r["series_id"] for r in self.query("SELECT series_id FROM cost_drivers WHERE part_id = ?", (part,))]
+
+    def forecast(self, part):
+        ids = self.ids(f"fc:{part.split(':')[-1]}@")
+        f = self.fact(ids[-1]) if ids else None
+        if not f or (f.get("change_pct") or 0) <= 0:
+            return None
+        text = f"Our forecast for this part is up {f['change_pct']:.1f}% ({ids[-1]})."
+        return {"kind": "forecast", "ids": [ids[-1]], "text": text, "strength": 2}
+
+    def rival_quote(self, part, sid, price):
+        """A quote of this case from another supplier, cheaper than this supplier's price."""
+        out = []
+        for ref in self.refs:
+            f = self.fact(ref) if ref.startswith("quote:") else None
+            if f and f.get("part") == part and f.get("supplier") != sid and price and f["unit_price"] < price:
+                out.append(
+                    {
+                        "kind": "rival",
+                        "ids": [ref],
+                        "text": f"We hold another quote for this part at {money(f['unit_price'])} per unit ({ref}).",
+                        "strength": 6,
+                        "rival": True,
+                    }
+                )
+        return out
+
+    def scorecard(self, sid, quality):
+        ids = self.ids(f"sc:{sid.split(':')[-1]}@")
+        if not ids:
+            return None
+        f = self.fact(ids[-1])
+        if f is None:  # demo world: cite without a figure
+            text = f"We have reviewed your delivery performance in our supplier scorecard ({ids[-1]})."
+            return {"kind": "scorecard", "ids": [ids[-1]], "text": text, "strength": 2}
+        if quality:
+            if (f.get("ppm") or 0) < 1000:
+                return None
+            text = f"Your deliveries ran at {f['ppm']} ppm in {f['quarter']} ({ids[-1]})."
+        else:
+            if (f.get("otd_pct") or 100) >= 90:
+                return None
+            text = f"Your on-time delivery was {f['otd_pct']}% in {f['quarter']} ({ids[-1]})."
+        return {"kind": "scorecard", "ids": [ids[-1]], "text": text, "strength": 2}
+
+    def demo_refs(self):
+        """Refs the package cannot resolve: cited without a figure."""
+        words = {
+            "cost": ("should_cost", "Our bottom-up should-cost estimate for this part is on file ({ids}).", 5),
+            "po": ("order_history", "We compared your offer with our recent order prices for this part ({ids}).", 4),
+        }
+        out = []
+        for kind, (name, text, strength) in words.items():
+            ids = [r for r in self.refs if r.startswith(f"{kind}:") and self.fact(r) is None]
+            if ids:
+                out.append(
+                    {"kind": name, "ids": ids[:3], "text": text.format(ids=", ".join(ids[:3])), "strength": strength}
+                )
+        doc = self.case.get("trigger_doc")
+        ctr = next((r for r in self.refs if r.startswith("ctr:")), None)
+        if doc and ctr and self.fact(doc) is None and self.case.get("type") == "price_increase":
+            text = f"Your letter ({doc}) gives less notice than our agreement provides for ({ctr})."
+            out.append({"kind": "notice", "ids": [doc, ctr], "text": text, "strength": 5})
+        return out
+
+    # -- per supplier ----------------------------------------------------------------------
+    def for_supplier(self, sid, quote):
+        """Every argument for this supplier that pushes our way, strongest first."""
+        case, out = self.case, []
+        quality = case.get("type") == "quality" or case["buyer"].get("category_goal") == "quality_first"
+        single = len(case.get("parts") or []) == 1  # a bundle's price is not one part's order price
+        for part in case.get("parts") or []:
+            history = self.order_history(part, sid, quote) if single else None
+            out += [c for c in (self.should_cost(part, sid, quote), history) if c]
+            out += [c for c in (self.index_change(s) for s in self.drivers(part)) if c]
+            out += self.rival_quote(part, sid, quote)
+            if c := self.forecast(part):
+                out.append(c)
+        if c := self.notice(sid):
+            out.append(c)
+        if c := self.scorecard(sid, quality):
+            out.append(c)
+        if self.foreign:
+            out += self.demo_refs()
+        seen, uniq = set(), []
+        for c in sorted(out, key=lambda c: -c["strength"]):
+            if tuple(c["ids"]) not in seen:
+                seen.add(tuple(c["ids"]))
+                uniq.append(c)
+        return uniq
+
+
+def rival_offer(sid, offer_id, price):
+    """Another bidder's standing offer in this session, citable to the others."""
+    return {
+        "kind": "rival",
+        "ids": [offer_id],
+        "text": f"Another bidder offers {money(price)} per unit for this part ({offer_id}).",
+        "strength": 7,
+        "rival": True,
+        "from": sid,
+    }

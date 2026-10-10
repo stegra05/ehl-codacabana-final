@@ -13,7 +13,8 @@ from arena_kit import ArenaClient, ArenaError, RemoteTable, play, play_all
 from arena_kit.cli import load_env, summary
 from arena_kit.play import hosted, play_waves
 
-from .agent import AGENTS, agent_factory
+from . import runner
+from .agent import AGENTS, load_package, naive_factory
 
 LOGS = Path("logs/sessions")
 
@@ -58,6 +59,7 @@ def main(argv=None):
     r.add_argument("--data", **data)
     r.add_argument("--parallel", type=int, default=8, help="cases at once (at most 10)")
     r.add_argument("--waves", type=int, default=5, help="final: stop after this many waves have closed")
+    r.add_argument("--cases", help="practice or sandbox: only these cases, e.g. P01,P08")
     s = sub.add_parser("pull", help="save finished sessions with trace and back office to logs/sessions/")
     s.add_argument("--set", default="practice", choices=["practice", "sandbox", "final"])
     args = ap.parse_args(argv)
@@ -70,11 +72,15 @@ def main(argv=None):
 
     if args.cmd == "pull":
         return pull(client, args.set)
-    new_agent = agent_factory(args.agent, args.data)
+    naive = args.agent == "naive"
+    pkg = None if naive else load_package(args.data)
     if args.cmd == "play":
         table = RemoteTable(client)
         try:
-            result = play(table, args.case_id, new_agent())
+            if naive:
+                result = play(table, args.case_id, naive_factory()())
+            else:
+                result = runner.play_case(table, args.case_id, pkg)
         except ArenaError as e:  # e.g. not hosted, the quota, a paused key: the arena says why
             raise SystemExit(str(e)) from None
         print(json.dumps(summary(result), indent=2))
@@ -82,12 +88,22 @@ def main(argv=None):
         print(f"replay: {os.environ['ARENA_URL'].rstrip('/')}{state.get('replay_url')}")
         pull(client, state["set"])
     elif args.set == "final":  # no human in the loop: waits for each wave, plays it within its cap
-        out = play_waves(client, new_agent, args.waves, min(args.parallel, 10))
+        parallel = min(args.parallel, 10)
+        if naive:
+            out = play_waves(client, naive_factory(), args.waves, parallel)
+        else:
+            out = runner.play_waves(client, pkg, args.waves, parallel)
         for case_id, result in out.items():
             print(case_id, result if isinstance(result, Exception) else summary(result))
     else:
         ids = [c["case_id"] for c in hosted(client.cases(args.set))]
-        out = play_all(lambda: RemoteTable(client), ids, new_agent, min(args.parallel, 10))
+        if args.cases:
+            ids = [i for i in ids if i.split(":")[-1] in args.cases.split(",")]
+        parallel = min(args.parallel, 10)
+        if naive:
+            out = play_all(lambda: RemoteTable(client), ids, naive_factory(), parallel)
+        else:
+            out = runner.play_all(client, ids, pkg, parallel)
         for case_id, result in out.items():
             print(case_id, result if isinstance(result, Exception) else summary(result))
         scores = [r["score"] for r in out.values() if isinstance(r, dict) and r.get("score") is not None]
