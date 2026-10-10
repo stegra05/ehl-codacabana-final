@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Arena sessions</title>
+<style>
+:root { --bg:#fafaf9; --panel:#fff; --ink:#1c1917; --mute:#78716c; --line:#e7e5e4; --us:#eff6ff;
+        --them:#fff; --good:#15803d; --bad:#b91c1c; --warn:#a16207; --accent:#1d4ed8; }
+* { box-sizing:border-box }
+body { margin:0; font:14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--ink);
+       background:var(--bg); display:grid; grid-template-columns:330px 1fr; height:100vh }
+nav { border-right:1px solid var(--line); overflow:auto; background:var(--panel) }
+nav input { width:calc(100% - 20px); margin:10px; padding:7px 9px; border:1px solid var(--line); border-radius:6px }
+.item { padding:9px 12px; border-top:1px solid var(--line); cursor:pointer }
+.item:hover { background:#f5f5f4 } .item.on { background:#e0e7ff }
+.item b { font-weight:600 } .item small { color:var(--mute); display:block }
+.score { float:right; font-variant-numeric:tabular-nums; font-weight:600 }
+main { overflow:auto; padding:22px 28px 60px }
+h1 { font-size:19px; margin:0 0 4px } .sub { color:var(--mute); margin-bottom:16px }
+.kpis { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px }
+.kpi { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 12px; min-width:120px }
+.kpi span { color:var(--mute); font-size:12px; display:block } .kpi b { font-size:16px; font-variant-numeric:tabular-nums }
+.bd { color:var(--mute); font-size:12px; margin-bottom:18px }
+h2 { font-size:15px; margin:26px 0 10px; padding-top:10px; border-top:2px solid var(--line) }
+.msg { border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin:10px 0; background:var(--them); max-width:980px }
+.msg.us { background:var(--us); margin-left:60px }
+.head { display:flex; gap:10px; align-items:baseline; font-size:12px; color:var(--mute); margin-bottom:6px; flex-wrap:wrap }
+.head b { color:var(--ink); font-size:13px }
+.tag { border-radius:10px; padding:1px 8px; font-size:11px; background:#f5f5f4; color:var(--ink) }
+.st-agreed,.st-verified { background:#dcfce7; color:var(--good) } .st-final_offer { background:#fef3c7; color:var(--warn) }
+.st-walked_away,.st-contradicted,.st-no_bid { background:#fee2e2; color:var(--bad) }
+pre { white-space:pre-wrap; font:inherit; margin:6px 0 }
+table { border-collapse:collapse; font-size:12px; margin:6px 0 } td,th { border:1px solid var(--line); padding:3px 7px; text-align:right }
+th { background:#f5f5f4; font-weight:600 } td:first-child,th:first-child { text-align:left }
+.box { font-size:12px; border-left:3px solid var(--line); padding:4px 10px; margin:6px 0; color:#44403c }
+.box.reasons { border-color:#93c5fd } .box.bo { border-color:#d6d3d1; background:#fafaf9 } .box.probe { border-color:#a78bfa }
+.box div::before { content:"· "; color:var(--mute) }
+a { color:var(--accent) }
+</style></head><body>
+<nav><input id="q" placeholder="filter: case, supplier, set..."><div id="list"></div></nav>
+<main id="main"><p class="sub">Pick a session.</p></main>
+<script>
+const S = __DATA__;
+const eur = x => x == null ? "-" : "€" + Math.round(x).toLocaleString("en");
+const esc = s => String(s ?? "").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const pct = x => x == null ? "-" : (100 * x).toFixed(0);
+function list() {
+  const q = document.getElementById("q").value.toLowerCase();
+  document.getElementById("list").innerHTML = S.map((s, i) => [s, i])
+    .filter(([s]) => JSON.stringify([s.case_id, s.title, s.set, s.variant, s.threads.map(t => t.supplier_id)]).toLowerCase().includes(q))
+    .map(([s, i]) => `<div class="item" data-i="${i}"><span class="score">${pct(s.result.score)}</span>
+      <b>${esc(s.case_id)}</b> ${esc(s.set)}${s.variant ? " · " + esc(s.variant) : ""}
+      <small>${esc(s.title)}</small><small>${s.result.deal ? "deal " + esc(s.result.supplier_id) : esc(s.end || "no deal")} · ${esc(s.file.split("_")[1])}</small></div>`).join("");
+  document.querySelectorAll(".item").forEach(e => e.onclick = () => show(+e.dataset.i));
+}
+function sheets(ev) {
+  if (!ev.sheets.length) return "";
+  const keys = [...new Set(ev.sheets.flatMap(s => Object.keys(s.terms)))];
+  const fmt = v => v && typeof v === "object" ? `${v.series} ${v.material_share * 100}% db ${v.deadband_pct}` : esc(v ?? "-");
+  return `<table><tr>${keys.map(k => `<th>${esc(k)}</th>`).join("")}<th>C</th></tr>` +
+    ev.sheets.map(s => `<tr>${keys.map(k => `<td>${fmt(s.terms[k])}</td>`).join("")}<td>${eur(s.c)}</td></tr>`).join("") + "</table>";
+}
+function show(i) {
+  const s = S[i], r = s.result;
+  document.querySelectorAll(".item").forEach(e => e.classList.toggle("on", +e.dataset.i === i));
+  const bd = Object.entries(r.cost_breakdown || {}).filter(([, v]) => v).map(([k, v]) => `${k} ${eur(v)}`).join(" · ");
+  let h = `<h1>${esc(s.case_id)} ${esc(s.title)}</h1>
+    <div class="sub">${esc(s.set)} · ${esc(s.type)} · ${esc(s.goal)} · ${r.deal ? "deal with " + esc(r.supplier_id) : esc(s.end || "no deal")} · ${esc(s.file)}</div>
+    <div class="kpis"><div class="kpi"><span>score</span><b>${r.score == null ? "-" : r.score.toFixed(3)}</b></div>
+    <div class="kpi"><span>C open</span><b>${eur(r.c_open)}</b></div><div class="kpi"><span>C deal</span><b>${eur(r.c_deal)}</b></div>
+    <div class="kpi"><span>C best (hidden floor)</span><b>${eur(r.c_best)}</b></div><div class="kpi"><span>C alternative</span><b>${eur(r.c_alt)}</b></div></div>
+    <div class="bd">${bd || ""}${r.terms ? "<br>deal terms: " + esc(JSON.stringify(r.terms)) : ""}</div>`;
+  for (const t of s.threads) {
+    h += `<h2>${esc(t.supplier_id)}</h2><div class="bd">standard terms: ${esc(JSON.stringify(t.standard))}</div>`;
+    for (const ev of t.events) {
+      const tags = [ev.status && `<span class="tag st-${ev.status}">${esc(ev.status)}</span>`,
+        ev.action && `<span class="tag">${esc(ev.action)}</span>`,
+        ...ev.claims.map(c => `<span class="tag st-${c.result}">claim ${c.index}: ${esc(c.result)}</span>`),
+        ev.signals && `<span>delay ${ev.signals.reply_delay_days}d · valid ${ev.signals.validity_days}d</span>`,
+        ev.missing.length && `<span>missing: ${esc(ev.missing.join(", "))}</span>`].filter(Boolean).join(" ");
+      h += `<div class="msg ${ev.mine ? "us" : ""}"><div class="head"><b>${ev.mine ? "Hollerau (us)" : esc(ev.from)}</b> round ${ev.round} ${tags}</div>`;
+      if (ev.probe) h += `<div class="box probe"><div>probe <b>${esc(ev.probe.key)}</b>: ${esc(ev.probe.note)} · ${ev.probe.auto ? "auto-sent" : "picked"} after ${ev.probe.decide_s}s</div></div>`;
+      h += `<pre>${esc(ev.body)}</pre>${sheets(ev)}`;
+      if (ev.attachments.length) h += `<div class="bd">attachments: ${ev.attachments.map(a => `<a href="file://${encodeURI(s.dir + "/" + a)}">${esc(a)}</a>`).join(" · ")}</div>`;
+      if (ev.reasons.length) h += `<div class="box reasons"><b>supplier's reasons</b>${ev.reasons.map(x => `<div>${esc(x)}</div>`).join("")}</div>`;
+      if (ev.backoffice.length) h += `<div class="box bo"><b>back office</b>${ev.backoffice.map(b => `<div>${esc(b.from)} → ${esc(b.to)}: ${esc(b.text)}</div>`).join("")}</div>`;
+      h += `</div>`;
+    }
+  }
+  document.getElementById("main").innerHTML = h;
+  document.getElementById("main").scrollTop = 0;
+}
+document.getElementById("q").oninput = list;
+list(); if (S.length) show(0);
+</script></body></html>

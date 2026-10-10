@@ -19,6 +19,7 @@ from .agent import AGENTS, agent_factory
 from .console import AUTO_AFTER_S, Console
 from .harvest import pull, save
 from .suggest import Suggester
+from .view import build, open_page
 
 
 def main(argv=None):
@@ -45,6 +46,8 @@ def main(argv=None):
     pr.add_argument("--data", **data)
     pr.add_argument("--auto", type=float, default=AUTO_AFTER_S, help="seconds until the default move goes out")
     pr.add_argument("--no-ai", action="store_true", help="code options only, no model suggestions")
+    v = sub.add_parser("view", help="pull the team's sessions and open them in the browser")
+    v.add_argument("--offline", action="store_true", help="only what is saved already")
     s = sub.add_parser("pull", help="save finished sessions with trace and back office to logs/sessions/")
     s.add_argument("--set", default="practice", choices=["practice", "sandbox", "final"])
     args = ap.parse_args(argv)
@@ -57,6 +60,13 @@ def main(argv=None):
 
     if args.cmd == "pull":
         return pull(client, args.set)
+    if args.cmd == "view":
+        if not args.offline:
+            for set_ in ("practice", "sandbox"):
+                pull(client, set_)
+        page = build(None if args.offline else client)
+        print(f"open {page}")
+        return open_page(page)
     if args.cmd == "probe":
         return probe(client, args)
     new_agent = agent_factory(args.agent, args.data)
