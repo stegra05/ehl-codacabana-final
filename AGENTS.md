@@ -60,13 +60,15 @@ supplier bots (LLM personas with hidden economics) and closes one term sheet per
 | `docs/learnings.md` | **read first**: what we know about the arena, suppliers and data, with evidence |
 | `docs/design.md` | the agent we are building: modules, data, policy, build order |
 | `docs/challenge.md`, `api.md`, `submission.md` | Tacto's brief, API and cost formula, hand-in (upstream copies) |
-| `buyer/agent.py` | which agent plays a case; our strategy grows here |
+| `buyer/policy.py`, `runner.py` | the price engine: per-thread policy and the loop that plays a case (`docs/design.md`, Implemented) |
+| `buyer/economics.py`, `claims.py`, `personas.py`, `writer.py`, `llm.py` | C and term planning, claim bank, persona signals, e-mail and model paragraph |
 | `buyer/cli.py` | `buyer play`, `buyer run`, `buyer pull` |
 | `tests/` | end to end against `arena-sim`, no network, no model |
 | `exports/` | Saturday probe sessions as CSV/JSONL; schema in `exports/README.md` |
 | `analysis/explore.py` | data package exploration: profiles, persona signals, report page |
 | `data/package/` | the data package (gitignored); Sunday also `data/release-sunday/` |
-| `logs/sessions/<set>/` | finished sessions with trace and back office (gitignored) |
+| `logs/sessions/<set>/` | finished sessions with trace and back office (gitignored; Saturday's committed with `-f`) |
+| `logs/runs/`, `logs/practice-v*.log` | our decisions per move (anchor, terms, claims, prices) and the practice run logs |
 
 The MCP server `arena-data` (`.mcp.json`) gives SQL, ID lookup and documents over the package.
 

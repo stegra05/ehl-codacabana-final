@@ -3,11 +3,23 @@
 The target architecture of our buyer, merged from the team's planning notes (PRs #7 to #10,
 10 Oct). What we learned in play is in `learnings.md`; this file says what we build.
 
-**Status.** `main` plays the kit's `LLMAgent` behind our runner (`buyer/agent.py`). Julian's draft
-two implements most of the design below on the unmerged branch `origin/julian/draft-two`
-(`buyer/economics.py`, `claims.py`, `personas.py`, `llm.py`, `guard.py`, `runner.py`,
-`thread.py`): sandbox D01 0.96, D02 0.54, no practice quota used. The architecture diagram is on
-page 1 of [how-it-works.pdf](how-it-works.pdf).
+**Status.** The branch `steffen/price-engine` plays a code-only policy with a model-written
+paragraph (`buyer/policy.py`, run by `buyer/runner.py`): practice mean of best scores 0.73 (from
+0.32), sandbox D01 0.99, D02 0.73. What it does is under "Implemented" below; the rest of this file
+is the target design. Julian's draft two (`origin/julian/draft-two`) holds a richer stance and
+reader design that is not merged. The architecture diagram is on page 1 of
+[how-it-works.pdf](how-it-works.pdf).
+
+## Implemented (price engine)
+
+| Module | Job |
+|---|---|
+| `buyer/economics.py` | C of a sheet; what a sheet is worth to the supplier (`supplier_value` plus overtime for a faster delivery than it quoted); term planning: every allowed combination priced at the supplier's own valuation, lowest C, ties to the supplier's side; the relationship-optimal price |
+| `buyer/claims.py` | claim bank: should-cost below its price, our order prices, falling cost-driver indices, notice period, forecast, scorecard, case rival quotes, hedge and open-book notes; rival offers in an RFQ |
+| `buyer/personas.py` | owner type, persona signals from notes, letters, quote remarks and news, cost of money |
+| `buyer/policy.py` | per thread: anchor by goal and persona, 30 % of the gap per round, held low after a deep first concession, patience budget for near-cost, fully booked and relationship-goal suppliers; adopts its counter terms when they cost us less, mirrors a better alternative, takes a required index clause; claims 3 in round 1, then 1 per round; close on final offer, agreement or round limit |
+| `buyer/writer.py`, `buyer/llm.py` | the e-mail: a model paragraph that answers the supplier's last e-mail (no digits, IDs or leaks, else the template), then claims and the proposal from code |
+| `buyer/runner.py` | one message at a time per session, to the thread whose 60 s clock has run longest; keepalive questions for finished bidders; rollback when a send times out; accept the cheapest standing sheet; Live Final waves |
 
 ## Principle
 

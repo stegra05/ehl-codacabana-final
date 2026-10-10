@@ -1,9 +1,9 @@
 # Learnings
 
 What we know about the arena, its supplier bots and the data package, and what it means for the
-agent. Basis, Saturday 10 October: 15 practice sessions covering all 10 hosted cases and 12
-suppliers, 17 sandbox sessions, the team's simulator and sandbox experiments, and the data
-package. Every euro figure and what-if score below was recomputed with `arena_kit.total_cost`. Evidence: `exports/` (every session, supplier thread,
+agent. Basis, Saturday 10 October: 62 practice sessions (15 probe, 47 with the price engine,
+v1 to v6), about 60 sandbox sessions including controlled experiments, the data package, and the
+practice records of all teams on `GET /v1/live`. Every euro figure and what-if score below was recomputed with `arena_kit.total_cost`. Evidence: `exports/` (every session, supplier thread,
 e-mail and claim; schema in `exports/README.md`) and `analysis/explore.py` (the data package).
 
 Add findings to the matching section, newest first: date, tag, the finding, its evidence (case,
@@ -13,78 +13,58 @@ Hypotheses. Correct or delete entries that turn out wrong.
 
 ## Takeaways for the agent
 
-1. **Choose terms by C, in code: no lever helps in every case.** The same move flips sign between
-   cases. Covering 24 months lifted D01 from 0.20 to 0.73 but made P04 dearer. The copper index
-   clause turned P02's price cut into a score of 0. Before every sheet, score each allowed
-   combination with `total_cost`, with the supplier's standard terms for unstated fields, and
-   keep must-haves and C_alt as hard guards.
-2. **Cover the need where the deal beats the fallback.** Uncovered need costs the fallback price
-   plus `fallback_risk_pct`. D01 (fallback 55.00, deal 50.90): 24 instead of 12 months, 0.20 to
-   0.73. P04 (fallback 4.70, price frozen at 4.96): 24 months cost more than 12. P08 (5.72 + 3 %
-   against 5.93 at 90 days): no difference. P10: 24 months unlocked the full 23,400 units a year
-   instead of 19,890.
-3. **Keep every sheet below the supplier's price until the price is right.** 15 of the 16 practice
-   threads that reached `agreed` never moved price again ("Our agreed offer stands"). The one
-   exception (P02) gave 0.7 % for 14-day payment. An instant `agreed` means we offered too much:
-   Dralveck took our opening sheet in round 1 in both P05 runs. In P10 our own sheet raised an
-   agreed 32.00 to 32.45.
-4. **The floors sit far below where we stopped.** Expressed as a unit price at our deal's terms,
-   C_best lies 7 to 22 % below our deal price in six cases: P05 -22 %, P18 -21 %, P10 -16 %,
-   P08 -14 %, P07 -11 %, P11 -7 %. Tacto's house agent scored 0.74 on P02 and 0.75 on P08, where
-   we got 0 and 0.11. Our probe offered the supplier's own price from round 2, so it never
-   measured how far prices fall. That is the open experiment.
-5. **Trade payment days at the supplier's rate against our 8 %.** Suppliers price 60 more days at
-   their own cost of money (table under Supplier behaviour). Take the longest payment where that
-   rate is below 8 %: P03 at +0.7 % for 90 days scores 0.68 instead of our 0.60. Pay faster only
-   for a supplier that values cash far above 8 %. Every 30 days earlier than the reference 60
-   costs us 0.67 % of spend.
-6. **Refuse index clauses on series the case expects to rise.** A clause adds `material_share`
-   times (expected move beyond the deadband + `index_risk_pct`) of spend. P02 (copper
-   +5 %, risk 4 %, share 0.2): the clause costs 1.8 % of spend, Nordmark gave 1.5 % for it
-   (374.32 to 368.70) and the deal scored 0. Its no-clause offer scores 0.21, the same clause
-   with a 5 % deadband 0.55 (both before the relationship charge). P08 and P18 (AS-14404 +6 %,
-   risk 1 %, share 0.45): the offered Preisgleitklausel costs 3.2 % of spend.
-7. **Use the structural levers: start date, lead time, contract length.** Units bought before
-   `effective_date` cost the current price. In P01, C_best equals paying about 138.20 (the ask
-   was 138.55) with an April start and 90-day payment. We got 133.60 with a November start and
-   14 days (0.64). Late delivery costs a flat `late_cost_per_day` per day: in P05, Hrvelec at 42
-   days for 33.00 scores 0.30, while we paid its overtime premium for 35 days and scored 0.19.
-   24-month contracts came free at P03, P04, P07 and P10.
-8. **Read the supplier before the first move.** The persona traits in notes, quote remarks and
-   news predicted behaviour. `price_frozen` suppliers never moved price, `cash_need` suppliers
-   asked for faster payment, `capacity_full` suppliers charged overtime for speed (table under
-   Persona signals). Every supplier asks "Which volume can you commit to?", also where volume is
-   fixed: a stock phrase, not a lever.
-9. **Few claims, exact, and only against the supplier's own drivers.** 44 of 57 claims were
-   verified, but only one moved price (P01, 1.20). Rising indices are read as support for the
-   supplier. Write figures without thousands separators. In an RFQ a data ID counts once per
-   case. No supplier sent a cost breakdown.
-10. **Words without a sheet move change nothing, and outcomes are deterministic.** Bluff and
-    urgency on an unchanged sheet left the price unchanged ("My call: hold"). The same moves give
-    the same numbers, so a practice replay measures our change, and a rule-based supplier
-    simulator built from the traces is feasible.
+1. **Stay below the supplier's counter until the end; it agrees the moment our sheet reaches the
+   counter it would make.** D01: our 51.25 one cent under its 51.30 was agreed at once
+   (sandbox `14ea35524959126f`). Moving a share of the gap each round keeps it conceding: the
+   engine took the practice mean of best scores from 0.32 to 0.73.
+2. **Verified claims that it "took into account" lower where it stops, most of all in round 1.**
+   D01 with the same price path: no claims 50.00, delivery record 49.60, notice 49.60, should-cost
+   49.30, three claims spread over rounds 48.90 (score 0.998). Which types count differs by
+   supplier (table under Arguments and claims).
+3. **Words move it too.** D01, identical sheets, no claims: plain 50.00, "firm" 49.90, warm and
+   acknowledging its wage costs 49.60, "What would you need from us to move further on the
+   price?" 49.40 (0.987). But a question repeated every round backfires: practice suppliers
+   answered "volume!" where volume is fixed and stopped moving (P05, P18 v3). Answer what it
+   asked; state a fixed volume as our full demand, with the figure.
+4. **Patience is a budget of about 40 % cumulative gap** (sum over rounds of our sheet's distance
+   to its counter, relative to its price): final offers at 41 to 42 % (D01 linear paths), 39 %
+   (P07), 42 % (P08), 36 % (P18). Suppliers selling near our should-cost or with a pricing
+   committee end much earlier: Nordmark walked away at 19 % (P02 v1), Ravensteiner gave its final
+   offer in round 1 at a 15 % gap (P10 v1).
+5. **Choose terms by C at the supplier's own valuation**, including a contract beyond our horizon
+   (free for us, security for it) and the overtime a fully booked supplier charges for faster
+   delivery (about 0.5 % of the price per day: Hrvelec, Ravensteiner). This alone moved P10 from
+   a 42-day to a 56-day lead time.
+6. **In relationship goals stop at the price where C is lowest.** D01: all claims at once pushed
+   to 48.50 and scored 0.969; stopping near 48.90 scored 0.998, the relationship charge grows
+   faster below.
+7. **Only a supplier's standing sheet can be accepted** (an alternative returns 422). A better
+   alternative is sent back as our sheet; it agrees and becomes standing (P10).
+8. **Raw-material distributors refuse a fixed price beyond 12 months and refuse any deadband**
+   (P08, P18): take their clause and negotiate the price; insisting on a deadband stalled them.
+9. **RFQ: the arena answers one call per session at a time** and each thread's 60 s clock runs
+   from its reply, so sends are serialized by deadline; the cheapest rival offer is a new,
+   verified claim to every other bidder every round (P05 0.83, D02 0.73).
+10. **The ceiling is lower than 0.9.** Best per case over all teams averages 0.82 (`/v1/live`,
+    Saturday evening); practice C_best for P04 needs 4.93 against a frozen 4.94.
 
 ## Where we stand
 
-Best score per hosted case. Mean 0.32, which would be 32 points per wave.
+Best score per hosted case, Saturday 22:30: mean 0.727 (team rank about 4 of 21 on the practice
+board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in brackets).
 
-| Case | Type / goal | Ours | House / best team | Our deal | C_best as a price at our terms | What we missed |
+| Case | Goal | Ours | Session | Deal | Record (house) | What limits us |
 |---|---|---|---|---|---|---|
-| P01 | price increase / stabilise | 0.64 | 0.97 / 0.93 | 133.60, Nov start, 14 d | 138.20 at April start, 90 d | start date, payment days |
-| P02 | price increase / stabilise | 0.00 | 0.74 / 0.29 | 368.70, 90 d, copper clause | 368.14 at 90 d, no clause | took the index clause |
-| P03 | renewal / stabilise | 0.60 | | 438.21, 24 m, 30 d | 429.40 at 90 d (-2 %) | 90 d at +0.7 % (0.68) |
-| P04 | renewal / routine | 0.00 | | 4.96, 24 m, 30 d | 4.93 at 90 d | price frozen above the 4.70 fallback; window 2,317 EUR |
-| P05 | RFQ / leverage | 0.19 | | Hrvelec 33.98, 35 d lead, 14 d | 26.62 (-22 %) | price; paid for speed |
-| P07 | bundling / routine | 0.56 | | 5.63, 24 m, 30 d | 5.02 at 90 d (-11 %) | price |
-| P08 | raw material / leverage | 0.11 | 0.75 / 0.23 | 5.93, 12 m, 90 d | 5.10 at 24 m (-14 %) | price |
-| P10 | capacity / secure supply | 0.60 | | 32.45, 24 m, 23,400/yr | 27.38 (-16 %) | price |
-| P11 | quality / quality first | 0.46 | 0.31 / 0.41 | 47.00, 300 ppm, no chargeback | 43.77 (-7 %) | price |
-| P18 | raw material / leverage | 0.06 | 0.39 / 0.39 | 6.00, 12 m, 90 d | 4.73 at 24 m (-21 %) | coverage (0.17), price |
-
-House / best team: Tacto's house agent and the best team score from Tacto's Discord check-in on
-Saturday afternoon. C_best as a price: the unit price at which our deal's terms, with full
-coverage, the longest allowed payment, no index clause and the latest allowed start, cost exactly
-C_best.
+| P01 | stabilise | 0.974 | `4cc256188e1cd8af` | 130.18, Nov, 14 d | 0.995 (0.966) | agreed at our sheet in round 4 |
+| P02 | stabilise | 0.507 | `3ad1d67f26aac5e7` | 371.88, 90 d | 0.847 (0.740) | Nordmark settles near 371.9 after round 1 |
+| P03 | stabilise | 0.923 | `c7fcc4c7ae8f4e9a` | 432.15, 90 d, 24 m | 0.936 (0.925) | price frozen |
+| P04 | routine | 0.860 | `81e9fd209c3fd659` | 4.94, 90 d, 36 m | 0.874 (0.860) | C_best needs 4.93 |
+| P05 | leverage RFQ | 0.828 | `917135b8156fb8a3` | Dralveck 27.86, 14 d, 35 d | 0.824 (0.555) | ours is the record |
+| P07 | routine | 0.751 | `cacd5028b34d30dc` | 5.35, 45 d, 36 m | 0.779 (0.782) | final offer in round 3 |
+| P08 | leverage | 0.549 | `7701b00c7a9a8b3e` | 5.35, AS-14404 clause | 0.732 (0.752) | final offer in round 2 to 4 |
+| P10 | secure_supply | 0.679 | `7c4f1855794797d6` | 31.50, 56 d, 36 m | 0.702 (0.686) | fully booked, final early |
+| P11 | quality_first | 0.710 | `3ac9ee6cf673cf7c` | 45.50, 300 ppm | 0.807 (0.314) | wants faster payment, which is fixed |
+| P18 | leverage | 0.485 | `6a39d7511267e0ff` | 5.30, AS-14404 clause | 0.677 (0.386) | final offer in round 2 to 3 |
 
 ## Score and terms
 
@@ -129,6 +109,26 @@ C_best.
 - 2026-10-10 `rules` No alternative, so walking away scores 0: D01, P05, P06, P10, P14, P17.
 
 ## Supplier behaviour
+
+- 2026-10-10 `arena` **How it concedes (D01, controlled runs, sandbox):** a constant sheet gets
+  no concession and a final offer in round 4 (`d2afbf478253fa57`); each round it concedes about
+  min(0.8 x our move, a cap that shrinks by round: 0.5, 0.3, 0.2, 0.2, 0.1); a very low anchor
+  (37.03) costs patience and ends higher (50.40). Round 1 counters were the same for anchors 44
+  to 47 (51.30). → Most of the movement comes from round-1 claims and terms; later rounds add a
+  few percent while our moves are large enough.
+- 2026-10-10 `arena` **A large first concession means a deep floor** (job shops: Dralveck 36.00
+  to 30.50, Fuchsreiter 38.50 to 31.50 in P05; DEMO-J1 17.10 to 14.99 in D02). Meeting them with
+  30 % of the gap triggered agreement at our sheet in round 2; holding low got D02 from 0.48 to
+  0.63.
+- 2026-10-10 `arena` **Timeouts:** a late message counts as a round and as "no move" ("Without
+  movement from your side we cannot move either", P05 v2). Once a job shop answered a timeout
+  with a lower price (DEMO-J1, "sharpened my pencil"), but a deliberate timeout on D01 gave
+  nothing (0.983 against 0.988). P10 v1: a crash after its final offer let the clock run out and
+  Ravensteiner withdrew.
+- 2026-10-10 `arena` **Walk-away without a final offer:** Nordmark (P02 v1, `b85685a51d797c60`)
+  withdrew in round 4 when our sheets sat 2 to 7 % below its counter, below its full cost; back
+  office "My call: final_offer ... we withdraw". With small gaps (v2 on) it gives a final offer
+  at about 372 in round 4 instead.
 
 - 2026-10-10 `arena` **Deterministic.** Nine D01 sandbox runs with identical sheets gave
   identical prices (52.90, 52.00, 51.50, then `final_offer` 51.50); replays of P04 and P11
@@ -186,6 +186,21 @@ C_best.
 
 ## Arguments and claims
 
+- 2026-10-10 `arena` **Which claims a supplier takes into account** (practice v1 to v6, claim
+  results and reasons):
+
+  | Claim | Taken into account | No effect or irrelevant |
+  |---|---|---|
+  | volume forecast `fc:` | every supplier tried | a second `fc:` ID: "already taken into account" |
+  | should-cost `cost:` | D01, D02 J1, P01, P05 Fuchsreiter, P10 | above its price (never cite) |
+  | falling cost-driver index | P01, P05, P11 ("we did not know that") | an index outside its drivers, ECB currency rates: irrelevant |
+  | notice period `doc:` + `ctr:` | D01, P01 | |
+  | delivery or quality record `sc:` | D01, P01, P05, P11 | P07, P08, P18 ("does not change our calculation") |
+  | rival offer `offer:` (RFQ) | P05, D02 (every round, new offer ID) | D02 C1 "does not change our calculation" at times |
+  | our order prices `po:` | D01 | P02, P03, P04, P08, P18 |
+  | its own older quote outside the case refs | | irrelevant ("does not concern this part or our company") |
+  | another supplier's order prices | | irrelevant |
+
 - 2026-10-10 `arena` **Verified is not convincing.** Of 57 claims, 44 were verified, 11
   duplicate and 2 contradicted. Only P01 moved: 134.80 to 133.60 after the notice claim and two
   index claims ("we did not know that, a fair point"). Others: "Your figures confirm our case:
@@ -205,6 +220,15 @@ C_best.
   plus tooling 1,500 and 2,376 ppm).
 
 ## Agent experiments
+
+- 2026-10-10 `arena` **The price engine (branch `steffen/price-engine`), practice v1 to v6** (47
+  sessions): v1 (terms by C, goal anchors, 30 % path, claims) took the mean of best scores from
+  0.32 to 0.66; v2 to v6 added mirroring alternatives, overtime valuation, the RFQ scheduler,
+  rival offers every round and a model-written paragraph (0.73). What did not help: a patience
+  budget for every supplier (P08, P18 fell), a milder anchor for suppliers with a pricing
+  committee (P07, P18 fell), currency claims (irrelevant), switching a required index clause to
+  a 5 % deadband (refused). Run logs `logs/practice-v1.log` to `-v6.log`, decisions per move in
+  `logs/runs/`.
 
 - 2026-10-10 `arena` **Julian's draft two** (`origin/julian/draft-two`, design in `design.md`)
   on the sandbox: D01 0.73 → 0.93 → 0.96, D02 0.37 → 0.54 over five runs. What moved it: a floor
@@ -300,16 +324,11 @@ shows evidence.
 
 ## Hypotheses (untested in the arena)
 
-- Prices fall much further when every sheet stays below the supplier's price and concessions
-  are slow (house agent 0.75 on P08, ours 0.11 after agreeing in round 2).
-- Cash-short suppliers give more price for 14 to 30 days payment than the 0.67 % per 30 days it
-  costs us.
-- Citing the best rival offer moves RFQ bidders; our probe never cited offers.
-- Suppliers with "approval above 2 %" notes move at most 2 % per round.
-- Stale-costing suppliers concede after a verified falling-index claim; hedged suppliers answer
-  index claims with "not our reality" until the hedge ends.
-- The cost floor is full cost; the five that once sold below full cost may go lower.
-- A faster payment package beats a deeper price anchor for cash-short suppliers; test 20 / 30 %
-  openings against standard / early payment as a 2x2, several runs per credit stratum.
-- A `selective` rebuttal (naming the cost driver the supplier left out of its letter) moves more
-  than a plain index claim.
+- Records on P02 (0.85) and P08 (0.73) come from a lower round-1 counter, not from later rounds:
+  our later rounds converge to the same price whatever the gap (P02 371.9 in v4 to v6).
+- Three sheets of equal C for us in round 1 reveal what each lever is worth to the supplier
+  (payment, lead time, ppm) and could lift P10 and P11.
+- The close response of a final case carries `c_best`; calibrating anchors between waves from it
+  is possible but needs a rules check first.
+- Persona-specific wording beyond the generic paragraph (cash need, partnership 2022, reference
+  customer) moves the round-1 counter.
