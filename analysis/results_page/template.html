@@ -1,0 +1,433 @@
+<title>Codacabana Probe Results</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one 1120px reading column; summary first (verdict, gauge rows), then findings, suppliers, levers, data. */
+:root {
+  --bg: #f4f6f8; --surface: #ffffff; --sunk: #eef1f5;
+  --ink: #12161c; --ink-2: #444c58; --muted: #6f7886; --line: #dde2e8;
+  --accent: #2456c9; --accent-soft: #e5ecfa;
+  --us: #2a78d6; --them: #eb6834; --floor: #12161c;
+  --good: #0ca30c; --warn: #b07a00; --bad: #d03b3b;
+  --good-soft: #e3f4e3; --warn-soft: #fbf0d6; --bad-soft: #f9e3e3;
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1115; --surface: #161a20; --sunk: #1c2128;
+  --ink: #eaedf1; --ink-2: #b7bec8; --muted: #8b94a2; --line: #2a313b;
+  --accent: #7ea6f2; --accent-soft: #1d2a44;
+  --us: #3987e5; --them: #d95926; --floor: #eaedf1;
+  --good: #3fbf3f; --warn: #e0a72a; --bad: #e66767;
+  --good-soft: #15301a; --warn-soft: #33290f; --bad-soft: #3a1b1b;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e1115; --surface: #161a20; --sunk: #1c2128;
+  --ink: #eaedf1; --ink-2: #b7bec8; --muted: #8b94a2; --line: #2a313b;
+  --accent: #7ea6f2; --accent-soft: #1d2a44;
+  --us: #3987e5; --them: #d95926; --floor: #eaedf1;
+  --good: #3fbf3f; --warn: #e0a72a; --bad: #e66767;
+  --good-soft: #15301a; --warn-soft: #33290f; --bad-soft: #3a1b1b;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--f-body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 800; font-stretch: 112%; letter-spacing: -0.01em; line-height: 1.05; }
+h2 { font-size: 24px; font-weight: 700; font-stretch: 108%; }
+h3 { font-size: 17px; font-weight: 700; font-stretch: 100%; }
+p { margin: 0; }
+.eyebrow { font: 600 12px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 19px; color: var(--ink-2); max-width: 68ch; }
+.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+section { display: grid; gap: 18px; min-width: 0; }
+.sec-head { display: grid; gap: 6px; }
+.sec-head p { color: var(--ink-2); max-width: 70ch; }
+
+/* header */
+header { display: grid; gap: 18px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border-top: 2px solid var(--ink); border-bottom: 1px solid var(--line); }
+.kpi { padding: 14px 16px 14px 0; display: grid; gap: 2px; }
+.kpi b { font: 700 30px/1.1 var(--f-display); font-stretch: 110%; font-variant-numeric: tabular-nums; }
+.kpi span { font-size: 13px; color: var(--muted); }
+.verdict { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.verdict div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 4px; }
+.verdict b { font-family: var(--f-display); font-size: 16px; }
+.verdict p { font-size: 15px; color: var(--ink-2); }
+
+/* gauge rows: share of the possible saving captured */
+.gauges { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 18px 14px; }
+.g-axis, .g-row { display: grid; grid-template-columns: minmax(150px, 230px) 1fr 120px; gap: 16px; align-items: center; }
+.g-axis { font: 12px var(--f-mono); color: var(--muted); padding: 8px 0 6px; border-bottom: 1px solid var(--line); }
+.g-axis .ticks { position: relative; height: 16px; }
+.g-axis .ticks span { position: absolute; transform: translateX(-50%); }
+.g-axis .ticks span:first-child { transform: none; } .g-axis .ticks span:last-child { transform: translateX(-100%); }
+.g-row { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.g-row:last-child { border-bottom: 0; }
+.g-label { display: grid; gap: 1px; min-width: 0; }
+.g-label b { font: 600 13px var(--f-mono); }
+.g-label span { font-size: 14px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.g-label small { font-size: 12px; color: var(--muted); }
+.track { position: relative; height: 28px; }
+.track::before { content: ""; position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: var(--line); }
+.track .grid { position: absolute; top: 6px; bottom: 6px; width: 1px; background: var(--line); }
+.track .bar { position: absolute; left: 0; top: 10px; height: 8px; border-radius: 0 4px 4px 0; background: var(--us); }
+.track .dot { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; border: 2px solid var(--us); background: var(--surface); cursor: default; }
+.track .dot.best { background: var(--us); box-shadow: 0 0 0 2px var(--surface); }
+.track .end { position: absolute; right: -1px; top: 4px; width: 3px; height: 20px; background: var(--floor); border-radius: 2px; }
+.track .hit { position: absolute; top: 0; height: 28px; width: 28px; margin-left: -14px; }
+.g-val { text-align: right; display: grid; gap: 0; }
+.g-val b { font: 600 15px var(--f-mono); font-variant-numeric: tabular-nums; }
+.g-val small { font-size: 12px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 18px; font-size: 13px; color: var(--ink-2); }
+.legend i { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+.lg-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--us); }
+.lg-ring { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--us); }
+.lg-end { width: 3px; height: 14px; background: var(--floor); border-radius: 2px; }
+
+/* findings */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: 600 13px var(--f-body); border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip:focus-visible, button:focus-visible, .sup-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.card-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.area { font: 600 11px var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.conf { font: 600 11px var(--f-mono); border-radius: 4px; padding: 2px 6px; white-space: nowrap; }
+.conf.high { background: var(--good-soft); color: var(--good); } .conf.medium { background: var(--warn-soft); color: var(--warn); }
+.card p { font-size: 15px; color: var(--ink-2); }
+.card .impl { border-top: 1px dashed var(--line); padding-top: 10px; color: var(--ink); }
+.card .impl b { font-weight: 600; }
+.ev { display: flex; flex-wrap: wrap; gap: 6px; }
+.ev span { font: 12px var(--f-mono); background: var(--sunk); color: var(--ink-2); border-radius: 4px; padding: 2px 6px; }
+
+/* suppliers */
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 860px; font-size: 14px; }
+th { font: 600 11px var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 12px 12px 8px; border-bottom: 1px solid var(--line); }
+td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.sup-row { cursor: pointer; }
+.sup-row:hover td { background: var(--sunk); }
+.sup-name b { display: block; font-weight: 600; }
+.sup-name small { color: var(--muted); font-size: 12px; }
+.sig { display: inline-block; font: 11px var(--f-mono); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; margin: 1px 2px 1px 0; color: var(--ink-2); white-space: nowrap; }
+.pill { font: 600 11px var(--f-mono); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.pill.agreed { background: var(--good-soft); color: var(--good); }
+.pill.final_offer { background: var(--warn-soft); color: var(--warn); }
+.pill.open { background: var(--sunk); color: var(--ink-2); }
+.pill.walked_away { background: var(--bad-soft); color: var(--bad); }
+.r { text-align: right; } td.num, td .num { font-size: 13px; }
+.caret { display: inline-block; width: 10px; color: var(--muted); transition: transform .15s; }
+tr[aria-expanded="true"] .caret { transform: rotate(90deg); }
+.detail td { background: var(--sunk); padding: 0; }
+.detail-inner { padding: 14px 18px 18px; display: grid; gap: 16px; }
+.run-head { font: 600 12px var(--f-mono); color: var(--muted); }
+.steps { display: grid; gap: 6px; }
+.step { display: grid; grid-template-columns: 34px 64px 1fr; gap: 10px; font-size: 13px; align-items: start; }
+.step .rd { font: 12px var(--f-mono); color: var(--muted); padding-top: 2px; }
+.step .who { font: 600 11px var(--f-mono); border-radius: 4px; padding: 2px 6px; text-align: center; }
+.who.us { background: var(--accent-soft); color: var(--accent); } .who.them { background: var(--surface); color: var(--ink-2); border: 1px solid var(--line); }
+.step .body { min-width: 0; display: grid; gap: 3px; }
+.terms { font: 12px var(--f-mono); color: var(--ink); overflow-wrap: anywhere; }
+.quote { color: var(--ink-2); font-style: italic; }
+.why { color: var(--muted); }
+
+/* payment dot plot */
+.plot { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 18px 16px; }
+.plot svg { display: block; width: 100%; height: auto; overflow: visible; }
+.plot text { fill: var(--muted); font: 12px var(--f-mono); }
+.plot .lab { fill: var(--ink-2); font: 13px var(--f-body); }
+
+/* data */
+.files { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.file { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: var(--surface); display: grid; gap: 4px; }
+.file code { font: 600 13px var(--f-mono); }
+.file p { font-size: 14px; color: var(--ink-2); }
+.cmd { font: 13px var(--f-mono); background: var(--sunk); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; white-space: pre; }
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+
+#tip { position: fixed; pointer-events: none; z-index: 10; background: var(--ink); color: var(--bg); font: 13px/1.45 var(--f-body); padding: 8px 10px; border-radius: 6px; max-width: 280px; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+#tip b { font-weight: 600; } #tip .num { font-size: 12px; }
+
+@media (max-width: 640px) {
+  .g-axis, .g-row { grid-template-columns: 1fr 84px; }
+  .g-axis > :first-child { display: none; }
+  .g-label { grid-column: 1 / -1; }
+  .g-axis .ticks { grid-column: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .caret { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Tacto Negotiation Arena · Hollerau Pumpenwerke purchasing · practice probe, 10 Oct 2026</div>
+    <h1>What 15 practice runs taught us about the supplier bots</h1>
+    <p class="lede">We ran a fixed experiment against every hosted practice case: questions first, then our levers, their levers, data claims and concessions. Each run also reveals the supplier's floor (C<sub>best</sub>), so every result below is measured against the best deal that was possible.</p>
+    <div class="kpis" id="kpis"></div>
+    <div class="verdict">
+      <div><b>"Agreed" ends the price talk</b><p>In 15 of 16 threads no later move lowered an agreed price. Stay below the supplier's price until the end.</p></div>
+      <div><b>Cover the need first</b><p>Half of C in P08 and P18 was need the 12-month deal did not cover. A 24-month contract is often free.</p></div>
+      <div><b>The notes predict the supplier</b><p>Price frozen, cash short, capacity full: the signals in the data matched what each bot said and did.</p></div>
+    </div>
+  </header>
+
+  <section id="close">
+    <div class="sec-head">
+      <div class="eyebrow">Outcome per case</div>
+      <h2>How much of the possible saving we captured</h2>
+      <p>0 % is the best opening offer, 100 % is C<sub>best</sub>, the cheapest package any supplier in the case would ever accept. This is the arena's case score. Hover a dot for the euros.</p>
+    </div>
+    <div class="legend"><span><i class="lg-dot"></i>Best run</span><span><i class="lg-ring"></i>Other run of the same case</span><span><i class="lg-end"></i>Floor (C<sub>best</sub>)</span></div>
+    <div class="gauges" id="gauges" role="table" aria-label="Score per case"></div>
+  </section>
+
+  <section id="findings">
+    <div class="sec-head">
+      <div class="eyebrow">13 findings</div>
+      <h2>What the bots do, and what it means for our agent</h2>
+    </div>
+    <div class="chips" id="areas" role="group" aria-label="Filter findings by area"></div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section id="suppliers">
+    <div class="sec-head">
+      <div class="eyebrow">12 suppliers</div>
+      <h2>Each supplier: what the data said, what it did</h2>
+      <p>Signals come from call notes, letters and news in the data package. The sparkline shows its price per round (orange) and our offers (blue rings); the square marks the round it first said agreed. Click a row for the full exchange.</p>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th></th><th>Supplier</th><th>Case</th><th>Data signals</th><th class="r">Opening vs should-cost</th><th>Price path</th><th class="r">Opening → final</th><th>Last status</th></tr></thead>
+      <tbody id="sup-body"></tbody>
+    </table></div>
+  </section>
+
+  <section id="levers">
+    <div class="sec-head">
+      <div class="eyebrow">Lever price: payment days</div>
+      <h2>What each supplier charges for paying us later</h2>
+      <p>The supplier's own counter for the same package with later payment, as an annual rate. Left of our 8 % cost of money, longer payment saves us money; right of it, offering faster payment buys price.</p>
+    </div>
+    <div class="plot" id="payplot"></div>
+  </section>
+
+  <section id="data">
+    <div class="sec-head">
+      <div class="eyebrow">Machine-readable exports</div>
+      <h2>The data behind this page</h2>
+      <p>In the repo under <code class="num">exports/</code>, regenerated from the saved sessions. Join on <code class="num">session_id</code>, then <code class="num">supplier_id</code> and <code class="num">round</code>; the schema is in <code class="num">exports/README.md</code>.</p>
+    </div>
+    <div class="files" id="files"></div>
+    <div class="cmd">uv run buyer pull --set practice      # sessions with trace, back office, attachments
+uv run python analysis/export.py      # exports/*.csv, *.jsonl
+uv run buyer view                     # read every session on one local page</div>
+  </section>
+
+  <footer>Practice set, package v1. 15 practice sessions (13 by the automatic probe, 1 resumed by hand, 1 lost to a crash before its first move) and <span id="sb"></span> sandbox sessions. Scores are the arena's; C values in euros over each case's horizon.</footer>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+const D = __DATA__;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const eur = x => x == null ? "-" : "€" + Math.round(x).toLocaleString("en-GB");
+const keur = x => x == null ? "-" : (Math.abs(x) >= 1e6 ? "€" + (x / 1e6).toFixed(2) + "M" : "€" + Math.round(x / 1000).toLocaleString("en-GB") + "k");
+const pct = x => x == null ? "-" : Math.round(x * 100) + " %";
+const TYPE = { price_increase: "price increase", renewal: "renewal", rfq: "RFQ", bundling: "bundling", raw_material: "raw material", capacity: "capacity", quality: "quality" };
+
+/* tooltip */
+const tip = $("#tip");
+function showTip(e, html) { tip.innerHTML = html; tip.hidden = false; moveTip(e); }
+function moveTip(e) {
+  const pad = 14, r = tip.getBoundingClientRect();
+  let x = e.clientX + pad, y = e.clientY + pad;
+  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - pad;
+  if (y + r.height > innerHeight - 8) y = e.clientY - r.height - pad;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+function hideTip() { tip.hidden = true; }
+function bindTip(el, html) {
+  el.addEventListener("mouseenter", e => showTip(e, html));
+  el.addEventListener("mousemove", moveTip);
+  el.addEventListener("mouseleave", hideTip);
+  el.addEventListener("focus", () => { const r = el.getBoundingClientRect(); showTip({ clientX: r.right, clientY: r.bottom }, html); });
+  el.addEventListener("blur", hideTip);
+}
+
+/* runs grouped by case, best first */
+const byCase = {};
+D.runs.forEach(r => (byCase[r.case] ??= []).push(r));
+const cases = Object.keys(byCase).sort();
+cases.forEach(c => byCase[c].sort((a, b) => (b.score ?? -1) - (a.score ?? -1)));
+const best = cases.map(c => byCase[c][0]);
+
+/* KPIs */
+const meanBest = best.reduce((s, r) => s + (r.score || 0), 0) / best.length;
+const captured = best.reduce((s, r) => s + (r.c_open - (r.c_deal ?? r.c_open)), 0);
+const possible = best.reduce((s, r) => s + (r.c_open - r.c_best), 0);
+const left = best.reduce((s, r) => s + ((r.c_deal ?? r.c_open) - r.c_best), 0);
+$("#kpis").innerHTML = [
+  [D.runs.length, "practice runs"], [cases.length, "hosted cases"], [D.suppliers.length, "suppliers probed"],
+  [Math.round(meanBest * 100) + " %", "mean best score"], [keur(captured), "saved of " + keur(possible) + " possible"],
+  [keur(left), "left on the table"],
+].map(([v, l]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join("");
+$("#sb").textContent = D.sandbox_sessions;
+
+/* gauges */
+const g = $("#gauges");
+g.innerHTML = `<div class="g-axis" role="row"><span>Case</span><div class="ticks">${[0, 25, 50, 75, 100].map(t => `<span style="left:${t}%">${t} %</span>`).join("")}</div><span style="text-align:right">best score · left</span></div>`;
+cases.forEach(c => {
+  const runs = byCase[c], b = runs[0];
+  const row = document.createElement("div");
+  row.className = "g-row"; row.setAttribute("role", "row");
+  const leftEur = (b.c_deal ?? b.c_open) - b.c_best;
+  row.innerHTML = `<div class="g-label"><b>${c}</b><span title="${esc(b.title)}">${esc(b.title)}</span><small>${TYPE[b.type] || b.type} · ${b.goal}${b.suppliers > 1 ? " · " + b.suppliers + " suppliers" : ""}</small></div>
+    <div class="track">${[25, 50, 75].map(t => `<span class="grid" style="left:${t}%"></span>`).join("")}<span class="bar" style="width:${(b.score || 0) * 100}%"></span><span class="end"></span></div>
+    <div class="g-val"><b>${(b.score ?? 0).toFixed(2)}</b><small>${b.deal ? keur(leftEur) + " left" : "no deal"}</small></div>`;
+  const track = row.querySelector(".track");
+  runs.slice().reverse().forEach(r => {
+    const dot = document.createElement("span");
+    dot.className = "dot" + (r === b ? " best" : "");
+    dot.style.left = (r.score || 0) * 100 + "%";
+    const hit = document.createElement("span");
+    hit.className = "hit"; hit.style.left = dot.style.left; hit.tabIndex = 0;
+    hit.setAttribute("aria-label", `${c} run: score ${(r.score ?? 0).toFixed(2)}`);
+    const html = `<b>${c} · ${r.deal ? "deal at €" + r.price : "no deal"}</b><br>score <span class="num">${(r.score ?? 0).toFixed(3)}</span>${r === b ? " (best)" : ""}<br>
+      C open <span class="num">${eur(r.c_open)}</span><br>C deal <span class="num">${eur(r.c_deal)}</span><br>C best <span class="num">${eur(r.c_best)}</span>
+      ${r.implied ? `<br>floor price at our terms <span class="num">€${r.implied}</span>` : ""}${r.uncovered ? `<br>uncovered need <span class="num">${eur(r.uncovered)}</span>` : ""}
+      <br><span style="opacity:.75">${esc(r.method)}</span>`;
+    bindTip(hit, html);
+    track.append(dot, hit);
+  });
+  g.append(row);
+});
+
+/* findings */
+const areas = ["all", ...new Set(D.findings.map(f => f.area))];
+let area = "all";
+try { area = localStorage.getItem("probe-area") || "all"; if (!areas.includes(area)) area = "all"; } catch (e) {}
+function renderAreas() {
+  $("#areas").innerHTML = areas.map(a => `<button class="chip" aria-pressed="${a === area}" data-a="${a}">${a === "all" ? "All findings" : a[0].toUpperCase() + a.slice(1)} <span class="num" style="opacity:.6">${a === "all" ? D.findings.length : D.findings.filter(f => f.area === a).length}</span></button>`).join("");
+  document.querySelectorAll("#areas .chip").forEach(b => b.onclick = () => { area = b.dataset.a; try { localStorage.setItem("probe-area", area); } catch (e) {} renderAreas(); renderCards(); });
+}
+function renderCards() {
+  $("#cards").innerHTML = D.findings.filter(f => area === "all" || f.area === area).map(f => `
+    <article class="card"><div class="card-top"><span class="area">${esc(f.area)}</span><span class="conf ${f.confidence}">${f.confidence} confidence</span></div>
+      <h3>${esc(f.title)}</h3><p>${esc(f.finding)}</p>
+      <p class="impl"><b>For the agent:</b> ${esc(f.implication)}</p>
+      <div class="ev">${f.evidence.map(e => `<span>${esc(e)}</span>`).join("")}</div></article>`).join("");
+}
+renderAreas(); renderCards();
+
+/* suppliers */
+function sparkline(run) {
+  const W = 150, H = 36, P = 4;
+  const them = [], us = [];
+  run.steps.forEach(s => {
+    const p = s.sheets && s.sheets[0] && s.sheets[0].unit_price;
+    if (p == null) return;
+    (s.a === "them" ? them : us).push({ r: s.r, p, status: s.status, n: s.sheets.length });
+  });
+  const all = [...them, ...us].map(x => x.p);
+  if (!them.length) return "";
+  const lo = Math.min(...all), hi = Math.max(...all), span = hi - lo || 1;
+  const maxR = Math.max(...them.map(x => x.r), ...us.map(x => x.r), 1);
+  const X = r => P + (r / maxR) * (W - 2 * P), Y = p => H - P - ((p - lo) / span) * (H - 2 * P);
+  const line = them.map((t, i) => `${i ? "L" : "M"}${X(t.r).toFixed(1)},${Y(t.p).toFixed(1)}`).join("");
+  const ag = them.find(t => t.status === "agreed");
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="price path from €${them[0].p} to €${them[them.length - 1].p}">
+    <path d="${line}" fill="none" stroke="var(--them)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${us.map(u => `<circle cx="${X(u.r)}" cy="${Y(u.p)}" r="3" fill="var(--surface)" stroke="var(--us)" stroke-width="1.5"/>`).join("")}
+    ${ag ? `<rect x="${X(ag.r) - 4}" y="${Y(ag.p) - 4}" width="8" height="8" fill="var(--them)" stroke="var(--surface)" stroke-width="1.5"/>` : ""}
+  </svg>`;
+}
+function termsText(t) {
+  const order = ["unit_price", "payment_days", "contract_months", "volume_per_year", "lead_time_days", "effective_date", "ppm_commitment", "chargeback_eur_per_complaint", "index_clause", "incoterm"];
+  const name = { unit_price: "€", payment_days: "pay", contract_months: "months", volume_per_year: "vol", lead_time_days: "lead", effective_date: "from", ppm_commitment: "ppm", chargeback_eur_per_complaint: "chargeback €", index_clause: "index", incoterm: "" };
+  return order.filter(k => k in t).map(k => {
+    const v = t[k];
+    if (k === "index_clause") return v ? `index ${v.series} ${Math.round(v.material_share * 100)}% db${v.deadband_pct}` : "no index";
+    if (k === "unit_price") return `€${v}`;
+    if (k === "payment_days") return `${v}d pay`;
+    if (k === "lead_time_days") return `${v}d lead`;
+    return `${name[k]} ${v}`.trim();
+  }).join(" · ");
+}
+const STEP = { open: "questions + anchor", ours: "our lever at their price", theirs: "their lever, lower price", claims: "data claims", step: "concession", push: "ask for more after agreed", keepalive: "keep thread alive" };
+function detail(s) {
+  return s.runs.map(run => `<div><div class="run-head">${run.case} · session ${run.sid}${run.won ? " · we closed with this supplier" : ""}${run.docs.length ? " · documents: " + run.docs.filter(d => !d.startsWith("quote")).join(", ") : ""}</div>
+    <div class="steps">${run.steps.map(st => {
+      if (st.act) return `<div class="step"><span class="rd">r${st.r}</span><span class="who us">us</span><div class="body"><b>${st.act === "accept" ? "Accepted the standing offer" : "Walked away"}</b></div></div>`;
+      const sheets = (st.sheets || []).map(termsText).join("  |  ");
+      return `<div class="step"><span class="rd">r${st.r}</span><span class="who ${st.a}">${st.a === "us" ? "us" : "them"}</span><div class="body">
+        ${st.a === "us" ? `<span class="why">${esc(STEP[st.step] || st.step || "")}${st.note ? " · " + esc(st.note) : ""}</span>` : (st.status ? `<span><span class="pill ${st.status}">${st.status}</span>${st.claims.length ? ` <span class="why">claims: ${st.claims.join(", ")}</span>` : ""}</span>` : "")}
+        ${sheets ? `<span class="terms">${esc(sheets)}</span>` : ""}
+        ${(st.reasons || []).map(q => `<span class="quote">“${esc(q)}”</span>`).join("")}
+      </div></div>`;
+    }).join("")}</div></div>`).join("");
+}
+const tb = $("#sup-body");
+D.suppliers.sort((a, b) => a.runs[0].case.localeCompare(b.runs[0].case) || a.name.localeCompare(b.name)).forEach((s, i) => {
+  const run = s.runs[s.runs.length - 1];
+  const vsSc = s.should_cost && run.opening ? (run.opening / s.should_cost - 1) * 100 : null;
+  const tr = document.createElement("tr");
+  tr.className = "sup-row"; tr.tabIndex = 0; tr.setAttribute("aria-expanded", "false");
+  tr.innerHTML = `<td><span class="caret">▸</span></td>
+    <td class="sup-name"><b>${esc(s.name)}</b><small>${esc(s.country || "")} · ${esc(s.owner || "")} · scorecard ${esc(s.colour || "-")}</small></td>
+    <td class="num">${[...new Set(s.runs.map(r => r.case))].join(", ")}${s.runs.length > 1 ? `<br><small style="color:var(--muted)">${s.runs.length} runs</small>` : ""}</td>
+    <td>${s.signals.length ? s.signals.map(x => `<span class="sig">${esc(x)}</span>`).join("") : '<span style="color:var(--muted)">none</span>'}</td>
+    <td class="r num">${vsSc == null ? "-" : (vsSc > 0 ? "+" : "") + vsSc.toFixed(1) + " %"}</td>
+    <td>${sparkline(run)}</td>
+    <td class="r num">€${run.opening ?? "-"} → €${run.final ?? "-"}</td>
+    <td><span class="pill ${run.status}">${esc(run.status)}</span>${run.agreed_round ? `<br><small style="color:var(--muted)">agreed r${run.agreed_round}</small>` : ""}</td>`;
+  const dr = document.createElement("tr");
+  dr.className = "detail"; dr.hidden = true;
+  dr.innerHTML = `<td colspan="8"><div class="detail-inner">${detail(s)}</div></td>`;
+  const toggle = () => { const open = dr.hidden; dr.hidden = !open; tr.setAttribute("aria-expanded", String(open)); };
+  tr.onclick = toggle;
+  tr.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } };
+  tb.append(tr, dr);
+});
+
+/* payment dot plot */
+(function () {
+  const pts = D.payment;
+  const names = [...new Set(pts.map(p => p.supplier))];
+  const W = 900, rowH = 34, top = 30, left = 250, right = 30, H = top + names.length * rowH + 30;
+  const maxX = Math.max(18, Math.ceil(Math.max(...pts.map(p => p.rate)) / 2) * 2);
+  const X = v => left + (v / maxX) * (W - left - right);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Annual rate each supplier charges for later payment">`;
+  for (let t = 0; t <= maxX; t += 2) svg += `<line x1="${X(t)}" x2="${X(t)}" y1="${top - 6}" y2="${H - 26}" stroke="var(--line)" stroke-width="1"/><text x="${X(t)}" y="${H - 8}" text-anchor="middle">${t}%</text>`;
+  svg += `<line x1="${X(8)}" x2="${X(8)}" y1="${top - 14}" y2="${H - 26}" stroke="var(--ink)" stroke-width="2" stroke-dasharray="4 3"/><text x="${X(8) + 6}" y="${top - 16}" style="fill:var(--ink)">our cost of money, 8 %/yr</text>`;
+  names.forEach((n, i) => {
+    const y = top + i * rowH + rowH / 2;
+    svg += `<text class="lab" x="${left - 14}" y="${y + 4}" text-anchor="end">${esc(n)}</text><line x1="${left}" x2="${W - right}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
+    pts.filter(p => p.supplier === n).forEach(p => {
+      const c = p.rate < 8 ? "var(--us)" : "var(--them)";
+      svg += `<circle class="pp" data-k="${pts.indexOf(p)}" cx="${X(p.rate)}" cy="${y}" r="7" fill="${c}" stroke="var(--surface)" stroke-width="2" tabindex="0"/>`;
+    });
+  });
+  svg += `</svg>`;
+  $("#payplot").innerHTML = svg + `<div class="legend" style="margin-top:8px"><span><i class="lg-dot"></i>Below 8 %: let them finance us, take the longer term</span><span><i class="lg-dot" style="background:var(--them)"></i>Above 8 %: faster payment is our cheap lever</span></div>`;
+  document.querySelectorAll("#payplot .pp").forEach(el => {
+    const p = pts[+el.dataset.k];
+    bindTip(el, `<b>${esc(p.supplier)}</b> · ${p.case}<br>${p.from} → ${p.to} days: €${p.p_from} → €${p.p_to} (<span class="num">${p.pct >= 0 ? "+" : ""}${p.pct} %</span>)<br>= <span class="num">${p.rate} %</span> a year`);
+  });
+})();
+
+/* files */
+$("#files").innerHTML = [
+  ["sessions.csv / .jsonl", "One row per session: score, C open / deal / alt / best, deal terms, cost breakdown, the floor price at our terms."],
+  ["threads.csv / .jsonl", "One row per supplier in a session: data signals and should-cost next to its price path, status, documents, questions."],
+  ["messages.jsonl", "Every e-mail both ways: term sheets with C, status, claims and checks, the supplier's reasons, its back office."],
+  ["claims.csv", `Every data argument we made and the arena's check: ${D.claims.total} in practice, ${D.claims.by_result.verified} verified, ${D.claims.by_result.duplicate} duplicate, ${D.claims.by_result.contradicted} contradicted.`],
+  ["findings.json", "The 13 findings on this page, with evidence and what each means for the agent."],
+  ["README.md", "Column-by-column schema and how to regenerate."],
+].map(([n, d]) => `<div class="file"><code>exports/${n}</code><p>${d}</p></div>`).join("");
+</script>

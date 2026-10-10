@@ -1,0 +1,178 @@
+{
+  "generated": "2026-10-10",
+  "basis": "15 practice sessions (10 hosted cases, 12 suppliers) and 17 sandbox sessions; see sessions.csv / threads.csv / messages.jsonl",
+  "findings": [
+    {
+      "id": "agreed-freezes-price",
+      "area": "supplier behaviour",
+      "title": "\"agreed\" freezes the price unless we give a lever",
+      "finding": "16 practice threads reached agreed. In 15 no later move lowered the price: claims, concessions and pushes all got \"Our agreed offer stands\". The one exception (P02, first run) dropped 0.7 % (369.12 to 366.41) in exchange for 14-day payment. Price moves while the status is open, as a counter to a sheet below its price.",
+      "evidence": [
+        "threads.csv first_agreed_round (16 threads)",
+        "case:P02 (exception)",
+        "case:P03",
+        "case:P04",
+        "case:P08",
+        "case:P18"
+      ],
+      "implication": "Do not send a sheet the supplier would accept until the price is where we want it. After agreed, only a lever it values (e.g. faster payment) buys more.",
+      "confidence": "high"
+    },
+    {
+      "id": "deterministic",
+      "area": "supplier behaviour",
+      "title": "Same moves, same result",
+      "finding": "Supplier numbers are deterministic; only the wording varies. Nine identical D01 runs gave identical prices; replays of P04 and P11 matched round for round; P02 differed only because our first offer differed.",
+      "evidence": [
+        "sandbox D01 x9 (method sandbox A/B)",
+        "case:P04 x2",
+        "case:P11 x2",
+        "case:P02 x2"
+      ],
+      "implication": "Practice replays measure our change, not noise. A simulator of the supplier rules is feasible.",
+      "confidence": "high"
+    },
+    {
+      "id": "coverage-first",
+      "area": "score",
+      "title": "Covering the need beats price",
+      "finding": "P08 and P18 closed 12-month deals on a 24-month need; uncovered need was about half of C. C_best implies 4.27 vs 5.93 (P08) and 3.10 vs 6.00 (P18) at those terms. In P10 a 24-month contract unlocked the full volume (23,400 instead of 19,890).",
+      "evidence": [
+        "case:P08",
+        "case:P18",
+        "case:P10",
+        "sandbox case:D01"
+      ],
+      "implication": "Fix contract length and volume to cover need x horizon before negotiating price.",
+      "confidence": "high"
+    },
+    {
+      "id": "first-offer-too-high",
+      "area": "score",
+      "title": "An instant agree means we offered too much",
+      "finding": "P05: Dralveck agreed to our first offer (97 % of its quote) in round 1, twice. In the first P05 run our offer sat above Hrvelec's quote and it agreed at once.",
+      "evidence": [
+        "case:P05 x2"
+      ],
+      "implication": "Open well below the supplier's price; an agree on the opening sheet is a signal we left money.",
+      "confidence": "medium"
+    },
+    {
+      "id": "signals-predict",
+      "area": "data",
+      "title": "Persona signals in the notes predict behaviour",
+      "finding": "price_frozen (P03, P04): no price move, 'group directives, price reductions frozen until December; we can talk about payment, volume or contract length'. cash_need (Dralveck, Fuchsreiter, Kalwisz): 'I need faster payment since cash is tight'. capacity_full (Hrvelec, Ravensteiner): faster delivery costs an overtime premium. spare_capacity: 'We have free capacity for your parts'.",
+      "evidence": [
+        "case:P03",
+        "case:P04",
+        "case:P05",
+        "case:P10",
+        "case:P11",
+        "analysis/out/profiles.csv"
+      ],
+      "implication": "Read the signals before the first move and pick the lever accordingly.",
+      "confidence": "high"
+    },
+    {
+      "id": "payment-days-price",
+      "area": "levers",
+      "title": "Payment days cost the supplier's own rate",
+      "finding": "Moving payment from 30 to 90 days: free at P08 and P18 (raw-material distributors), +0.7 % at P03 (about 4 %/yr), +1.0 % at P02 (6 %/yr), +1.2 % at P04 (7 %/yr), +1.4 % at P07 (8.5 %/yr); Hrvelec +1.5 to 2.1 % for 45 to 90 days (12 to 17 %/yr). Our cost of money is 8 %/yr.",
+      "evidence": [
+        "case:P02",
+        "case:P03",
+        "case:P04",
+        "case:P05",
+        "case:P07",
+        "case:P08",
+        "case:P18"
+      ],
+      "implication": "Take longer payment where the supplier's rate is below 8 %, offer faster payment where it is far above (cash-short suppliers).",
+      "confidence": "medium"
+    },
+    {
+      "id": "contract-length-free",
+      "area": "levers",
+      "title": "24 months is often free",
+      "finding": "P03, P04, P07 and P10 accepted 24 months at their price ('valuable planning security'). Raw-material distributors (P08, P18) kept 12 months at a fixed price and offered an index clause on AS-14404 instead.",
+      "evidence": [
+        "case:P03",
+        "case:P04",
+        "case:P07",
+        "case:P10",
+        "case:P08",
+        "case:P18"
+      ],
+      "implication": "Ask for the full horizon early; for raw material, consider the index clause to get coverage.",
+      "confidence": "high"
+    },
+    {
+      "id": "claims-rarely-move",
+      "area": "claims",
+      "title": "Verified data rarely moves price",
+      "finding": "Of 57 arguments, 44 were verified, 11 duplicate and 2 contradicted, but only P01 moved (EUR 1.20 after late notice plus index: 'we did not know that, a fair point'). Rising indices are read as support for the supplier ('Your figures confirm our case'); scorecards 'hold, but do not change our calculation'.",
+      "evidence": [
+        "claims.csv",
+        "case:P01"
+      ],
+      "implication": "Use claims sparingly and only those that cut against the supplier's stated drivers; never cite a rising index.",
+      "confidence": "medium"
+    },
+    {
+      "id": "claim-format",
+      "area": "claims",
+      "title": "No thousands separators in figures",
+      "finding": "'2,637 ppm' was parsed as 2.637 and came back contradicted ('That costs trust'). Written as 2637 in the replay it was verified.",
+      "evidence": [
+        "case:P11 x2"
+      ],
+      "implication": "Format every cited figure without separators.",
+      "confidence": "high"
+    },
+    {
+      "id": "rfq-ids-once",
+      "area": "claims",
+      "title": "In an RFQ a data ID counts once per case",
+      "finding": "The same index IDs cited to a second bidder came back duplicate. Only rival quotes and offers may be cited to every bidder.",
+      "evidence": [
+        "case:P05 x2"
+      ],
+      "implication": "Spread different arguments across bidders; cite rival offers instead.",
+      "confidence": "high"
+    },
+    {
+      "id": "no-cost-breakdowns",
+      "area": "documents",
+      "title": "Nobody sends a cost breakdown",
+      "finding": "0 of 12 practice suppliers sent one, including those marked open_book. Delivery schedules (P05, P10) and the 8D report (P11) came on request; a quote PDF comes with every changed offer.",
+      "evidence": [
+        "threads.csv sent_cost_breakdown"
+      ],
+      "implication": "Do not spend a round waiting for a breakdown; model cost from should-cost and cost drivers.",
+      "confidence": "high"
+    },
+    {
+      "id": "bluff-urgency-nothing",
+      "area": "tone",
+      "title": "Bluff and urgency move nothing on an unchanged sheet",
+      "finding": "Three runs each on D01: the back office said 'My call: hold' every time and the final price was identical. The words register ('built on mutual reliability, not on pressure').",
+      "evidence": [
+        "sandbox case:D01 (method sandbox A/B)"
+      ],
+      "implication": "Pressure without a term-sheet move is wasted; never leak urgency.",
+      "confidence": "medium"
+    },
+    {
+      "id": "walk-reveals-best",
+      "area": "rules",
+      "title": "Every session reveals the floor",
+      "finding": "C_best comes back with the result even after a walk-away, so one practice session per case gives its best achievable cost.",
+      "evidence": [
+        "sandbox case:D01",
+        "case:P10 (first run)"
+      ],
+      "implication": "sessions.csv c_best is the target for every hosted case.",
+      "confidence": "high"
+    }
+  ]
+}
