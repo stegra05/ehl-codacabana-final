@@ -20,7 +20,7 @@ Hackathon repo, EHL Grand Finale, Munich, 10 to 11 Oct 2026. Code freeze and Liv
 - Never commit secrets. Keys live in `.env`. Never print, log or paste the arena key anywhere.
 - All changes go through a PR against `main`, reviewed by one teammate. Branch `<firstname>/<topic>`.
   Agents may commit, push their branch and `gh pr create`; never push to `main`, force-push or merge.
-- Run `uv run pytest -q && uv run ruff check .` before every PR.
+- Run `uv run pytest -q && uv run ruff check . && uv run ruff format --check .` before every PR.
 - No em-dashes in prose or copy. Be terse: after an action, state what changed in three lines.
 
 ## The challenge
@@ -60,9 +60,9 @@ supplier bots (LLM personas with hidden economics) and closes one term sheet per
 | `docs/learnings.md` | **read first**: what we know about the arena, suppliers and data, with evidence |
 | `docs/design.md` | the agent we are building: modules, data, policy, build order |
 | `docs/challenge.md`, `api.md`, `submission.md` | Tacto's brief, API and cost formula, hand-in (upstream copies) |
-| `buyer/policy.py`, `runner.py` | the price engine: per-thread policy and the loop that plays a case (`docs/design.md`, Implemented) |
-| `buyer/economics.py`, `claims.py`, `personas.py`, `writer.py`, `llm.py` | C and term planning, claim bank, persona signals, e-mail and model paragraph |
-| `buyer/cli.py` | `buyer play`, `buyer run`, `buyer pull` |
+| `buyer/policy.py`, `runner.py` | the price engine: per-thread policy and the supplier's asks; the loop that plays a case and the Live Final waves (`docs/design.md`, Implemented) |
+| `buyer/economics.py`, `claims.py`, `personas.py`, `writer.py`, `llm.py` | C and term planning, claim bank, persona signals, e-mail composition, model paragraph |
+| `buyer/cli.py` | `buyer play`, `buyer run`, `buyer pull`, `--agent naive` |
 | `tests/` | end to end against `arena-sim`, no network, no model |
 | `exports/` | Saturday probe sessions as CSV/JSONL; schema in `exports/README.md` |
 | `analysis/explore.py` | data package exploration: profiles, persona signals, report page |
@@ -118,7 +118,10 @@ uv run --with pandas python analysis/explore.py # data package -> analysis/out/
 
 ## Sunday
 
-- 08:00: `uv run arena data` again; the release lands in `data/release-sunday/`.
+- 08:00: `uv run arena data` again; the release lands in `data/release-sunday/`. Check that
+  `DataPackage("data/package").release` is not `None`, list the release's `data/*.csv` and their
+  columns (they reach `ids`, `lookup` and `document`, not SQL), count new supplier IDs, and run
+  `uv run pytest -q` (every case file through `arena-sim`) with the release in place.
 - 09:00: pre-flight, one practice case through the final machine and setup.
 - 11:30: checklist in `docs/submission.md` (key, data, LLM credits, power, no sleep, log file).
 - Before 12:00, from `main`: `uv run buyer run --set final --parallel 10 -v 2>&1 | tee logs/final.log`,

@@ -1,5 +1,8 @@
 ## What
 
-## How to test
+## Evidence (session, case or data ID)
 
-## Screenshot / demo (if UI)
+## Checks
+- [ ] `uv run pytest -q`
+- [ ] `uv run ruff check . && uv run ruff format --check .`
+- [ ] `docs/learnings.md` updated with any new finding

@@ -48,7 +48,7 @@ Join keys: `session_id` (+ `supplier_id`, + `round`). `set` is `practice` or `sa
 | Column | Meaning |
 |---|---|
 | `country`, `owner_type`, `credit_index`, `scorecard_colour`, `data_signals` | from the data package (`analysis/explore.py`, `analysis/out/profiles.csv`); signals are persona traits found in notes, letters and news, e.g. `cash_need`, `price_frozen`, `capacity_full` |
-| `should_cost` | `should_cost.csv`, the supplier's own plant if modelled |
+| `should_cost` | the package's `should_cost` table, the supplier's own plant if modelled |
 | `opening_price`, `final_price`, `price_move_pct` | its first and last unit price in the thread |
 | `opening_vs_should_cost_pct` | how far its quote sits above (+) or below (-) the should-cost |
 | `final_status`, `first_agreed_round` | `open`, `agreed`, `final_offer`, `walked_away`; the round it first said `agreed` |

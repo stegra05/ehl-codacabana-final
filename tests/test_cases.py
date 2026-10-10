@@ -5,15 +5,12 @@ our agent: no exception on any case structure (bundles, 3-bidder RFQs, tooling, 
 import json
 import logging
 import secrets
-import socket
-import threading
-import time
 from pathlib import Path
 
 import pytest
-import uvicorn
 from arena_kit import ArenaClient, RemoteTable
-from arena_kit.sim import Sim, create_app
+from arena_kit.sim import Sim
+from conftest import serve
 
 from buyer import runner
 
@@ -32,20 +29,9 @@ def all_cases():
 @pytest.fixture(scope="module")
 def arena():
     cases = all_cases()
-    sim = Sim(cases, clock=lambda: 1_000_000.0)
-    with socket.socket() as s:
-        s.bind(("127.0.0.1", 0))
-        port = s.getsockname()[1]
-    server = uvicorn.Server(uvicorn.Config(create_app(sim), port=port, log_level="warning"))
-    thread = threading.Thread(target=server.run, daemon=True)
-    thread.start()
-    while not server.started:
-        time.sleep(0.01)
-    url = f"http://127.0.0.1:{port}"
-    key = ArenaClient(url).register(f"test-{secrets.token_hex(3)}", "sim")["api_key"]
-    yield ArenaClient(url, key, rate=1000), cases
-    server.should_exit = True
-    thread.join()
+    with serve(Sim(cases, clock=lambda: 1_000_000.0)) as url:
+        key = ArenaClient(url).register(f"test-{secrets.token_hex(3)}", "sim")["api_key"]
+        yield ArenaClient(url, key, rate=1000), cases
 
 
 @pytest.mark.parametrize("case_id", sorted(all_cases()))

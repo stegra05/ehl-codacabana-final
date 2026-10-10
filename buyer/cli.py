@@ -10,13 +10,24 @@ import statistics
 from pathlib import Path
 
 from arena_kit import ArenaClient, ArenaError, RemoteTable, play, play_all
+from arena_kit.agents import NaiveAgent
 from arena_kit.cli import load_env, summary
+from arena_kit.data import DataPackage
 from arena_kit.play import hosted, play_waves
 
 from . import llm, runner
-from .agent import AGENTS, load_package, naive_factory
 
 LOGS = Path("logs/sessions")
+AGENTS = ("buyer", "naive")  # our policy (`policy.py`, played by `runner.py`) or the kit's baseline
+
+
+def load_package(path):
+    """The data package with its ID index built once, before parallel cases share it."""
+    if not path:
+        return None
+    pkg = DataPackage(path)
+    pkg.lookup("")
+    return pkg
 
 
 def pull(client, set_):
@@ -81,7 +92,7 @@ def main(argv=None):
         table = RemoteTable(client)
         try:
             if naive:
-                result = play(table, args.case_id, naive_factory()())
+                result = play(table, args.case_id, NaiveAgent())
             else:
                 result = runner.play_case(table, args.case_id, pkg, complete=complete)
         except ArenaError as e:  # e.g. not hosted, the quota, a paused key: the arena says why
@@ -93,7 +104,7 @@ def main(argv=None):
     elif args.set == "final":  # no human in the loop: waits for each wave, plays it within its cap
         parallel = min(args.parallel, 10)
         if naive:
-            out = play_waves(client, naive_factory(), args.waves, parallel)
+            out = play_waves(client, NaiveAgent, args.waves, parallel)
         else:
             out = runner.play_waves(client, pkg, args.waves, parallel, complete=complete)
         for case_id, result in out.items():
@@ -104,7 +115,7 @@ def main(argv=None):
             ids = [i for i in ids if i.split(":")[-1] in args.cases.split(",")]
         parallel = min(args.parallel, 10)
         if naive:
-            out = play_all(lambda: RemoteTable(client), ids, naive_factory(), parallel)
+            out = play_all(lambda: RemoteTable(client), ids, NaiveAgent, parallel)
         else:
             out = runner.play_all(client, ids, pkg, parallel, complete=complete)
         for case_id, result in out.items():

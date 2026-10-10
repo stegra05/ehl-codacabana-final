@@ -1,0 +1,118 @@
+{
+  "commit": "a1b7afb7cfe7e773fdc1389564838247274a8d05",
+  "model": "gpt-6-luna",
+  "completed": 10,
+  "rows": [
+    {
+      "case": "case:P01",
+      "session": "4f234bc3a5fee132",
+      "score": 0.8981606966931385,
+      "previous": 0.9296448140192507,
+      "delta": -0.031484117326112226,
+      "previous_session": "6a55c2202fc17c09",
+      "previous_best": 0.99862421783879,
+      "deal": true,
+      "cost": 1102616.95
+    },
+    {
+      "case": "case:P02",
+      "session": "b3daba378f139d09",
+      "score": 0.27543595565602425,
+      "previous": 0.5067213701897855,
+      "delta": -0.23128541453376122,
+      "previous_session": "89fdf6591c573a71",
+      "previous_best": 0.7347381731929096,
+      "deal": true,
+      "cost": 2269824.65
+    },
+    {
+      "case": "case:P03",
+      "session": "d0dbeb2b5fb4acb8",
+      "score": 0.9228331929713948,
+      "previous": 0.9299668646202875,
+      "delta": -0.007133671648892781,
+      "previous_session": "53d1b3575d5effb4",
+      "previous_best": 0.9299668646202875,
+      "deal": true,
+      "cost": 3935069.22
+    },
+    {
+      "case": "case:P04",
+      "session": "709a6a7a1dc40c48",
+      "score": 0.8604451426623068,
+      "previous": 0.8604451426623068,
+      "delta": 0.0,
+      "previous_session": "be4177d39fd4c93d",
+      "previous_best": 0.8604451426623068,
+      "deal": true,
+      "cost": 196852.67
+    },
+    {
+      "case": "case:P05",
+      "session": "7f3993d6fad152ba",
+      "score": 0.8218454790802674,
+      "previous": 0.761911813074375,
+      "delta": 0.05993366600589234,
+      "previous_session": "0fbaadf5670ed6c7",
+      "previous_best": 0.8280454924995244,
+      "deal": true,
+      "cost": 238054.36
+    },
+    {
+      "case": "case:P07",
+      "session": "4864991929d93c24",
+      "score": 0.7509714726367044,
+      "previous": 0.73129525000079,
+      "delta": 0.019676222635914398,
+      "previous_session": "7e2da1a60aa67d52",
+      "previous_best": 0.7599706752376264,
+      "deal": true,
+      "cost": 322098.8
+    },
+    {
+      "case": "case:P08",
+      "session": "22f82a186bc4fb08",
+      "score": 0.6593548905201365,
+      "previous": 0.48228630075701445,
+      "delta": 0.17706858976312206,
+      "previous_session": "f127261033144b0e",
+      "previous_best": 0.6704216560222964,
+      "deal": true,
+      "cost": 1020119.1
+    },
+    {
+      "case": "case:P10",
+      "session": "0fa2163ef87aaa50",
+      "score": 0.6785164534560958,
+      "previous": 0.6785164534560958,
+      "delta": 0.0,
+      "previous_session": "47e46aaf7adb3c72",
+      "previous_best": 0.6863220713040008,
+      "deal": true,
+      "cost": 1522963.2
+    },
+    {
+      "case": "case:P11",
+      "session": "620b5f0476db19e7",
+      "score": 0.7098962346486538,
+      "previous": 0.6722692257450149,
+      "delta": 0.0376270089036389,
+      "previous_session": "9bc1e21bca026199",
+      "previous_best": 0.7098962346486538,
+      "deal": true,
+      "cost": 750082.5
+    },
+    {
+      "case": "case:P18",
+      "session": "e86f454a59ff98f0",
+      "score": 0.6883119264840607,
+      "previous": 0.48540331783641805,
+      "delta": 0.20290860864764265,
+      "previous_session": "9549c183534bbcbb",
+      "previous_best": 0.6295101511321533,
+      "deal": true,
+      "cost": 245255.5
+    }
+  ],
+  "mean": 0.7265771444808783
+}

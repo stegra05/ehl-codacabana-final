@@ -16,7 +16,8 @@ from arena_kit.client import ArenaError
 from arena_kit.play import ENDED, RemoteTable, fetch_documents, latest, moves_left, quota_used_up
 
 from . import llm
-from .policy import Negotiator, Side, deadline_near, keepalive_message
+from .policy import Negotiator, Side
+from .writer import keepalive_message
 
 log = logging.getLogger("buyer")
 RUNS = Path("logs/runs")
@@ -216,3 +217,8 @@ def play_waves(client, pkg=None, waves=5, parallel=10, poll=2.0, complete=None):
                     started[case["case_id"]] = pool.submit(one, case, functools.partial(caps.get, case["wave"]))
             time.sleep(poll)
     return {case_id: f.result() for case_id, f in started.items()}
+
+
+def deadline_near(deadline, margin=90):
+    cap = deadline() if callable(deadline) else deadline
+    return bool(cap) and time.time() > cap - margin
