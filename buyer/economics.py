@@ -29,11 +29,13 @@ def c_alt(case):
     return cost(case, terms)
 
 
-def acceptable(case, terms, std, est=None):
-    """The accept gate: a price, every must-have kept, cheaper than the alternative."""
-    return (
-        bool(terms.get("unit_price")) and must_haves_ok(case, terms, std) and cost(case, terms, std, est) < c_alt(case)
-    )
+def deal_cost(case, terms, std, est=None):
+    """The accept gate: C of a sheet with a price that keeps every must-have and is cheaper than
+    the alternative (relationship charge included), else None. The C returned is the C checked."""
+    if not terms.get("unit_price") or not must_haves_ok(case, terms, std):
+        return None
+    c = cost(case, terms, std, est)
+    return c if c < c_alt(case) else None
 
 
 def known_incoterm(case, terms):

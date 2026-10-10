@@ -7,11 +7,16 @@ import logging
 import os
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import httpx
 
 log = logging.getLogger("buyer")
 TIMEOUT_S = 20.0
+MIN_S = 2.0  # less time than this left on the clocks: the template, no model call
+# A late call is abandoned, not interrupted: it finishes in the background (httpx timeout) while
+# the move goes out with the template.
+POOL = ThreadPoolExecutor(max_workers=32, thread_name_prefix="writer")
 FORBIDDEN = re.compile(
     r"\d|\b(?:idx|quote|offer|sc|qn|po|cost|fc|news|doc|ctr):|urgent|urgency|deadline|budget|no alternative|"
     r"walk away|other options|last chance|desperate|must close|time pressure|target price",
@@ -56,13 +61,17 @@ def complete_from_env():
     return complete
 
 
-def paragraph(complete, brief):
-    """The model's paragraph for this brief, or None (no model, late, broken or unsafe)."""
+def paragraph(complete, brief, timeout=TIMEOUT_S):
+    """The model's paragraph for this brief within `timeout` seconds of wall clock, or None (no
+    model, no time, late, broken or unsafe)."""
     if complete is None:
+        return None
+    if timeout < MIN_S:
+        log.warning("writer skipped: %.1fs left on the clocks", timeout)
         return None
     t0 = time.monotonic()
     try:
-        text = (complete(SYSTEM, brief) or "").strip()
+        text = (POOL.submit(complete, SYSTEM, brief).result(timeout=min(timeout, TIMEOUT_S)) or "").strip()
     except Exception as e:  # noqa: BLE001 - a slow or broken model must not cost the move
         log.warning("writer model failed after %.1fs: %s", time.monotonic() - t0, e)
         return None

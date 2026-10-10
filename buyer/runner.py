@@ -15,14 +15,28 @@ from pathlib import Path
 from arena_kit.client import ArenaError
 from arena_kit.play import ENDED, RemoteTable, fetch_documents, latest, moves_left, quota_used_up
 
+from . import llm
 from .policy import Negotiator, Side, deadline_near, keepalive_message
 
 log = logging.getLogger("buyer")
 RUNS = Path("logs/runs")
 KEEPALIVE_AFTER_S = 35  # a finished thread gets a question this long after the supplier's reply
+CLOCK_S = 60  # each thread's clock, from the supplier's reply
+MARGIN_S = 5  # reserved on every clock for building and delivering the message
+FIRST_SEND_S = 10  # what a send (the supplier's reply) takes until we have measured one
+CLOSE_TRIES = 3  # a 409 on the close: read what stands now and decide again
+
+
+def writer_budget(sid, replied, live, send_s, now):
+    """Seconds the model may take on the message to `sid`: its own clock must not run out, and
+    every other live thread must still get a message once this send returns."""
+    left = [CLOCK_S - MARGIN_S - (now - replied[sid])]
+    left += [CLOCK_S - MARGIN_S - send_s - (now - replied[o]) for o in live if o != sid]
+    return min(llm.TIMEOUT_S, *left)
 
 
 def play_case(table, case_id, pkg=None, deadline=None, complete=None):
+    opened = time.monotonic()  # the supplier clocks run from their first e-mail, before our setup
     case, threads = table.open(case_id)
     if getattr(table, "done", None):  # resumed a case that had already ended
         return table.done
@@ -39,7 +53,8 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
             log.exception("%s %s: setup failed", case_id, sid)
             neg.sides.setdefault(sid, Side(sid)).state = "done"
     failed = dict.fromkeys(threads, 0)
-    replied = {sid: time.monotonic() for sid in threads}
+    replied = dict.fromkeys(threads, opened)
+    send_s = FIRST_SEND_S  # the slowest send so far
     # round 1 goes out cheapest quote first: if a clock runs out, it is the least promising one's
     order = sorted(threads, key=lambda sid: neg.sides[sid].quote or float("inf"))
     rank = {sid: i for i, sid in enumerate(order)}
@@ -69,8 +84,9 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
             message = keepalive_message(threads[sid])
         else:
             sid = todo[0]
+            budget = writer_budget(sid, replied, [s for s in threads if live(s)], send_s, time.monotonic())
             try:
-                move = neg.move(sid, threads)
+                move = neg.move(sid, threads, budget)
             except Exception:  # a field the policy did not expect: the thread must not fall silent
                 log.exception("%s %s: move failed", case_id, sid)
                 failed[sid] += 1
@@ -81,8 +97,10 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
             if move is None:
                 continue
             message = move["message"]
+        t0 = time.monotonic()
         try:
             reply = table.send(sid, message)
+            send_s = max(send_s, time.monotonic() - t0)
         except ArenaError as e:
             if e.status != 409:
                 raise
@@ -96,6 +114,9 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
             replied[sid] = time.monotonic()
             continue
         neg.commit(sid)
+        if "result" in reply:  # the reply ended the case, e.g. the last supplier walked away
+            result = reply["result"]
+            break
         threads[sid] += [{**message, "from": "buyer"}, reply]
         replied[sid] = time.monotonic()
     if result is None:
@@ -105,14 +126,29 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
                     fetch_documents(table, m)
                 except ArenaError as e:
                     log.warning("%s: document not fetched: %s", case_id, e)
-        try:
-            decision = neg.close(threads)
-            result = table.close(decision["supplier_id"], decision["message"])
-        except Exception as e:  # noqa: BLE001 - a case must end with a decision
-            log.warning("%s: close failed (%s), accepting a standing sheet", case_id, e)
-            result = table.close(*neg.fallback_close(threads))
+        result = close(table, case_id, neg, threads)
     save(table.session_id, case_id, neg, result)
     return result
+
+
+def close(table, case_id, neg, threads):
+    """Accept or walk away. A 409 (the sheet expired, the thread ended) means the arena state moved:
+    read what stands now and decide again with the same guards. Anything else raises, and the Live
+    Final loop resumes the case."""
+    for _ in range(CLOSE_TRIES):
+        decision = neg.close(threads)
+        sid = decision["supplier_id"]
+        try:
+            return table.close(sid, decision["message"])
+        except ArenaError as e:
+            if e.status != 409:
+                raise
+            log.info("%s %s: close refused: %s", case_id, sid, e.detail)
+            reply = table.missed(sid, e)
+            if "result" in reply:
+                return reply["result"]
+            threads[sid].append(reply)
+    raise RuntimeError(f"{case_id}: no close after {CLOSE_TRIES} tries")
 
 
 def save(session_id, case_id, neg, result):

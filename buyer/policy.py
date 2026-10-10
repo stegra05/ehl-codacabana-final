@@ -13,6 +13,7 @@ What the suppliers showed (sandbox and practice, `docs/learnings.md`):
 - a large first concession means a deep floor: then we hold low instead of meeting it."""
 
 import base64
+import functools
 import logging
 import threading
 import time
@@ -30,7 +31,7 @@ log = logging.getLogger("buyer")
 FRACTION = 0.3  # share of the gap to the supplier's counter we move per round
 # Opening price as a share of its quote at our terms, by category goal. Practice C_best sat 12 to
 # 22 % below the quote in leverage, routine and secure-supply cases, 1.5 to 3 % in stabilise ones.
-ANCHOR = {"leverage": 0.78, "routine": 0.82, "secure_supply": 0.88, "quality_first": 0.88, "stabilise": 0.92}
+ANCHOR = {"leverage": 0.85, "routine": 0.82, "secure_supply": 0.88, "quality_first": 0.88, "stabilise": 0.92}
 ANCHOR_MIN = 0.75  # never open lower than this share (an insult costs patience)
 BUDGET = 1.0  # patience: the cumulative relative gap we show (no cap for a typical supplier)
 DEEP = 0.06  # a first concession this large (share of its quote) means a deep floor
@@ -75,6 +76,7 @@ class Negotiator:
         self.used = set()  # claim IDs cited in this case (a rival quote: per supplier)
         self.lock = threading.Lock()
         self.notes = []  # what we decided, for the log
+        self.writer_s = llm.TIMEOUT_S  # wall clock the model may take on the move being built
 
     # -- setup -------------------------------------------------------------------------------
     def setup(self, sid, events):
@@ -87,8 +89,11 @@ class Negotiator:
         if not sheet_id or quote.get("unit_price") is None:
             s.state = "ended"
             return s
-        part = (case.get("parts") or [None])[0]
-        full_cost, own_plant = safe(lambda: self.full_cost(part, sid), (None, False))
+        # a bundle's should-cost is unknown: one component's cost is not the price unit of the kit
+        parts = case.get("parts") or []
+        full_cost, own_plant = (
+            safe(lambda: self.full_cost(parts[0], sid), (None, False)) if len(parts) == 1 else (None, False)
+        )
         lead = quote.get("lead_time_days") or s.std.get("lead_time_days")
         overtime = 0.005 if "capacity_full" in s.prof["signals"] else 0.001
         s.est = eco.estimate(
@@ -251,9 +256,11 @@ class Negotiator:
                 self.switch(s, new, f"its sheet {changed} costs us less")
 
     # -- one move ----------------------------------------------------------------------------
-    def move(self, sid, threads):
-        """The next message to this supplier: {"message": ...}, or None when the thread is done."""
+    def move(self, sid, threads, writer_s=llm.TIMEOUT_S):
+        """The next message to this supplier: {"message": ...}, or None when the thread is done.
+        `writer_s`: what the supplier clocks leave for the model paragraph."""
         case, s, events = self.case, self.sides[sid], threads[sid]
+        self.writer_s = writer_s
         s.prev_state = s.state
         last = latest(events)
         status = last.get("status")
@@ -440,7 +447,9 @@ class Negotiator:
         tone = "warm" if s.prof.get("warm", True) else "friendly and businesslike"
         facts = self.facts(s, sheets, claims, moved, statements, attachments)
         para = llm.paragraph(
-            self.complete, writer.brief(self.case, s.prof, latest(events).get("body"), facts, tone, first)
+            self.complete,
+            writer.brief(self.case, s.prof, latest(events).get("body"), facts, tone, first),
+            self.writer_s,
         )
         body = writer.email(
             self.case,
@@ -511,36 +520,23 @@ class Negotiator:
             self.note(sid, "rollback")
 
     # -- close -------------------------------------------------------------------------------
-    def fallback_close(self, threads):
-        """(supplier, message) after a failed close: accept the cheapest standing sheet that keeps
-        the must-haves, else walk away."""
-        best = None
-        for sid, events in threads.items():
-            oid, terms = standing(events)
-            std = standard_terms(events) or self.sides[sid].std
-            if oid and latest(events).get("status") not in ENDED and eco.must_haves_ok(self.case, terms, std):
-                c = eco.cost(self.case, terms, std)
-                if best is None or c < best[0]:
-                    best = (c, sid, oid)
-        if best is None:
-            return next(iter(threads)), {"action": {"type": "walk_away"}}
-        return best[1], {"action": {"type": "accept", "term_sheet_id": best[2]}}
-
     def best_offer(self, threads):
         """(C, supplier, term_sheet_id) of the cheapest acceptable standing sheet (only a standing
-        sheet can be accepted; alternatives were sent back to become standing)."""
+        sheet can be accepted; alternatives were sent back to become standing). One supplier's
+        broken data skips that supplier, never the close."""
         best = None
         for sid, events in threads.items():
             if latest(events).get("status") in ENDED:
                 continue
             oid, terms = standing(events)
-            side = self.sides.get(sid) or Side(sid)
-            std = standard_terms(events) or side.std
-            if oid and eco.acceptable(self.case, terms, std):
-                c = eco.cost(self.case, terms, std, side.est)
-                if best is None or c < best[0]:
-                    best = (c, sid, oid)
+            c = safe(functools.partial(self.deal_cost, sid, events, terms)) if oid else None
+            if c is not None and (best is None or c < best[0]):
+                best = (c, sid, oid)
         return best
+
+    def deal_cost(self, sid, events, terms):
+        side = self.sides.get(sid) or Side(sid)
+        return eco.deal_cost(self.case, terms, standard_terms(events) or side.std, side.est)
 
     def close(self, threads):
         best = self.best_offer(threads)
