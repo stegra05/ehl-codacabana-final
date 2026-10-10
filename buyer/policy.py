@@ -22,8 +22,10 @@ from .personas import profile
 log = logging.getLogger("buyer")
 
 FRACTION = 0.3  # share of the gap to the supplier's counter we move per round
-ANCHOR = 0.88  # opening price as a share of its quote at our terms
-ANCHOR_MIN = 0.85  # never open lower than this share (an insult costs patience)
+# Opening price as a share of its quote at our terms, by category goal. Practice C_best sat 12 to
+# 22 % below the quote in leverage, routine and secure-supply cases, 1.5 to 3 % in stabilise ones.
+ANCHOR = {"leverage": 0.78, "routine": 0.8, "secure_supply": 0.85, "quality_first": 0.88, "stabilise": 0.92}
+ANCHOR_MIN = 0.75  # never open lower than this share (an insult costs patience)
 FIRST_CLAIMS, LATER_CLAIMS = 3, 1
 DONE = {"agreed", "final_offer"}
 ENDED = {"walked_away", "no_bid"}
@@ -71,12 +73,12 @@ class Negotiator:
         full_cost = self.full_cost(part, sid)
         s.est = eco.estimate(case, s.std or quote, s.prof["rate"], full_cost, self.real_ppm(sid))
         q_price = quote["unit_price"]
-        ratio = ANCHOR
+        ratio = ANCHOR.get(case["buyer"].get("category_goal"), 0.85)
+        if "price_frozen" in s.prof["signals"]:
+            ratio = max(ratio, 0.95)  # its list price does not move far; a deep cut only costs patience
         current = case["buyer"].get("current_unit_price")
         if case.get("type") == "price_increase" and current:
-            ratio = current / q_price  # a price increase opens at today's price
-        if full_cost:
-            ratio = min(ratio, full_cost * 0.98 / q_price)
+            ratio = min(ratio, current / q_price)  # a price increase opens at today's price at most
         ratio = max(ANCHOR_MIN, ratio)
         # terms planned at the price we open with: coverage pays off at a low price, not at the quote
         planned = eco.plan_terms(case, s.std, s.est, quote, q_price * ratio)
