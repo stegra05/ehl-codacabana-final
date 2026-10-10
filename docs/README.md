@@ -7,3 +7,5 @@ these copies when it changes.
 - `challenge.md`: the participant brief (story, task, score, rules, timeline)
 - `api.md`: the HTTP API, message format, claim checks, the cost function C
 - `submission.md`: what to hand in on ehl.gg by Sunday 12:00, and the pitch
+
+Ours: `learnings.md`, what we learned about the arena, its suppliers and the data package.

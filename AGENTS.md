@@ -67,6 +67,9 @@ Some cite the Sunday 08:00 data release. Wave score = mean case score x 100; tot
 | `buyer/cli.py` | `buyer play`, `buyer run`, `buyer pull` |
 | `tests/` | end to end against `arena-sim`, no network, no model |
 | `docs/` | brief, API, submission guide (copied from upstream) |
+| `docs/learnings.md` | what we learned about the arena, the suppliers and the data; read it before changing the agent |
+| `exports/` | the Saturday probe sessions as CSV/JSONL (sessions, supplier threads, e-mails, claims); schema in `exports/README.md` |
+| `analysis/explore.py` | data package exploration: supplier profiles, persona signals, price fairness, a report page |
 | `data/package/` | the data package, gitignored; `uv run arena data` fetches it (Sunday also `data/release-sunday/`) |
 | `logs/sessions/<set>/` | finished sessions with trace and back office, gitignored; `uv run buyer pull` fetches them |
 
@@ -87,6 +90,7 @@ uv run buyer run --set practice --parallel 10   # all 10 hosted practice cases: 
 uv run buyer pull --set practice                # every finished session -> logs/sessions/
 uv run buyer run --set final --parallel 10      # the Live Final, Sunday before 12:00
 uv run arena-sim serve --no-clock --data data/package   # local API with a scripted supplier
+uv run --with pandas python analysis/explore.py # data package -> analysis/out/ (profiles, signals, report.html)
 ```
 
 `--agent naive` plays the kit's baseline instead of ours. The MCP server `arena-data`
@@ -102,13 +106,17 @@ uv run arena-sim serve --no-clock --data data/package   # local API with a scrip
 - **Generalise, don't memorise.** No logic keyed on practice case IDs or supplier IDs. Knowledge
   derived from the data package at runtime is fine; it must also work for unseen suppliers.
 - **Read the supplier.** What moves it is in the data: call notes, letters, news, quote
-  remarks, payment history, scorecards. Trade what is cheap for us (payment days, contract
-  length, volume, dates) for what it values.
+  remarks, payment history, scorecards. Trade what is cheap for us for what it values. Which
+  terms are cheap differs per case (payment days, contract length, start date, index clause):
+  score them, see `docs/learnings.md`.
 - **Don't leak** urgency, budget, a missing alternative or the target price.
 - **Every model call has a hard timeout** well under 60 s, and the move still goes out if it
   fails. Measure latency per move.
 
 ## The learning loop
+
+`docs/learnings.md` is the team's list of findings. Read it before you change the agent or spend
+practice quota.
 
 1. Try on the simulator or the sandbox first. Spend practice quota only on a change you expect
    to help, and check `uv run arena me` before batch runs: teammates share the 200.
@@ -116,8 +124,11 @@ uv run arena-sim serve --no-clock --data data/package   # local API with a scrip
    reasons for every move, the back office its internal discussion, the result the cost breakdown.
 3. Find why C_deal missed C_best (which lever, which argument, which timing), change the agent,
    score candidate term sheets offline with `total_cost`, then play again.
-4. Write what you learned about supplier behaviour into the PR description, so the team and
-   the pitch can use it.
+4. Add every finding to `docs/learnings.md` in the same PR, in its section: date, tag (`arena`
+   seen in a session, `data` from the package, `rules` from the docs or kit code), the finding,
+   its evidence (session, case or data ID) and what it means for the agent. Untested ideas go
+   under Hypotheses; correct or delete entries that turn out wrong. Supplier behaviour also goes
+   into the PR description, so the team and the pitch can use it.
 
 ## Sunday
 
