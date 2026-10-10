@@ -2,7 +2,7 @@
 
 What we know about the arena, its supplier bots and the data package, and what it means for the
 agent. Basis, Saturday 10 October: 15 practice sessions covering all 10 hosted cases and 12
-suppliers, 17 sandbox sessions, and the data package. Every euro figure and what-if score below
+suppliers, 17 sandbox sessions, the team's simulator and sandbox experiments, and the data package. Every euro figure and what-if score below
 was recomputed with `arena_kit.total_cost`. Evidence: `exports/` (every session, supplier thread,
 e-mail and claim; schema in `exports/README.md`) and `analysis/explore.py` (the data package).
 
@@ -88,6 +88,17 @@ C_best.
 
 ## Score and terms
 
+- 2026-10-10 `rules` **The category goal sets the rates of C**, not the case type (P13 is a price
+  increase under `leverage`, P06 an RFQ under `stabilise`). From all 21 case files:
+
+  | Goal | Fallback risk | Relationship charge | Push for |
+  |---|---|---|---|
+  | `leverage` | 3 % | no | price: rival quotes, should-cost, indices |
+  | `routine` | 5 % | no | price and a quick close; small stakes |
+  | `quality_first` | 8 % | no | low `ppm_commitment`, chargeback at least `cost_per_defect` |
+  | `stabilise` | 10 % | yes, sustainable margin 0.5 to 8 % | structure: term, start date, payment, fair clause |
+  | `secure_supply` | 25 % | yes, 4 to 10 % | full coverage and lead time first, then price |
+
 - 2026-10-10 `rules` **Every session reveals C_best, also a walk-away**, plus our cost breakdown
   computed with the supplier's true numbers, relationship charge included. D01 walk-away after
   one message: c_open 448,810.67, c_best 408,623.99. → One session per case gives its target,
@@ -121,7 +132,8 @@ C_best.
 
 - 2026-10-10 `arena` **Deterministic.** Nine D01 sandbox runs with identical sheets gave
   identical prices (52.90, 52.00, 51.50, then `final_offer` 51.50); replays of P04 and P11
-  matched round for round. Only the wording varies. → Repeats measure wording, not behaviour.
+  matched round for round. Only the wording varies. → Repeats measure wording, not behaviour;
+  the "stochastic bots" caveat in the PR #7 sandbox comparison does not apply.
 - 2026-10-10 `arena` **`agreed` freezes the price.** 16 of 19 practice threads reached `agreed`,
   ten of them in round 1 or 2, because our probe opened near the supplier's price and then
   offered its own price with our levers. After that, claims, concessions and pushes all got "Our
@@ -192,7 +204,35 @@ C_best.
   alternative terms set C_alt and can differ (P01: lead time 70 in the case, 56 in the quote,
   plus tooling 1,500 and 2,376 ppm).
 
+## Agent experiments
+
+- 2026-10-10 `arena` **Julian's draft two** (`origin/julian/draft-two`, design in `design.md`)
+  on the sandbox: D01 0.73 → 0.93 → 0.96, D02 0.37 → 0.54 over five runs. What moved it: a floor
+  at the case's `sustainable_margin_pct` instead of a flat 8 % (D01 0.84 → 0.96); the first
+  model-proposed stance was more cautious than the constants (D02 0.32) until calibrated; holding
+  one more round while the supplier still moves; among equal-C options, the one the supplier
+  prefers (35 days' lead time instead of 21, which the job shop priced as overtime). Latency
+  11 to 19 s per move (reader plus writer, `claude-opus-5-5` at low effort), stance call 9 to 11 s
+  once per case. Cheaper variants need engineering approval and never became a binding sheet.
+- 2026-10-10 `arena` **Opening 20 % below beat 30 %** on the sandbox with a guarded, cost-ranked
+  `NaiveAgent` (PR #7): D01 0.93 against 0.86, D02 0.38 against 0.30.
+- 2026-10-10 `rules` **The kit's `NaiveAgent` accepts bad deals** on the local simulator: 32 of 152
+  agreements broke a must-have, 28 cost more than the alternative. Adding the `must_haves_ok` and
+  C_alt guards removed both. Adaptive concessions (by supplier movement and messages left) beat
+  fixed halving; switching the anchor by supplier risk added nothing, and no credit, equity or
+  scorecard measure predicted when 30 % beats 20 % (PR #7, commit `ad2e0b6`). The simulator
+  ignores documents and persona, so these results check mechanics, not persuasion.
+- 2026-10-10 `arena` A quote PDF without a separate standard-terms section left the reference
+  payment term empty and broke a D01 run (PR #7). → Fall back to the quote's explicit terms.
+
 ## Data package
+
+- 2026-10-10 `data` Size: 447 suppliers, 46 with a detailed profile (`supplier_intel`), 60 parts,
+  33 index series (2021-01 to 2026-09), 300 negotiation events, 1,033 quality notifications.
+- 2026-10-10 `data` Owner types of the 46 profiled suppliers, with the brief's persona: family 22
+  (about 140 staff, "remembers how you treated it"), group 9 (about 1,300 staff, best credit,
+  "an approval ladder"), founder 9 (about 30 staff, weakest credit, "needs cash and work"),
+  private 6 (about 300 staff). Lower credit index is better: group 164, founder 251 on average.
 
 - 2026-10-10 `data` Price letters overshoot the index-weighted cost move of the part's drivers:
   P01 +9.5 % against +2.3 %, P13 +7.0 % against +4.0 %, P17 +8.0 % against +5.5 %. P02 +6.5 %
@@ -244,8 +284,9 @@ shows evidence.
 - 2026-10-10 `rules` Case files of all 21 cases come free from `GET /v1/cases` (no session, no
   quota). Hosted for practice: P01, P02, P03, P04, P05, P07, P08, P10, P11, P18; the other nine
   exist as case files only. Our probe used 15 practice sessions.
-- 2026-10-10 `rules` The kit's `llm_from_env` reads `LLM_PROVIDER`, `LLM_MODEL` and `LLM_API_KEY`
-  (not `OPENAI_API_KEY`); without `LLM_MODEL`, `buyer play` with our agent fails before the
+- 2026-10-10 `rules` The kit's `llm_from_env` reads `LLM_PROVIDER` (`openai`, any compatible
+  endpoint, or `anthropic`), `LLM_MODEL`, `LLM_API_KEY`, `LLM_BASE_URL` and `LLM_EFFORT` (not
+  `OPENAI_API_KEY`); without `LLM_MODEL`, `buyer play` with our agent fails before the
   first move. `gpt-6-luna` answered a short call in 2.0 s and wrote three move suggestions in
   12 s. Tacto: their house agent runs on a small, cheap model, and reading the data beats a
   bigger model.
@@ -266,3 +307,7 @@ shows evidence.
 - Stale-costing suppliers concede after a verified falling-index claim; hedged suppliers answer
   index claims with "not our reality" until the hedge ends.
 - The cost floor is full cost; the five that once sold below full cost may go lower.
+- A faster payment package beats a deeper price anchor for cash-short suppliers; test 20 / 30 %
+  openings against standard / early payment as a 2x2, several runs per credit stratum.
+- A `selective` rebuttal (naming the cost driver the supplier left out of its letter) moves more
+  than a plain index claim.
