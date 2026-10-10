@@ -155,7 +155,19 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
   review our pricing" (D02 `7e0d70250aee7673`), "please provide the binding volume figures so we
   can properly account for this" (D01 `101f032a24f98a58`). → `buyer/reader.py` reads the asks;
   the e-mail states the binding volume with the figure, answers a fixed payment term plainly and
-  attaches the forecast rows when proof is asked (v8, effect to be measured).
+  attaches the forecast rows when proof is asked. v8 (P02 `8d3a77a03fe49730`, P11
+  `7a472625d72c63b2`): the words register ("We have factored your confirmed volume increase into
+  our calculation", "thanks for sending the forecast") but the prices did not move beyond the
+  usual spread (P02 372.45 against 371.88 to 373.88 before, P11 45.50 as always). Kalwisz read
+  our payment history: "You say you pay reliably, but we often see late payments".
+- 2026-10-10 `arena` **A shallower anchor gets the distributors' same first counter and buys a
+  round.** Anchor 0.85 of the quote (P18 5.18, P08 5.19, log `practice-v8b-anchor085.log`):
+  first counters 5.50 and 5.45, identical to anchor 0.787 in 13 runs; P08 then gave four counters
+  (5.45, 5.40, 5.36, 5.34, our best P08 at 0.571) instead of three, P18 three (5.50, 5.40, final)
+  as before. Kept at 0.78: the job shops of the RFQs drop 12 to 15 % on their first counter (P05
+  Dralveck 36.00 to 30.50, D02 J1 17.10 to 14.99) and an anchor above that counter is agreed at
+  once. → In a single-supplier leverage case the anchor depth between 0.78 and 0.85 does not
+  matter for the price; nothing is gained below 0.78.
 
 - 2026-10-10 `arena` **Pushing past a final offer ends the case.** D01: one more sheet 0.1 below
   its final 49.70 and the foundry walked away, no deal (sandbox `212404b7930bfc68`, "we have
