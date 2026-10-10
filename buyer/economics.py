@@ -107,19 +107,14 @@ def friendliness(terms):
     return tuple(FRIENDLY[f] * (terms.get(f) or 0) for f in FRIENDLY if f in terms)
 
 
-def plan_terms(case, std, est, ref_terms, ref_price, keep=None, require_clause=False):
+def plan_terms(case, std, est, ref_terms, ref_price):
     """The non-price terms that cost us least once the supplier prices them at its own valuation:
     for every allowed combination, the price worth the same to it as `ref_price` at `ref_terms`,
-    then C at that price; among equal C, the supplier's favourite. `keep` pins fields;
-    `require_clause`: the supplier insists on an index clause. Returns (terms with that price, C)."""
+    then C at that price; among equal C, the supplier's favourite. Returns (terms with that price, C)."""
     target = value(case, {**ref_terms, "unit_price": ref_price}, est)
     rows = []
     for combo in options(case) or [{}]:
-        if keep and any(combo.get(k, v) != v for k, v in keep.items()):
-            continue
-        if require_clause and not combo.get("index_clause"):
-            continue
-        terms = complete_offer(case, {**ref_terms, **combo, **(keep or {}), "unit_price": ref_price})
+        terms = complete_offer(case, {**ref_terms, **combo, "unit_price": ref_price})
         terms["unit_price"] = round(price_for_value(case, terms, est, target), 2)
         if not must_haves_ok(case, terms, std):
             continue

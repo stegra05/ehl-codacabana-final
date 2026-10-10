@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 import httpx
 
 log = logging.getLogger("buyer")
-TIMEOUT_S = 20.0
+TIMEOUT_S = 15.0
 MIN_S = 2.0  # less time than this left on the clocks: the template, no model call
 # A late call is abandoned, not interrupted: it finishes in the background (httpx timeout) while
 # the move goes out with the template.
@@ -42,7 +42,8 @@ tone says firm."""
 
 
 def complete_from_env():
-    """(system, user) -> text with the team's OpenAI-compatible model, or None when not configured."""
+    """(system, user) -> text with the team's model over an OpenAI-compatible chat completions
+    endpoint (`LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_EFFORT`), or None when not configured."""
     model, key = os.environ.get("LLM_MODEL"), os.environ.get("LLM_API_KEY")
     if not model or not key:
         return None

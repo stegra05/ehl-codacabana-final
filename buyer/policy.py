@@ -15,7 +15,6 @@ What the suppliers showed (sandbox and practice, `docs/learnings.md`):
 import base64
 import functools
 import logging
-import threading
 import time
 
 from arena_kit.docs import standard_terms
@@ -31,7 +30,7 @@ log = logging.getLogger("buyer")
 FRACTION = 0.3  # share of the gap to the supplier's counter we move per round
 # Opening price as a share of its quote at our terms, by category goal. Practice C_best sat 12 to
 # 22 % below the quote in leverage, routine and secure-supply cases, 1.5 to 3 % in stabilise ones.
-ANCHOR = {"leverage": 0.85, "routine": 0.82, "secure_supply": 0.88, "quality_first": 0.88, "stabilise": 0.92}
+ANCHOR = {"leverage": 0.78, "routine": 0.82, "secure_supply": 0.88, "quality_first": 0.88, "stabilise": 0.92}
 ANCHOR_MIN = 0.75  # never open lower than this share (an insult costs patience)
 BUDGET = 1.0  # patience: the cumulative relative gap we show (no cap for a typical supplier)
 DEEP = 0.06  # a first concession this large (share of its quote) means a deep floor
@@ -51,6 +50,8 @@ class Side:
         self.est = {}
         self.terms = {}  # our planned non-price terms (with a price placeholder)
         self.quote = None  # its opening price at our terms
+        self.last_sheet = {}  # its previous standing terms
+        self.late = 0  # our messages the arena counted as rounds although they came too late
         self.anchor = None
         self.target = None  # relationship goals: the price with the lowest C
         self.budget = BUDGET
@@ -74,7 +75,6 @@ class Negotiator:
         self.bank = ClaimBank(pkg, case)
         self.sides = {}
         self.used = set()  # claim IDs cited in this case (a rival quote: per supplier)
-        self.lock = threading.Lock()
         self.notes = []  # what we decided, for the log
         self.writer_s = llm.TIMEOUT_S  # wall clock the model may take on the move being built
 
@@ -89,6 +89,7 @@ class Negotiator:
         if not sheet_id or quote.get("unit_price") is None:
             s.state = "ended"
             return s
+        s.last_sheet = quote
         # a bundle's should-cost is unknown: one component's cost is not the price unit of the kit
         parts = case.get("parts") or []
         full_cost, own_plant = (
@@ -234,9 +235,17 @@ class Negotiator:
         standing_terms = sheets[0]["terms"]
         clause = standing_terms.get("index_clause")
         if "index_clause" in s.terms and s.terms["index_clause"] != clause and clause:
-            # it will not sell this term at a fixed price (raw-material distributors), and it
-            # refuses a deadband: we take its clause and keep negotiating the price
-            self.switch(s, {**s.terms, "index_clause": clause}, "its index clause")
+            # it will not sell this term at a fixed price (raw-material distributors) and refuses a
+            # deadband: take its clause when its sheet, clause included, costs us less than its
+            # last one (P08, P18: a longer contract came with it) and keeps every must-have; else
+            # keep asking for a fixed price (P02: the copper clause alone cost 1.8 % of spend)
+            new = {**s.terms, "index_clause": clause}
+            c_now = eco.cost(case, standing_terms, s.std, s.est)
+            c_before = eco.cost(case, s.last_sheet, s.std, s.est)
+            if eco.must_haves_ok(case, new, s.std) and c_now < c_before - 1.0:
+                self.switch(s, new, "its index clause")
+            else:
+                self.note(s.sid, "keep_terms", why="its index clause costs us more", c_now=c_now, c_before=c_before)
         best_c = eco.cost(case, eco.at_price(case, s.terms, self.their_price(s, standing_terms)), s.std, s.est)
         for sheet in sheets:
             terms = sheet["terms"]
@@ -278,6 +287,7 @@ class Negotiator:
             self.adopt(s, sheets)
             s.term_change = any(sheets[0]["terms"].get(k, v) != v for k, v in terms_before.items() if k != "unit_price")
             s.theirs.append(self.their_price(s, sheets[0]["terms"]))
+            s.last_sheet = sheets[0]["terms"]
             s.last_reply = last
             s.asks = reader.asks(last.get("body"))
             self.read_signals(s, last.get("body"))
@@ -285,17 +295,22 @@ class Negotiator:
         if s.state in ("mirror", "closing"):  # we sent its own sheet or our target: done
             s.state = "done"
             return None
-        if status in DONE or moves_left(case, events) <= 0:
-            return self.finish(s, sheets, events, theirs, moves_left(case, events))
+        left = self.moves_left(s, events)
+        if status in DONE or left <= 0:
+            return self.finish(s, sheets, events, theirs, left)
         if s.target and theirs <= s.target * 1.002:
             # relationship goal: below the target a lower price costs more than it saves
             s.state = "closing"
             return self.send(s, [eco.at_price(case, s.terms, max(s.target, theirs))], [], events, theirs)
         if s.ours and theirs <= s.ours[-1]:  # it came below what we offered: take it
-            return self.finish(s, sheets, events, theirs, moves_left(case, events))
+            return self.finish(s, sheets, events, theirs, left)
         price, n_claims = self.next_price(s, theirs)
         claims = self.pick(s, n_claims, threads)
         return self.send(s, [eco.at_price(case, s.terms, price)], claims, events, theirs)
+
+    def moves_left(self, s, events):
+        """Messages we may still send: the arena counts a late message as a round too."""
+        return moves_left(self.case, events) - s.late
 
     def next_price(self, s, theirs):
         """Our next price at s.terms: open at the anchor; then a share of the gap, held low after a
@@ -517,7 +532,8 @@ class Negotiator:
                 s.gaps.pop()
             s.state = s.pending["state"]
             s.pending = None
-            self.note(sid, "rollback")
+            s.late += 1
+            self.note(sid, "rollback", late=s.late)
 
     # -- close -------------------------------------------------------------------------------
     def best_offer(self, threads):
