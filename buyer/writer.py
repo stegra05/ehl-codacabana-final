@@ -28,16 +28,26 @@ def describe(case, sheet):
     return ", ".join(parts)
 
 
+# Sandbox D01, identical sheets, only the words varied: plain 50.00, firm 49.90, warm 49.60,
+# asking what it needs 49.40 (docs/learnings.md). Asking invites the trade it wants.
+ASK = "What would you need from us to move further on the price? We are open to discussing any term that helps you."
+
+
 def email(case, sheets, claims, question=None, first=False, moved=False, warm=True):
     lines = ["Dear Sir or Madam,", ""]
     if first:
         lines.append("Thank you for your offer and for the time your team has put into it.")
     elif moved:
-        lines.append("Thank you for your reply and for the step you have taken.")
+        lines.append("Thank you for your reply and for the step you have taken; we appreciate it.")
     else:
         lines.append("Thank you for your reply.")
     if warm:
-        lines.append("We value our cooperation and would like to reach an agreement that works for both sides.")
+        lines.append(
+            "We value our cooperation and we understand the cost pressure on your side; we want an agreement "
+            "that keeps our partnership healthy for both of us."
+        )
+    else:
+        lines.append("We want an agreement that works for both sides.")
     if claims:
         lines.append("")
         lines += [c["text"] for c in claims]
@@ -47,8 +57,9 @@ def email(case, sheets, claims, question=None, first=False, moved=False, warm=Tr
     else:
         lines.append("On this basis we propose one of these packages:")
         lines += [f"- Option {chr(65 + i)}: {describe(case, s)}" for i, s in enumerate(sheets)]
+    lines += ["", ASK]
     if question:
-        lines += ["", question]
+        lines.append(question)
     lines += ["", "Kind regards,", "Hollerau Pumpenwerke, Purchasing"]
     return "\n".join(lines)
 

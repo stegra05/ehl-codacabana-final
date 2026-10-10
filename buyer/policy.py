@@ -31,7 +31,7 @@ FRACTION = 0.3  # share of the gap to the supplier's counter we move per round
 # 22 % below the quote in leverage, routine and secure-supply cases, 1.5 to 3 % in stabilise ones.
 ANCHOR = {"leverage": 0.78, "routine": 0.82, "secure_supply": 0.88, "quality_first": 0.88, "stabilise": 0.92}
 ANCHOR_MIN = 0.75  # never open lower than this share (an insult costs patience)
-BUDGET = 0.34  # patience: the cumulative relative gap we show over the case
+BUDGET = 1.0  # patience: the cumulative relative gap we show (no cap for a typical supplier)
 DEEP = 0.06  # a first concession this large (share of its quote) means a deep floor
 MIN_MOVE = 0.002  # every sheet moves at least this share of the price
 FIRST_CLAIMS, LATER_CLAIMS = 3, 1
@@ -58,6 +58,9 @@ class Side:
         self.theirs = []  # its price at our terms, one per reply
         self.gaps = []  # relative gap of each of our sheets to its counter
         self.state = "open"  # open | mirror | closing | done | ended
+        self.prev_state = "open"  # the state before the message in flight
+        self.pending = None  # the message in flight: what to undo if it times out
+        self.tried = set()  # (field, value) we switched away from
         self.last_reply = None
 
 
@@ -90,7 +93,7 @@ class Negotiator:
         ratio = ANCHOR.get(goal, 0.85)
         near_cost = bool(own_plant and full_cost >= 0.98 * q_price)  # it sells at our cost estimate
         if goal in eco.RELATIONSHIP_GOALS:
-            s.budget = 0.22
+            s.budget = 0.3
         if "price_frozen" in signals:
             ratio = max(ratio, 0.95)  # its list price does not move far; a deep cut only costs patience
         if "capacity_full" in signals:
@@ -193,15 +196,19 @@ class Negotiator:
             new = {**s.terms, **changed}
             if not eco.must_haves_ok(case, new, s.std):
                 continue
+            if any((k, repr(v)) in s.tried for k, v in changed.items()):
+                continue  # we were there before: no flip-flop
             c = eco.cost(case, eco.at_price(case, new, terms["unit_price"]), s.std, s.est)
-            if c < best_c - 1.0:
+            if c < best_c - max(1.0, 0.001 * best_c):
                 best_c = c
+                s.tried |= {(k, repr(s.terms.get(k))) for k in changed}
                 self.switch(s, new, f"its sheet {changed} costs us less")
 
     # -- one move ----------------------------------------------------------------------------
     def move(self, sid, threads):
         """The next message to this supplier: {"message": ...}, or None when the thread is done."""
         case, s, events = self.case, self.sides[sid], threads[sid]
+        s.prev_state = s.state
         last = latest(events)
         status = last.get("status")
         if s.state == "ended" or status in ENDED:
@@ -273,34 +280,40 @@ class Negotiator:
         return None
 
     def pick(self, s, n, threads):
-        """The next unused claims for this supplier, rival offers in an RFQ first."""
+        """The next unused claims for this supplier: in an RFQ the cheapest rival offer first (a new
+        offer is a new argument every round), then its own claims, strongest first."""
         out = []
-        with self.lock:
-            rivals = []
-            for other, events in threads.items():
-                if other == s.sid or latest(events).get("status") in ENDED:
-                    continue
-                oid, t = standing(events)
-                if oid and t.get("unit_price") and s.theirs and self.their_price(s, t) < s.theirs[-1]:
-                    rivals.append(rival_offer(other, oid, t["unit_price"]))
-            pool = sorted(rivals, key=lambda c: c["text"])[:1] + s.claims
-            for c in pool:
-                key = [(s.sid, i) if c.get("rival") else i for i in c["ids"]]
-                if any(k in self.used for k in key):
-                    continue
-                out.append(c)
-                self.used.update(key)
-                if len(out) >= n:
-                    break
+        rivals = []
+        for other, events in threads.items():
+            if other == s.sid or latest(events).get("status") in ENDED:
+                continue
+            oid, t = standing(events)
+            if oid and t.get("unit_price") and s.theirs:
+                price = self.their_price(s, t)
+                if price < s.theirs[-1]:
+                    rivals.append((price, rival_offer(other, oid, t["unit_price"])))
+        pool = [c for _, c in sorted(rivals, key=lambda r: r[0])[:1]] + s.claims
+        for c in pool:
+            key = [(s.sid, i) if c.get("rival") else i for i in c["ids"]]
+            if any(k in self.used for k in key):
+                continue
+            out.append(c)
+            if len(out) >= n:
+                break
         return out
 
     def send(self, s, sheets, claims, events, theirs, question=None):
         first = not s.ours
         moved = len(s.theirs) > 1 and s.theirs[-1] < s.theirs[-2] - 0.005
         price = sheets[0]["unit_price"]
+        s.pending = {
+            "state": s.prev_state,
+            "keys": [(s.sid, i) if c.get("rival") else i for c in claims for i in c["ids"]],
+        }
         if s.state not in ("mirror",):
             s.ours.append(price)
             s.gaps.append(max(0.0, (theirs - price) / theirs) if theirs else 0.0)
+            s.pending["appended"] = True
         body = writer.email(
             self.case, sheets, claims, question, first=first, moved=moved, warm=s.prof.get("warm", True)
         )
@@ -318,7 +331,40 @@ class Negotiator:
             }
         }
 
+    def commit(self, sid):
+        """The message reached the supplier: its claims are spent."""
+        s = self.sides[sid]
+        if s.pending:
+            self.used.update(s.pending["keys"])
+            s.pending = None
+
+    def rollback(self, sid):
+        """The message came too late (a timeout): the supplier never read it."""
+        s = self.sides[sid]
+        if s.pending:
+            if s.pending.get("appended"):
+                s.ours.pop()
+                s.gaps.pop()
+            s.state = s.pending["state"]
+            s.pending = None
+            self.note(sid, "rollback")
+
     # -- close -------------------------------------------------------------------------------
+    def fallback_close(self, threads):
+        """(supplier, message) after a failed close: accept the cheapest standing sheet that keeps
+        the must-haves, else walk away."""
+        best = None
+        for sid, events in threads.items():
+            oid, terms = standing(events)
+            std = standard_terms(events) or self.sides[sid].std
+            if oid and latest(events).get("status") not in ENDED and eco.must_haves_ok(self.case, terms, std):
+                c = eco.cost(self.case, terms, std)
+                if best is None or c < best[0]:
+                    best = (c, sid, oid)
+        if best is None:
+            return next(iter(threads)), {"action": {"type": "walk_away"}}
+        return best[1], {"action": {"type": "accept", "term_sheet_id": best[2]}}
+
     def best_offer(self, threads):
         """(C, supplier, term_sheet_id) of the cheapest acceptable standing sheet (only a standing
         sheet can be accepted; alternatives were sent back to become standing)."""
