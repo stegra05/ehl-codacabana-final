@@ -1,6 +1,6 @@
 # System review
 
-Reviewed against `main` at `185ad65`, 10 October 2026. This is an assessment of the running buyer, with specific places to inspect before changing it. The [architecture review](architecture.md) maps the live path and every module. [Design](design.md) describes additional planned components; [learnings](learnings.md) holds practice evidence.
+Reviewed against `main` at `185ad65`, 10 October 2026. This is an assessment of the running buyer. Risks are code paths to inspect, not rules. The [architecture review](architecture.md) maps the live path and every module. [Design](design.md) describes additional planned components; [learnings](learnings.md) holds practice evidence.
 
 ## What works now
 
@@ -37,27 +37,3 @@ These are review targets, not implemented changes. A risk is marked **observed**
 - `runner.play_case` catches setup and move exceptions per supplier. A non-409 send error still escapes to the case-level retry; this is an intentional containment boundary to review against transient network failures.
 - `policy.safe` keeps partial data from stopping setup, but a fallback can change economics. Its exception is logged; the review should correlate those events with scores.
 
-## Functional review checklist
-
-| Stage | Verify with a trace or test |
-|---|---|
-| Intake | Does every supplier's latest quote attachment yield the standard terms used to price its standing sheet? Are unknown Incoterms handled conservatively? |
-| Data | Can an unseen supplier's release ID, document and cost evidence be found through the same access path? Which SQL-only fields are absent? |
-| Estimate | Does the estimated supplier value explain a term trade? Is the full-cost estimate based on that supplier or generic data? |
-| Plan | Does each outgoing sheet contain every `negotiable` field and satisfy must-haves? Is `plan_terms` fast enough for a hidden case with more options? |
-| Read | Which supplier requests were detected, answered in code, answered in the paragraph, or missed? |
-| Claims | Does each sentence pair a correct figure with its citable ID and stay within the arena's per-message limit? Are rival offers still standing? |
-| Clock | From each supplier reply, how long until our next send starts and completes? What happens as bidder count or reply latency grows? |
-| Close | Which standing sheet had minimum estimated C, which alternative set the ceiling, and what did the back office charge after close? |
-| Recovery | On a 409, timeout, network error or case restart, is the pending state rolled back and reconstructed from arena messages? |
-| Learning | Can a teammate explain `C_deal - C_best` by term, claim, price path and supplier response before changing a constant? |
-
-## Small improvement sequence
-
-1. **Protect the live final.** Resolve R1 and R2 with local fake tables and wave tests. Keep the current case runner working while changing one failure path at a time.
-2. **Read the Sunday release.** Inspect its schema, then resolve only the SQL visibility gaps that affect live profiles, claims or cost estimates. Confirm that the package and release stay read-only.
-3. **Make the boundary auditable.** Resolve R4 and R5 with one collected-move test, then add a small guard only if a failing path is demonstrated.
-4. **Calibrate with outcomes.** Use pulled back-office costs to check R6 and the cost gap. Change negotiation constants only after a simulator or sandbox pass and evidence in more than one supplier or case.
-5. **Improve understanding.** Resolve R7 and R8 using actual missed replies and latency traces. Record tested findings in `learnings.md` and update `design.md` when the architecture changes.
-
-Practice sessions use the team's rolling quota. Use `arena-sim` or `case:D01` and `case:D02` first. Before any PR, run `uv run pytest -q && uv run ruff check . && uv run ruff format --check .` and have a teammate review it, as required by [`AGENTS.md`](../AGENTS.md).

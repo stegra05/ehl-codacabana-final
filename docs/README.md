@@ -2,17 +2,16 @@
 
 Ours:
 
-- `architecture.md`: visual map of the running system, every diagram box and every Python file in `buyer/`.
-- `agentic-approach.md`: a bounded, testable proposal for letting the model choose a negotiation tactic.
-- `system-review.md`: strengths, current risks, review questions and a small improvement sequence.
-- `learnings.md`: what we know about the arena, its suppliers and the data package, with evidence.
-- `design.md`: the target design, including planned components.
-- `negotiation-research.md`: negotiation strategies from the literature, checked against our traces, with an experiment plan.
+- `learnings.md`: observations from the arena and the data package, with evidence and sample
+  sizes, and the open questions.
+- `design.md`: what the agent does today. `architecture.md`: the module map, every box and file.
+  `how-it-works.pdf` holds the diagram.
+- `system-review.md`: code paths worth a look before the final.
+- `agentic-approach.md`: a proposal for a model-chosen tactic, not implemented.
+- `negotiation-research.md`: ideas from the negotiation literature, with sources.
 
 Tacto's, copied from [tacto-ai/negotiation-arena-kit](https://github.com/tacto-ai/negotiation-arena-kit)
 `brief/` at commit `1b5516b` (CC BY 4.0). Upstream is the source of truth.
-These copies describe the arena and the kit's sample runner; use the root [README](../README.md)
-for our buyer's commands.
 
 - `challenge.md`: the participant brief (story, task, score, rules, timeline)
 - `api.md`: the HTTP API, message format, claim checks, the cost function C
