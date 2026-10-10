@@ -18,7 +18,8 @@ Rules for AI coding agents working in this repo. Humans follow them too.
 - Never commit secrets. Keys go into `.env` (gitignored). Never print, log or paste the
   arena key anywhere (code, logs, issues, Discord, PR text).
 - All changes go through a pull request against `main`, reviewed by one teammate.
-  Branch naming: `<firstname>/<topic>`.
+  Branch naming: `<firstname>/<topic>`. Agents may commit, push their branch and open the PR
+  (`gh pr create`) on their own; they never push to `main`, force-push or merge.
 - No em-dashes in prose or user-facing copy.
 - Be terse: after an action, state what changed in three lines or fewer.
 
