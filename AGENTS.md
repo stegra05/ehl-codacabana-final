@@ -63,9 +63,10 @@ Some cite the Sunday 08:00 data release. Wave score = mean case score x 100; tot
 | Path | What |
 |---|---|
 | `buyer/agent.py` | which agent plays a case; our strategy grows here (today: the kit's `LLMAgent`) |
-| `buyer/cli.py` | `buyer play`, `buyer run`, `buyer probe`, `buyer campaign`, `buyer pull`, `buyer view` |
-| `buyer/console.py`, `buyer/moves.py`, `buyer/suggest.py` | probe console: a person picks each move from code options and AI suggestions |
+| `buyer/cli.py` | `buyer play`, `buyer run`, `buyer autoprobe`, `buyer pull`, `buyer view` |
+| `buyer/autoprobe.py`, `buyer/casedata.py` | automatic probe of practice cases: a fixed experiment per supplier thread; should-cost, claims, valid sheets |
 | `buyer/harvest.py`, `buyer/view.py` | save sessions with attachments; one HTML page over all of them |
+| `exports/` | all probe sessions as CSV/JSONL plus `findings.json`; schema in `exports/README.md`, rebuilt by `analysis/export.py` |
 | `tests/` | end to end against `arena-sim`, no network, no model |
 | `docs/` | brief, API, submission guide (copied from upstream) |
 | `data/package/` | the data package, gitignored; `uv run arena data` fetches it (Sunday also `data/release-sunday/`) |
@@ -87,8 +88,8 @@ uv run buyer play case:P01 -v                   # practice: costs 1 of the team'
 uv run buyer run --set practice --parallel 10   # all 10 hosted practice cases: costs 10
 uv run buyer pull --set practice                # every finished session -> logs/sessions/
 uv run buyer view                               # pull the team's sessions, open them on one page
-uv run buyer campaign                           # the 15 practice runs one by one, you pick every move
-uv run buyer probe case:D01 --data data/package  # you pick each move (practice cases cost 1, asks first)
+uv run buyer autoprobe case:D01 case:D02        # automatic probe, in parallel (practice cases cost 1 each)
+uv run python analysis/export.py                # logs/sessions -> exports/*.csv, *.jsonl
 uv run buyer run --set final --parallel 10      # the Live Final, Sunday before 12:00
 uv run arena-sim serve --no-clock --data data/package   # local API with a scripted supplier
 ```
