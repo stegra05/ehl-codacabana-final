@@ -298,10 +298,12 @@ class Negotiator:
         if not sheets:
             s.state = "ended" if not standing(events)[0] else "done"
             return None
+        std_before = s.std
         s.std = standard_terms(events) or s.std
         fresh = s.last_reply is not last
         if fresh:
             terms_before = dict(s.terms)
+            estimate_before = dict(s.est)
             self.adopt(s, sheets)
             s.term_change = any(sheets[0]["terms"].get(k, v) != v for k, v in terms_before.items() if k != "unit_price")
             s.theirs.append(self.their_price(s, sheets[0]["terms"]))
@@ -309,10 +311,11 @@ class Negotiator:
             s.last_reply = last
             s.asks = reader.asks(last.get("body"))
             self.read_signals(s, last.get("body"))
-            if s.target is not None:
+            economics_changed = s.terms != terms_before or s.est != estimate_before or s.std != std_before
+            if s.target is not None and economics_changed:
                 s.target = eco.relationship_optimum(
                     case, s.terms, s.std, s.est, s.est["full_cost"] * 0.85,
-                    max(s.est["full_cost"] * 0.85, s.theirs[-1]),
+                    max(s.est["full_cost"] * 0.85, s.quote, s.target, s.theirs[-1]),
                 )
         theirs = s.theirs[-1]
         if s.state in ("mirror", "closing"):  # we sent its own sheet or our target: done
@@ -321,7 +324,7 @@ class Negotiator:
         left = self.moves_left(s, events)
         if status in DONE or left <= 0:
             return self.finish(s, sheets, events, theirs, left)
-        if s.target and theirs <= s.target * 1.002:
+        if s.ours and s.target and theirs <= s.target:
             # relationship goal: below the target a lower price costs more than it saves
             s.state = "closing"
             return self.send(s, [eco.at_price(case, s.terms, max(s.target, theirs))], [], events, theirs)

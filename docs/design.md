@@ -24,8 +24,10 @@ reader design that is not merged. The architecture diagram is on page 1 of
 
 Quoted alternatives must keep must-haves, fixed terms and the alternative-cost gate.
 Outgoing mirrors preserve the evaluated effective package without snapping options.
-After reading a new reply, an active relationship target is recalculated for the
-current package and supplier estimate. Fixed-payment answers are code-written even
+An active relationship target is recalculated only when package economics or
+the supplier estimate change, with the previous target inside the search range.
+An opening quote cannot bypass the planned anchor and claims, and proximity above
+the target does not trigger early closing. Fixed-payment answers are code-written even
 without a model; forecast prose is tied to claims actually cited in that message.
 Supplier-equivalent values remain estimates, not observed acceptance thresholds.
 

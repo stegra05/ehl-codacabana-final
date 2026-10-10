@@ -11,6 +11,33 @@ session or data ID) and what it means for the agent. Tags: `arena` seen in a ses
 the data package, `rules` from `docs/api.md` or the kit's code. Untested ideas go under
 Hypotheses. Correct or delete entries that turn out wrong.
 
+## Relationship-target correction after hosted validation
+
+- 2026-10-10 `arena` PR18 `a1b7afb` ran all ten practice cases with the configured
+  writer: ten deals, mean 0.726577. The preceding execution per case averaged
+  0.703846, but those versions were not controlled. P01 lost 0.031484, P02 lost
+  0.231285 and P03 lost 0.007134. Logs and decision records are committed under
+  `logs/sessions/practice`, `logs/runs` and `logs/pr18-hosted-20261010-224230.json`.
+- 2026-10-10 `rules` P02 session `b3daba378f139d09` exposed a target-refresh bug:
+  setup calculated 361.67, but the opening quote's equivalent price clipped the
+  optimization interval and triggered a 344.50 closing proposal before citing
+  any claims. Official relationship cost was EUR 115,657.38. Refresh only after
+  changed package, standard terms or supplier estimate; retain a search range
+  containing the previous target. Opening messages use the planned anchor and
+  claims. Pure price concessions do not alter the economic optimum.
+- 2026-10-10 `arena` P01 `4f234bc3a5fee132` closed at 131.40 rather than the
+  previous 130.98 on identical terms, adding EUR 1,793.46. The 0.2% proximity
+  rule triggered closing above the calculated target and before the delivery
+  claim was used. Remove that tolerance. P03 `d0dbeb2b5fb4acb8` closed at 432.15
+  versus 431.85, adding EUR 2,405.98. Claim order and supplier responses differed;
+  this alone does not establish a defect or justify case-specific claim tuning.
+- 2026-10-10 `rules` Three new arbitrary-ID regression tests fail before the
+  correction and pass after; full suite 45 passes. Across 576 synthetic pairs,
+  568 tie and eight P01 variants revert to the main baseline, below PR18's
+  previous synthetic results. Zero exceptions or invalid accepted deals; the
+  same 52 preexisting invalid-proposal stress runs remain. This correction fixes
+  demonstrated state-machine behavior, not a claimed simulator score gain.
+
 ## Complete-package evaluation, 10 October evening
 
 - 2026-10-10 `arena` Practice session `9b63768bad5febe5` offered a higher-price
