@@ -297,9 +297,12 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
   last 12) it fell 5.5 % from 2026-06 to 2026-09 and PPI-C2431 2.3 % from June. Cited in round 1
   (`practice-v10.log`): Donautal's first counter 5.40 (5.43 to 5.60 in 14 runs before), then
   5.33, 5.28, 5.26 final, score 0.670; Werdenfels 5.30 (5.50 to 5.60 before), then 5.20, 5.10,
-  final 5.10, score 0.621 (was 0.485). Both gave four counters instead of three. Electricity
-  (PPI-D351) fell 6.1 % from 2025-11 for P01 and P11 (the 12-month figure was 3.7 %). → Every
-  driver's largest fall within 12 months, ranked above notes and order prices.
+  final 5.10, score 0.621 (was 0.485). Both gave four counters instead of three. A second run
+  repeated Werdenfels' path exactly (5.30, 5.20, 5.10) and Donautal's within noise (5.40, 5.35,
+  5.31, 5.30); with the hedge letter moved out of round 1 Donautal opened at 5.52 (one run), so
+  the letter stays first. Electricity (PPI-D351) fell 6.1 % from 2025-11 for P01, P05 and P11:
+  Kalwisz still stopped at 45.50, P05 closed at 0.81 (best 0.828). → Every driver's largest fall
+  within 12 months, ranked above order prices and forecasts.
 - 2026-10-10 `arena` **v8 and v9 on practice (12 runs: P08 x5, P18 x6, P02, P11).** No
   mechanism moved the distributors' first counter (5.43 to 5.60 at anchors 0.787 and 0.85, with or
   without claims) or Kalwisz's 45.50; a 40 % share of the gap in round 2 got the same 0.10
