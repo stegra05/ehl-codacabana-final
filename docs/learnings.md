@@ -1,36 +1,39 @@
 # Learnings
 
 What we know about the arena, its supplier bots and the data package, and what it means for the
-agent. Basis, Saturday 10 October: 15 practice sessions covering all 10 hosted cases and 12
-suppliers, 17 sandbox sessions, the team's simulator and sandbox experiments, and the data
-package. Every euro figure and what-if score below was recomputed with `arena_kit.total_cost`. Evidence: `exports/` (every session, supplier thread,
+agent. Basis, Saturday 10 October: the probe (15 practice sessions covering all 10 hosted cases
+and 12 suppliers, 17 sandbox sessions), our agent's practice runs v1 to v13, the team's simulator
+and sandbox experiments, and the data package. Every euro figure and what-if score below was recomputed with `arena_kit.total_cost`. Evidence: `exports/` (every session, supplier thread,
 e-mail and claim; schema in `exports/README.md`) and `analysis/explore.py` (the data package).
 
-Add findings to the matching section, newest first: date, tag, the finding, its evidence (case,
+Add findings to the matching section: date, tag, the finding, its evidence (case,
 session or data ID) and what it means for the agent. Tags: `arena` seen in a session, `data` from
 the data package, `rules` from `docs/api.md` or the kit's code. Untested ideas go under
-Hypotheses. Correct or delete entries that turn out wrong.
+Hypotheses; agent changes go under Agent versions. Correct or delete entries that turn out wrong.
 
 ## Takeaways for the agent
 
 1. **Stay below the supplier's counter until the end; it agrees the moment our sheet reaches the
    counter it would make.** D01: our 51.25 one cent under its 51.30 was agreed at once
-   (sandbox `14ea35524959126f`). Moving a share of the gap each round keeps it conceding: the
-   engine took the practice mean of best scores from 0.32 to 0.73.
+   (sandbox `14ea35524959126f`). Moving a share of the gap each round keeps it conceding: v1
+   (terms by C, goal anchors, 30 % of the gap, claims) took the practice mean of best scores from
+   0.32 to 0.66, the later versions to 0.776 (Agent versions).
 2. **Verified claims that it "took into account" lower where it stops, most of all in round 1.**
    D01 with the same price path: no claims 50.00, delivery record 49.60, notice 49.60, should-cost
    49.30, three claims spread over rounds 48.90 (score 0.998). Which types count differs by
    supplier (table under Arguments and claims).
-3. **Words move it too.** D01, identical sheets, no claims: plain 50.00, "firm" 49.90, warm and
+3. **Words move the sandbox bot, not the practice suppliers.** D01, identical sheets, no claims: plain 50.00, "firm" 49.90, warm and
    acknowledging its wage costs 49.60, "What would you need from us to move further on the
-   price?" 49.40 (0.987). But a question repeated every round backfires: practice suppliers
+   price?" 49.40 (0.987). In practice a fully model-written e-mail moved nothing beyond the spread
+   of identical runs (Agent experiments). A question repeated every round backfires: practice suppliers
    answered "volume!" where volume is fixed and stopped moving (P05, P18 v3). Answer what it
    asked; state a fixed volume as our full demand, with the figure.
-4. **Patience is a budget of about 40 % cumulative gap** (sum over rounds of our sheet's distance
+4. **Patience runs out at about 40 % cumulative gap** (sum over rounds of our sheet's distance
    to its counter, relative to its price): final offers at 41 to 42 % (D01 linear paths), 39 %
    (P07), 42 % (P08), 36 % (P18). Suppliers selling near our should-cost or with a pricing
    committee end much earlier: Nordmark walked away at 19 % (P02 v1), Ravensteiner gave its final
-   offer in round 1 at a 15 % gap (P10 v1).
+   offer in round 1 at a 15 % gap (P10 v1). A cap for every supplier lowered P08 and P18, so the
+   agent caps only these (`BUDGET` in `buyer/policy.py`: none for a typical supplier).
 5. **Choose terms by C at the supplier's own valuation**, including a contract beyond our horizon
    (free for us, security for it) and the overtime a fully booked supplier charges for faster
    delivery (about 0.5 % of the price per day: Hrvelec, Ravensteiner). This alone moved P10 from
@@ -48,8 +51,8 @@ Hypotheses. Correct or delete entries that turn out wrong.
 9. **RFQ: the arena answers one call per session at a time** and each thread's 60 s clock runs
    from its reply, so sends are serialized by deadline; the cheapest rival offer is a new,
    verified claim to every other bidder every round (P05 0.83, D02 0.73).
-10. **The ceiling is lower than 0.9.** Best per case over all teams averages 0.82 (`/v1/live`,
-    Saturday evening); practice C_best for P04 needs 4.93 against a frozen 4.94.
+10. **The ceiling is lower than 0.9.** Best per case over all teams averages 0.84 (Record column
+    below); practice C_best for P04 needs 4.93 against a frozen 4.94.
 
 ## Where we stand
 
@@ -88,8 +91,8 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
   and a relationship charge gives the supplier's true margin, i.e. its full cost.
 - 2026-10-10 `rules` **Uncovered need** costs `fallback_unit_price` plus `fallback_risk_pct` % of
   it; coverage is `min(volume, need) x min(months / 12, horizon)`. Committed volume above the need
-  is bought anyway; months beyond the horizon neither cost nor earn. Evidence and examples:
-  takeaway 2.
+  is bought anyway; months beyond the horizon neither cost nor earn. Example: P10's opening
+  covered 19,890 of 23,400 units a year; 24 months unlocked the full volume (Supplier behaviour).
 - 2026-10-10 `rules` **Index clause** cost: `spend x material_share x (|path| - deadband)`, signed
   like the case's `index_paths`, plus `index_risk_pct` % of `spend x material_share` whenever a
   clause exists. Only a falling path larger than the risk charge makes a clause pay.
@@ -157,8 +160,8 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
   commit to a binding higher volume, our flexibility is exhausted". Kalwisz (P11): three steps
   of 0.50 then holds at 45.50 "for 300 ppm and 0 chargeback" (it priced 300 ppm at +0.50 over
   1500 ppm, `587fe8dcbf9f6c9c`). Ravensteiner (P10): 2 counters. → The round count, not the
-  gap, ends most threads: make every round count, move 25 to 35 % of the gap, never under 1 %
-  and never over 50 %.
+  gap, ends most threads: make every round count, move about 30 % of the gap (`FRACTION`), at
+  least 0.2 % of the price (`MIN_MOVE`) and never over 50 %.
 - 2026-10-10 `rules` **What C_best is made of** (price at which a term combination reaches
   C_best, relationship charge 0): P08 5.10 fixed at 90 days, 24 or 36 months (5.06 with the 5 %
   deadband clause, about 4.94 with the 0 % clause); P18 4.73 fixed (4.69 at 5 % deadband); P02
@@ -174,7 +177,7 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
   "Which figures is that based on? Please send us the data." 30. A volume confirmation in words
   registered: "We appreciate the confirmation of the full volume commitment, which allows us to
   review our pricing" (D02 `7e0d70250aee7673`), "please provide the binding volume figures so we
-  can properly account for this" (D01 `101f032a24f98a58`). → `buyer/reader.py` reads the asks;
+  can properly account for this" (D01 `101f032a24f98a58`). → `policy.asks` reads the asks;
   the e-mail states the binding volume with the figure, answers a fixed payment term plainly and
   attaches the forecast rows when proof is asked. v8 (P02 `8d3a77a03fe49730`, P11
   `7a472625d72c63b2`): the words register ("We have factored your confirmed volume increase into
@@ -221,10 +224,11 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
   office "My call: final_offer ... we withdraw". With small gaps (v2 on) it gives a final offer
   at about 372 in round 4 instead.
 
-- 2026-10-10 `arena` **Deterministic.** Nine D01 sandbox runs with identical sheets gave
-  identical prices (52.90, 52.00, 51.50, then `final_offer` 51.50); replays of P04 and P11
-  matched round for round. Only the wording varies. → Repeats measure wording, not behaviour;
-  the "stochastic bots" caveat in the PR #7 sandbox comparison does not apply.
+- 2026-10-10 `arena` **The sandbox is deterministic, practice is not.** Nine D01 sandbox runs
+  with identical sheets gave identical prices (52.90, 52.00, 51.50, then `final_offer` 51.50);
+  replays of P04 and P11 matched round for round. The distributors vary between identical runs
+  (P08 5.26 to 5.57 with the same code, v9; supplier-side noise of about 1 % per counter). →
+  Sandbox repeats measure wording; in practice treat single-run differences under 2 % as noise.
 - 2026-10-10 `arena` **`agreed` freezes the price.** 16 of 19 practice threads reached `agreed`,
   ten of them in round 1 or 2, because our probe opened near the supplier's price and then
   offered its own price with our levers. After that, claims, concessions and pushes all got "Our
@@ -384,27 +388,7 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
   P08 ended 5.26 (0.648, our new best, `practice-v9.log`), 5.34, 5.42, 5.57 with the same code.
   P02 words registered but the price stayed 372 to 373. → The round-1 counter and the two or
   three capped concessions after it are the supplier's; what we control is to feed every cap
-  (25 to 35 % of the gap, never under 1 %, never over 50 %) and never to lose a round.
-- 2026-10-10 `rules` **v8 (robustness and the reader), no quota spent.** All 21 case files
-  (the nine never hosted included) and both sandbox cases play through `arena-sim` with the
-  agent and no guarded error (`tests/test_cases.py`). New: every move and setup is guarded (a
-  failed move resends our last sheet, a third failure closes the thread on the best standing
-  sheet), the final's poll loop never raises and a crashed case is resumed once with its path
-  rebuilt from the thread (`Negotiator.restore`), the Sunday release's letters and news reach the
-  persona profile through the kit's `ids` and `document`, supplier e-mails are scanned for the
-  same traits, quotes and orders priced per 100 or 1000 are compared per piece and cited as
-  recorded, an unknown Incoterm or a scorecard without a quarter no longer breaks a move, the
-  cost-breakdown question (answered "we do not share" 12 of 12 times) is gone.
-
-- 2026-10-10 `arena` **The price engine (branch `steffen/price-engine`), practice v1 to v6** (47
-  sessions): v1 (terms by C, goal anchors, 30 % path, claims) took the mean of best scores from
-  0.32 to 0.66; v2 to v6 added mirroring alternatives, overtime valuation, the RFQ scheduler,
-  rival offers every round and a model-written paragraph (0.73). What did not help: a patience
-  budget for every supplier (P08, P18 fell), a milder anchor for suppliers with a pricing
-  committee (P07, P18 fell), currency claims (irrelevant), switching a required index clause to
-  a 5 % deadband (refused). Run logs `logs/practice-v1.log` to `-v6.log`, decisions per move in
-  `logs/runs/`.
-
+  (about 30 % of the gap, never over 50 %) and never to lose a round.
 - 2026-10-10 `arena` **Julian's draft two** (`origin/julian/draft-two`, design in `design.md`)
   on the sandbox: D01 0.73 → 0.93 → 0.96, D02 0.37 → 0.54 over five runs. What moved it: a floor
   at the case's `sustainable_margin_pct` instead of a flat 8 % (D01 0.84 → 0.96); the first
@@ -426,8 +410,39 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
 - 2026-10-10 `arena` A quote PDF without a separate standard-terms section left the reference
   payment term empty and broke a D01 run (PR #7). → Fall back to the quote's explicit terms.
 
+## Agent versions
+
+- 2026-10-10 **v1 to v6** (47 practice sessions, run logs `logs/practice-v1.log` to `-v6.log`,
+  decisions per move in `logs/runs/`): v1 (terms by C, goal anchors, 30 % path, claims) took the
+  mean of best scores from 0.32 to 0.66; v2 to v6 added mirroring alternatives, overtime
+  valuation, the RFQ scheduler, rival offers every round and a model-written paragraph (0.73).
+  What did not help: a patience budget for every supplier (P08, P18 fell), a milder anchor for
+  suppliers with a pricing committee (P07, P18 fell), currency claims (irrelevant), switching a
+  required index clause to a 5 % deadband (refused).
+- 2026-10-10 **v8**, no quota spent: all 21 case files and both sandbox cases play through
+  `arena-sim` with no guarded error (`tests/test_cases.py`). Every move and setup is guarded (a
+  failed move resends our last sheet, a third failure closes the thread on the best standing
+  sheet), the final's poll loop never raises, a crashed case resumes with its path rebuilt from
+  the thread (`Negotiator.restore`), the Sunday release's letters and news reach the persona
+  profile, supplier e-mails are scanned for the same traits, prices per 100 or 1000 are compared
+  per piece, and the cost-breakdown question (answered "we do not share" 12 of 12 times) is gone.
+- 2026-10-10 **v10 to v12**: falling-driver claims (P08 0.670, P18 0.621), the clause trade (P02
+  0.735), the held anchor after a job shop's deep drop (P05 0.828). Results under Agent
+  experiments; mean 0.776.
+
 ## Data package
 
+- 2026-10-10 `rules` **The Sunday release reaches the ID index, not SQL.** `DataPackage` finds
+  `data/release-sunday/` next to the package, merges its `facts.json` (new IDs only) and puts its
+  `data/*.csv` rows into the ID index for `lookup`, `ids` and `document`, never into SQLite
+  (`arena_kit/data.py`, `_ids`). Letters and news reach the persona profile; the SQL reads miss
+  release rows: owner type and cash discount (`suppliers`, `supplier_intel`), quote remarks,
+  should-cost (`policy.full_cost`), order prices and cost drivers in the claim bank. → Check the
+  release's CSV schema at 08:00.
+- 2026-10-10 `data` **Most suppliers have no text.** Of 447 suppliers, 46 have documents, 31 news,
+  18 quote remarks; the other 401 get the neutral profile (rate 7 %, no signals). A new supplier
+  in the final is one of them or unknown to the package: its own e-mails and the release are the
+  only persona source.
 - 2026-10-10 `data` Size: 447 suppliers, 46 with a detailed profile (`supplier_intel`), 60 parts,
   33 index series (2021-01 to 2026-09), 300 negotiation events, 1,033 quality notifications.
 - 2026-10-10 `data` Owner types of the 46 profiled suppliers, with the brief's persona: family 22
@@ -458,11 +473,11 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
   70120, 70130, 70160, 70550, `negotiation_history`).
 - 2026-10-10 `data` Each persona trait is written in one or two fixed phrases across call notes,
   meeting notes, quote remarks and news, so plain patterns classify every note (`SIGNALS` in
-  `analysis/explore.py`). Holiday, ISO, contact-person, packaging and trade-fair mails are noise.
+  `buyer/personas.py`). Holiday, ISO, contact-person, packaging and trade-fair mails are noise.
 
 ## Persona signals
 
-Phrases from `SIGNALS` in `analysis/explore.py`; levers are hypotheses until the arena column
+Phrases from `SIGNALS` in `buyer/personas.py`; levers are hypotheses until the arena column
 shows evidence.
 
 | Trait | Phrase in the data | Lever | Seen in the arena |
@@ -493,28 +508,35 @@ shows evidence.
 - 2026-10-10 `rules` In an RFQ every thread's 60-second clock runs while we work on another.
   A waiting thread needs a message, e.g. a short question about validity, or it collects
   timeouts; our probe kept waiting threads alive this way (D02, P05).
+- 2026-10-10 `rules` **Four bidders or more time out.** The arena answers one call per session at
+  a time. Supplier replies took 19 s median, 28 s p90 (121 moves in `logs/runs/`); our writer 1.8 s
+  median, 6.3 s max. A thread waits about (N - 1) x 21 s for its next message against a 60 s
+  limit: 2 bidders 23 s, 3 bidders 44 s (66 s at p90, late; P05 had one late move in v5), 4
+  bidders 65 s. No case file has more than 3 bidders. → With 4 or more, stop sending to the
+  clearly worst bidders after round 1.
+- 2026-10-10 `rules` **Structures only in unplayed cases** (case files): `tooling_eur` negotiable
+  and lead time at most 84 days (P06), chargeback in the alternative (P12), index series PPI-C241
+  in a clause (P16), fixed payment in a quality case (P12), a 3-part bundle (P15). Only `incoterm`
+  (D02) lies outside the fields the planner knows.
 - 2026-10-10 `rules` `arena-sim` plays a scripted supplier: good for plumbing and timing, not
   for tactics.
 
 ## Hypotheses (untested in the arena)
 
 - The P08 record (0.92) comes from a lower round-1 counter, not from later rounds: our later
-  rounds converge to the same price whatever the gap. (P02's gap is the clause, see Agent
-  experiments.)
+  rounds converge to the same price whatever the gap. v10 supports it (a first counter of 5.40
+  gave 0.670); the record's counter is still unexplained.
 - Three sheets of equal C for us in round 1 reveal what each lever is worth to the supplier
   (payment, lead time, ppm) and could lift P10 and P11.
-- The close response of a final case carries `c_best`; calibrating anchors between waves from it
-  is possible but needs a rules check first.
-- Persona-specific wording beyond the generic paragraph (cash need, partnership 2022, reference
-  customer) moves the round-1 counter.
-- Prices fall much further when every sheet stays below the supplier's price and concessions
-  are slow (house agent 0.75 on P08, ours 0.11 after agreeing in round 2).
+- Calibrating anchors between waves from the `c_best` each closed session reveals (Score and
+  terms) would help; it needs a rules check first.
+- Persona-specific wording (cash need, partnership 2022, reference customer) moves the round-1
+  counter; generic wording does not (Supplier behaviour, round-1 counter).
 - Cash-short suppliers give more price for 14 to 30 days payment than the 0.67 % per 30 days it
   costs us.
-- Citing the best rival offer moves RFQ bidders; our probe never cited offers.
 - Suppliers with "approval above 2 %" notes move at most 2 % per round.
-- Stale-costing suppliers concede after a verified falling-index claim; hedged suppliers answer
-  index claims with "not our reality" until the hedge ends.
+- Hedged suppliers answer index claims with "not our reality" until the hedge ends
+  (stale-costing P01 did concede, Persona signals).
 - The cost floor is full cost; the five that once sold below full cost may go lower.
 - A faster payment package beats a deeper price anchor for cash-short suppliers; test 20 / 30 %
   openings against standard / early payment as a 2x2, several runs per credit stratum.

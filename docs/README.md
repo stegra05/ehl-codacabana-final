@@ -3,8 +3,7 @@
 Ours:
 
 - `learnings.md`: what we know about the arena, its suppliers and the data package, with evidence.
-- `design.md`: the agent we are building. `how-it-works.pdf` holds its architecture diagram.
-- `generalisation.md`: how well the agent should carry over to the Live Final's unseen suppliers and case types.
+- `design.md`: the agent we are building: modules, data, policy constants with their evidence.
 - `negotiation-research.md`: negotiation strategies from the literature, checked against our traces, with an experiment plan.
 
 Tacto's, copied from [tacto-ai/negotiation-arena-kit](https://github.com/tacto-ai/negotiation-arena-kit)
