@@ -3,7 +3,6 @@ person would (its questions, its points, its situation). Code writes everything 
 checked: figures, data IDs, the proposal. A paragraph with any digit, data ID or leak is dropped
 and the template stands in. Hard timeout: the move goes out without the model if it is late."""
 
-import functools
 import inspect
 import logging
 import os
@@ -45,14 +44,15 @@ tone says firm."""
 
 def complete_from_env():
     """(system, user) -> text with the team's model over an OpenAI-compatible chat completions
-    endpoint (`LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_EFFORT`), or None when not configured."""
+    endpoint (`LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_REASONING_EFFORT` or `LLM_EFFORT`), or
+    None when not configured."""
     model, key = os.environ.get("LLM_MODEL"), os.environ.get("LLM_API_KEY")
     if not model or not key:
         return None
     base = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1").rstrip("/")
     client = httpx.Client(timeout=TIMEOUT_S, headers={"Authorization": f"Bearer {key}"})
 
-    default_effort = os.environ.get("LLM_EFFORT", "low")
+    default_effort = os.environ.get("LLM_REASONING_EFFORT") or os.environ.get("LLM_EFFORT") or "low"
 
     def complete(system, user, effort=None):
         messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
@@ -64,14 +64,18 @@ def complete_from_env():
     return complete
 
 
-# The reasoner's reads and choices are short JSON answers: without reasoning they take 1 to 3 s
-# (gpt-6-luna), with "low" 3 to 15 s, past the share of the clock they get.
+# The reasoner's reads and choices are short JSON answers: without reasoning they take about 1 s
+# (gpt-6-luna), with "low" 2 to 6 s. Not every model accepts "none" (gpt-6.1-sol answers 400): the
+# first refusal switches this process to "low" for good.
 FAST_EFFORT = os.environ.get("LLM_FAST_EFFORT", "none")
+FALLBACK_EFFORT = "low"
+_fast = {"effort": FAST_EFFORT}
 
 
 def fast(complete):
     """`complete` bound to the fast effort when it takes one (the team's model); a test double or
-    another provider's callable is used as it is."""
+    another provider's callable is used as it is. A model that rejects the effort (HTTP 400) is
+    asked again at `FALLBACK_EFFORT`, and keeps it."""
     if complete is None:
         return None
     try:
@@ -80,7 +84,18 @@ def fast(complete):
         takes_effort = False
     if not takes_effort:
         return complete
-    return functools.partial(complete, effort=FAST_EFFORT)
+
+    def call(system, user):
+        try:
+            return complete(system, user, effort=_fast["effort"])
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code != 400 or _fast["effort"] == FALLBACK_EFFORT:
+                raise
+            log.warning("model rejects reasoning_effort=%s: using %s from now on", _fast["effort"], FALLBACK_EFFORT)
+            _fast["effort"] = FALLBACK_EFFORT
+            return complete(system, user, effort=FALLBACK_EFFORT)
+
+    return call
 
 
 def paragraph(complete, brief, timeout=TIMEOUT_S):

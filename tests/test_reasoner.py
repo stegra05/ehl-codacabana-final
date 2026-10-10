@@ -68,6 +68,26 @@ def test_model_reads_first_and_regex_is_only_the_fallback():
     assert reader.read(None, FOUNDRY)["source"] == "regex"
 
 
+def test_a_model_that_rejects_the_fast_effort_is_asked_again_at_low(monkeypatch):
+    import httpx
+
+    from buyer import llm
+
+    monkeypatch.setitem(llm._fast, "effort", "none")
+    seen = []
+
+    def complete(system, user, effort=None):
+        seen.append(effort)
+        if effort == "none":
+            req = httpx.Request("POST", "https://example.test/v1/chat/completions")
+            raise httpx.HTTPStatusError("400", request=req, response=httpx.Response(400, request=req))
+        return '{"asks": ["payment"]}'
+
+    assert llm.fast(complete)("s", "u") == '{"asks": ["payment"]}'
+    assert seen == ["none", "low"]
+    assert llm.fast(complete)("s", "u") and seen[-1] == "low"  # it keeps the working effort
+
+
 # -- the arithmetic --------------------------------------------------------------------------------
 def s01():
     case = copy.deepcopy(load_cases()["case:S01"])
