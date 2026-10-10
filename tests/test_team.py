@@ -1,5 +1,5 @@
 """The subagent team around the price engine, with a scripted model: whatever a subagent answers
-is clamped, a failing team leaves the plain engine, and a case plays end to end with research,
+is checked, a failing team leaves the plain engine, and a case plays end to end with research,
 demo bidding, live analyst and debrief."""
 
 import copy
@@ -11,26 +11,33 @@ from arena_kit.sim import load_cases
 from test_buyer import reply
 
 from buyer import analyst, memory, rehearsal, research, runner
-from buyer.policy import CLOSING_GAP, Negotiator, step
+from buyer import economics as eco
+from buyer.policy import CLOSE_IN, Negotiator
 
+QUOTE = {"unit_price": 15.88, "payment_days": 30}
 WILD = {  # every subagent's answer at once, with values no code may take as they are
     "findings": ["It has free machines."],
     "leverage": "ours",
-    "shift": -0.9,
-    "fraction": 9,
+    "trades": [
+        {"field": "payment_days", "value": 14, "why": "it is short of cash"},
+        {"field": "unit_price", "value": 1.0, "why": "cheaper"},
+        {"field": "payment_days", "value": 999, "why": "not an option"},
+        "junk",
+    ],
     "claim_order": ["bogus", "forecast", "should_cost"],
     "tone": "angry",
     "notes": "A small shop that wants steady work.",
     "reason": "test",
-    "floor": 0.1,
-    "first_drop": 0.12,
-    "step": "much",
-    "counters": 4,
-    "patience": 0.4,
-    "eager": True,
+    "arguments": ["Our wages rose.", "Material is up 12 %.", 7],
+    "weak_points": ["Our machines stand idle."],
+    "wants": ["faster payment"],
+    "rebuttals": [{"to": 1, "answer": "Wages are a small share of this part."}, {"to": 9, "answer": "x"}],
+    "press": ["You mentioned free capacity."],
+    "mood": "irritated",
+    "tactic": "hold",
+    "argument": 1,
     "asks": ["volume", "bogus"],
-    "mood": "open",
-    "lesson": "Hold low against a shop that keeps conceding.",
+    "lesson": "Offer faster payment to a shop short of cash.",
 }
 
 
@@ -45,63 +52,62 @@ def broken(system, user):
 def leverage_case():
     case = copy.deepcopy(load_cases()["case:S01"])
     case["buyer"]["category_goal"] = "leverage"
-    return case
+    case["negotiable"] = ["unit_price", "payment_days"]
+    case["fixed_terms"].pop("payment_days", None)
+    case["term_options"]["payment_days"] = [14, 30, 60]
+    return {**case, "suppliers": ["sup:S"]}
 
 
-def test_playbook_and_strategy_are_clamped():
-    model = rehearsal.clamp_model(WILD)
-    assert model["floor"] == 0.7 and model["step"] == rehearsal.MODEL["step"][2] and model["eager"]
-    strategy = research.clamp(WILD)
-    assert strategy["shift"] == -0.05 and strategy["fraction"] == 0.3
+def test_strategy_and_playbook_are_checked():
+    strategy = research.clamp(WILD, leverage_case())
+    assert [(t["field"], t["value"]) for t in strategy["trades"]] == [("payment_days", 14)]
     assert strategy["claim_order"] == ["forecast", "should_cost"] and strategy["tone"] is None
-
-
-def test_demo_bidding_never_opens_higher_or_moves_faster():
-    for raw in ({}, WILD, {"floor": 0.97, "first_drop": 0.01, "counters": 1, "patience": 0.1}):
-        ratio, fraction, rows = rehearsal.tune(step, rehearsal.clamp_model(raw), 0.8, 1.0, (0.0, 0.3), 0.75, 0.8)
-        assert 0.75 <= ratio <= 0.8 and fraction <= 0.3
-        assert all(0.7 <= price <= 1.0 for _, _, price, _ in rows)
+    view = rehearsal.supplier_view(WILD)
+    assert view["arguments"] == ["Our wages rose."]  # a line with a figure, and junk, are dropped
+    book = rehearsal.playbook(view, WILD)
+    assert book["rebuttals"] == ["Wages are a small share of this part."] and book["press"] == WILD["press"]
+    assert rehearsal.playbook(view, WILD, informed=False)["press"] == []  # no data, no "our records show"
 
 
 def test_briefs_survive_a_broken_model(monkeypatch):
     monkeypatch.setattr(research, "CACHE", {})
-    case = leverage_case()
-    assert research.briefs(case, None, None) == {}
-    assert research.briefs(case, None, broken) == {}
+    assert research.briefs(leverage_case(), None, None) == {}
+    assert research.briefs(leverage_case(), None, broken) == {}
 
 
-def test_brief_tunes_a_leverage_thread_and_leaves_a_relationship_one(monkeypatch):
+def test_a_trade_sheet_costs_us_what_the_main_sheet_costs(monkeypatch):
     monkeypatch.setattr(research, "CACHE", {})
     case = leverage_case()
-    quote = {"unit_price": 15.88, "payment_days": 30}
-    briefs = research.briefs({**case, "suppliers": ["sup:S"]}, None, scripted)
-    plain = Negotiator(case).setup("sup:S", reply("open", quote))
+    briefs = research.briefs(case, None, scripted)
+    plain = Negotiator(case).setup("sup:S", reply("open", QUOTE))
     neg = Negotiator(case, briefs=briefs)
-    s = neg.setup("sup:S", reply("open", quote))
-    assert s.anchor <= plain.anchor and s.fraction <= plain.fraction  # lower and slower at most
-    assert s.research == WILD["notes"] and any(n["what"] == "research" for n in neg.notes)
+    s = neg.setup("sup:S", reply("open", QUOTE))
+    assert (s.anchor, s.terms) == (plain.anchor, plain.terms)  # the team moves no price
+    main = eco.at_price(s.terms, s.anchor)
+    s.trades = [{"field": "payment_days", "value": v, "why": ""} for v in case["term_options"]["payment_days"]]
+    for sheet in neg.trade_sheets(s, main):
+        assert sheet["payment_days"] != main["payment_days"]
+        c, c_main = eco.cost(case, sheet, s.std, s.est), eco.cost(case, main, s.std, s.est)
+        assert c <= c_main and c_main - c < 0.01 * c_main
 
-    case["buyer"]["category_goal"] = "stabilise"
-    plain = Negotiator(case).setup("sup:S", reply("open", quote))
-    s = Negotiator(case, briefs=briefs).setup("sup:S", reply("open", quote))
-    assert (s.anchor, s.fraction) == (plain.anchor, plain.fraction)
 
-
-def test_mood_paces_the_next_price():
-    case = leverage_case()
-    neg = Negotiator(case)
-    s = neg.setup("sup:S", reply("open", {"unit_price": 15.88, "payment_days": 30}))
+def test_tactic_paces_the_next_price_and_adds_evidence():
+    neg = Negotiator(leverage_case())
+    s = neg.setup("sup:S", reply("open", QUOTE))
     s.ours, s.theirs, s.gaps = [12.0], [15.88, 15.5], [0.2]
-    firm = neg.next_price(s, 15.5)[0]
-    s.mood = "open"
-    assert neg.next_price(s, 15.5)[0] < firm
-    s.mood = "closing"
-    assert neg.next_price(s, 15.5)[0] >= round(15.5 * (1 - CLOSING_GAP), 2)
+    steady, claims = neg.next_price(s, 15.5)
+    s.tactic = "hold"
+    assert neg.next_price(s, 15.5)[0] < steady
+    s.tactic = "close_in"
+    assert steady < neg.next_price(s, 15.5)[0] <= round(12.0 + CLOSE_IN * 3.5, 2)  # further, never a jump
+    s.tactic = "argue"
+    assert neg.next_price(s, 15.5) == (steady, claims + 1)
 
 
 def test_analyst_answers_from_its_lists_only():
-    seen = analyst.read(scripted, leverage_case(), "Which volume can you commit to?", [], [15.88])
-    assert seen["asks"] == ["volume"] and seen["mood"] == "open"
+    seen = analyst.read(scripted, leverage_case(), "Which volume can you commit to?", [], [15.88], ["Wages rose."])
+    assert (seen["mood"], seen["tactic"], seen["argument"], seen["asks"]) == ("irritated", "hold", 1, ["volume"])
+    assert analyst.read(scripted, leverage_case(), "hello", [], [])["argument"] == 0  # nothing to match
     assert analyst.read(broken, leverage_case(), "hello", [], []) is None
 
 

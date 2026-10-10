@@ -36,30 +36,30 @@ Supplier-equivalent values remain estimates, not observed acceptance thresholds.
 
 ## Implemented (the team around the engine)
 
-Subagents on top of the price engine (branch `louis/engine-improvements`). They brief, pace and
-word; code still owns every price, term and accept. `--no-team` plays the plain engine.
+Subagents on top of the price engine. They decide what goes on the table and how we argue; code
+still owns every price, the pace and every accept. `--no-team` plays the plain engine.
 
 ```
-case file ──> 4 specialists (one data group each) ──> lead researcher ──> strategy ─┐
-                      past lessons ─────────────────────┘                           │
-                      supplier subagent x3 ──> playbook ──> demo bidding (code) ────┤
-                                                                                    v
-supplier e-mail ──> live analyst (asks, mood, notes) ──> price engine ──> writer ──> e-mail
-                                                              │
-result, trace ──> debrief ──> buyer/lessons.jsonl ────────────┘ (next case's lead reads them)
+case file ──> 4 specialists (one data group each) ──> lead researcher ──> trades, claim order, tone
+                      past lessons ─────────────────────┘
+              demo bidding: supplier subagent (its arguments, weak points) <──> buyer subagent (our answers)
+                                                         │ playbook
+supplier e-mail ──> live analyst (mood, tactic, which argument) ──> price engine ──> writer ──> e-mail
+                                                                        │
+result, trace ──> debrief ──> buyer/lessons.jsonl ──────────────────────┘ (the next lead reads them)
 ```
 
-| Module | Job | May change |
+| Module | Job | What it may change |
 |---|---|---|
-| `buyer/research.py` | before the session opens (no supplier clock runs, 40 s cap, about 5 to 11 s seen): one specialist per data group of the table below (economics rows 1 to 3, persona 4 and 6, history 5 and 7, leverage 8 and 9) reads a digest that code collected for one supplier; the lead consolidates the findings and the recalled lessons | opening shift -0.05 to 0, fraction 0.2 to 0.3, order of the claim kinds, tone, notes for the writer |
-| `buyer/rehearsal.py` | the demo bidding: a supplier subagent states its playbook (floor, first drop, step, counters, patience, eager), three answers blended; code plays it against the policy's own price step over a grid of openings and fractions | picks opening and fraction, lower and slower than the default only, not in relationship goals; ties keep the default |
-| `buyer/analyst.py` | reads every supplier e-mail, the opening quote included (2 to 4 s, out of the writer's time) | its asks join the patterns'; mood `open` moves 0.7 of our step, `closing` brings our sheet within 1.5 % of its counter; notes for the writer |
-| `buyer/memory.py` | after a scored case: code writes the paths in shares of the quote, a debrief subagent one lesson; keyed on goal, case type, owner type and traits, never on IDs | what the next lead and supplier subagent read (5 most similar). The final writes none |
+| `buyer/research.py` | before the session opens (no supplier clock runs; 8 to 18 s seen, 40 s cap): one specialist per data group of the table below (economics rows 1 to 3, persona 4 and 6, history 5 and 7, leverage 8 and 9) reads a digest that code collected; the lead turns findings and recalled lessons into the negotiating strategy | up to two trades (a negotiable term and one of its allowed values the supplier should value more than it costs us), the order of the claim kinds, tone, notes for the writer |
+| `policy.trade_sheets` | prices each trade: the same sheet with that one term changed, at the price where it costs us exactly what our opening sheet costs; sent next to the opening sheet | nothing a model chose: the supplier's pick shows what it values, and main's package comparison takes its answer when it costs us less |
+| `buyer/rehearsal.py` | the demo bidding: a supplier subagent names the arguments it will bring, its weak points and what it wants besides price; a buyer subagent answers each argument | the writer's facts: our prepared answer when the supplier makes that argument, one weak point in the opening (only when the specialists had data); lines with figures are dropped |
+| `buyer/analyst.py` | reads every supplier e-mail, the opening quote included (2 to 4 s, out of the writer's time; skipped when the clocks leave under 10 s) | mood for the writer (irritated, pressured: acknowledge first); tactic: `hold` moves 0.7 of our step, `close_in` closes half the gap, `argue` adds one more verified claim; which expected argument the e-mail made |
+| `buyer/memory.py` | after a scored case: code writes the paths in shares of the quote, a debrief subagent one lesson; keyed on goal, case type, owner type and traits, never on IDs | what the next lead reads (5 most similar). The final writes none |
 
-What a model may not do: add a persona trait that moves an anchor or a rate (it added `price_frozen`
-and `capacity_full` to suppliers that are neither), open higher or move faster than the default
-(cost 3 % of the price on D02), open lower in a relationship goal (D01 0.979 against 0.987).
-Evidence in `learnings.md`, Agent experiments.
+What a model may not do, each learned the hard way (`learnings.md`, Agent experiments): set an
+opening or a pace, add a persona trait that moves an anchor or a rate, jump to the supplier's
+price, write a supplier something our records do not show.
 
 ## Principle
 

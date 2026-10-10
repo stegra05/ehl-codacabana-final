@@ -21,7 +21,7 @@ import time
 from arena_kit.docs import standard_terms
 from arena_kit.play import ENDED, latest, live_threads, moves_left, standing
 
-from . import analyst, llm, rehearsal, writer
+from . import analyst, llm, writer
 from . import economics as eco
 from .claims import ClaimBank, rival_offer
 from .personas import profile, signals_in
@@ -37,8 +37,10 @@ BUDGET = 1.0  # patience: the cumulative relative gap we show (no cap for a typi
 DEEP = 0.06  # a first concession this large (share of its quote) means a deep floor
 MIN_MOVE = 0.002  # every sheet moves at least this share of the price
 FIRST_CLAIMS, LATER_CLAIMS = 3, 1
-OPEN_HOLD = 0.7  # its e-mail signals room to move: we move this share of our usual step
-CLOSING_GAP = 0.015  # its e-mail signals the end is near: our sheet comes this close to its counter
+HOLD = 0.7  # the live analyst's "hold": it still concedes, we move this share of our usual step
+CLOSE_IN = 0.5  # "close_in": the end is near, we close this share of the gap (never a jump to its price)
+ANALYST_MIN_S = 10.0  # the clocks must leave this much for analyst and writer together, else no analyst
+TRADE_MIN = 0.7  # a trade sheet's price never sits below this share of what the supplier quotes for it
 DONE = {"agreed", "final_offer"}
 
 # What the supplier's e-mail asks of us
@@ -91,10 +93,14 @@ class Side:
         self.last_reply = None
         self.asks = []  # what its last e-mail asked of us (asks)
         self.attached = set()  # files we already sent it
-        self.fraction = FRACTION  # share of the gap we move per round (the research team may tune it)
         self.research = ""  # the lead researcher's notes for the e-mail writer
+        self.trades = []  # terms the lead expects it to value: offered next to our opening sheet
+        self.playbook = {}  # the demo bidding: its expected arguments, our answers, points to press
         self.live = ""  # the live analyst's notes on its last e-mail
-        self.mood = None  # the live analyst's reading of its last e-mail: open | firm | closing
+        self.mood = None  # the live analyst on its last e-mail: the writer's mood
+        self.tactic = None  # and our next move: steady | hold | close_in | argue
+        self.tactics = []  # every tactic played, for the debrief
+        self.argument = 0  # which expected argument its last e-mail made (1-based), 0 for none
 
 
 class Negotiator:
@@ -150,12 +156,11 @@ class Negotiator:
         if near_cost:
             ratio, s.budget = max(ratio, 0.97), min(s.budget, 0.14)
         current = case["buyer"].get("current_unit_price")
-        cap = 0.99
         if case.get("type") == "price_increase" and current:
-            cap = current / q_price  # a price increase opens at today's price at most
-        ratio = max(ANCHOR_MIN, min(ratio, cap))
+            ratio = min(ratio, current / q_price)  # a price increase opens at today's price at most
+        ratio = max(ANCHOR_MIN, ratio)
         if brief:
-            ratio = self.apply(s, brief, ratio, ratio > ANCHOR.get(goal, 0.85))
+            self.apply(s, brief)
         # terms planned at the price we open with: coverage pays off at a low price, not at the quote
         planned = safe(lambda: eco.plan_terms(case, s.std, s.est, quote, q_price * ratio))
         s.terms = planned[0] if planned else eco.complete_offer(case, eco.at_price(quote, q_price * ratio))
@@ -184,45 +189,57 @@ class Negotiator:
             anchor=s.anchor,
             target=s.target,
             budget=s.budget,
-            fraction=s.fraction,
             claims=[c["text"] for c in s.claims],
         )
         return s
 
-    def apply(self, s, brief, ratio, raised):
-        """The research team's brief on this thread: the demo bidding picks the opening ratio and
-        the fraction around the policy's `ratio` (without a playbook the lead's proposal stands);
-        its notes and tone go to the e-mail writer. Returns the opening ratio."""
-        default = ratio
-        proposal = (brief["shift"], brief["fraction"])
-        demo = []
-        if self.case["buyer"].get("category_goal") in eco.RELATIONSHIP_GOALS or raised:
-            # relationship goals: the cheapest deal is not the lowest price (the demo bidding opened
-            # 5 points lower on D01, got 48.60 instead of 49.40 and scored 0.979 against 0.987).
-            # `raised`: the data says a deep cut only costs patience (frozen prices, fully booked,
-            # near its cost); opening P04 at 0.90 instead of 0.95 ended in a final offer after two
-            # counters at 30 days' payment, 0.766 against 0.860
-            pass
-        elif brief.get("model"):
-            ratio, s.fraction, demo = rehearsal.tune(step, brief["model"], ratio, s.budget, proposal, ANCHOR_MIN, ratio)
-        else:
-            ratio, s.fraction = max(ANCHOR_MIN, ratio + proposal[0]), proposal[1]
+    def apply(self, s, brief):
+        """The research team's brief on this thread: the lead's trades wait for our opening sheet,
+        the demo bidding's playbook for the supplier's arguments; notes and tone go to the e-mail
+        writer. Prices and pace stay with the policy: a model moving them cost score (D01, D02,
+        P04, `docs/learnings.md`)."""
         s.research = brief.get("notes") or ""
+        s.trades = brief.get("trades") or []
+        s.playbook = brief.get("playbook") or {}
         if brief.get("tone"):
             s.prof["warm"] = brief["tone"] == "warm"
         self.note(
             s.sid,
             "research",
-            default=default,
-            ratio=ratio,
-            fraction=s.fraction,
-            proposal=proposal,
+            trades=s.trades,
             reason=brief.get("reason"),
-            playbook=brief.get("model"),
-            demo=sorted(demo, key=lambda r: r[2])[:3],
+            playbook=s.playbook,
             findings=brief.get("findings"),
         )
-        return ratio
+
+    def trade_sheets(self, s, main):
+        """The lead's trades as extra sheets next to our opening sheet `main`: each changes one
+        term and carries the price at which it costs us exactly what `main` costs, so whichever
+        the supplier picks, we lose nothing and learn what it values. A trade whose price would
+        sit at or above what the supplier quotes for those terms, or far below it, is not offered."""
+        case, out = self.case, []
+        c_main = eco.cost(case, main, s.std, s.est)
+        for trade in s.trades:
+            terms = {**main, trade["field"]: trade["value"]}
+            if terms == main or not eco.must_haves_ok(case, terms, s.std):
+                continue
+            lo, hi = 0.0, main["unit_price"] * 3
+            if (
+                not eco.cost(case, eco.at_price(terms, lo), s.std, s.est)
+                < c_main
+                < eco.cost(case, eco.at_price(terms, hi), s.std, s.est)
+            ):
+                continue
+            for _ in range(50):  # C rises with the price
+                mid = (lo + hi) / 2
+                lo, hi = (mid, hi) if eco.cost(case, eco.at_price(terms, mid), s.std, s.est) < c_main else (lo, mid)
+            sheet = eco.at_price(terms, int(lo * 100) / 100)
+            quoted = eco.price_for_value(case, terms, s.est, eco.value(case, eco.at_price(s.terms, s.quote), s.est))
+            if not TRADE_MIN * quoted <= sheet["unit_price"] < 0.995 * quoted:
+                continue
+            out.append(sheet)
+            self.note(s.sid, "trade_sheet", trade=trade, price=sheet["unit_price"], quoted=round(quoted, 2))
+        return out
 
     def trade_clause(self, s, quote, full_cost):
         """An index clause the supplier values more than it costs us (its driver rose over the
@@ -320,18 +337,47 @@ class Negotiator:
         self.note(s.sid, "signals", new=new)
 
     def listen(self, s, body):
-        """The live analyst on its latest e-mail: its asks join what the patterns found, the
-        mood paces our next price, the notes go to the e-mail writer. Its time comes out of the
-        writer's; late or off, the move goes on with the patterns alone."""
+        """The live analyst on its latest e-mail: the mood goes to the writer, the tactic paces our
+        next price and our evidence, the argument it recognised picks our prepared answer, its
+        asks join what the patterns found. Its time comes out of the writer's; late or off, the
+        move goes on with the patterns alone."""
+        s.mood, s.tactic, s.argument = None, None, 0
+        if self.writer_s < ANALYST_MIN_S:  # several threads share the clocks: the move comes first
+            return
         t0 = time.monotonic()
-        seen = analyst.read(self.complete, self.case, body, s.ours, s.theirs, self.writer_s / 2)
+        arguments = s.playbook.get("arguments") or []
+        seen = analyst.read(self.complete, self.case, body, s.ours, s.theirs, arguments, self.writer_s / 2)
         self.writer_s -= time.monotonic() - t0
         if seen is None:
-            s.mood = None
             return
         s.asks = [k for k in ASKS if k in s.asks or k in seen["asks"]]
-        s.mood, s.live = seen["mood"], seen["notes"]
+        s.mood, s.tactic, s.argument, s.live = seen["mood"], seen["tactic"], seen["argument"], seen["notes"]
+        s.tactics.append(s.tactic)
         self.note(s.sid, "analyst", seconds=round(time.monotonic() - t0, 1), **seen)
+
+    def team_facts(self, s, first, extra):
+        """What the team adds to the writer's facts: our prepared answer to the argument its e-mail
+        made, a weak point to press in the opening, the trades on offer, the mood to meet."""
+        out = []
+        rebuttals = s.playbook.get("rebuttals") or []
+        if s.argument and s.argument <= len(rebuttals) and rebuttals[s.argument - 1]:
+            out.append(
+                f'they argue: "{s.playbook["arguments"][s.argument - 1]}" Our answer, in your own words: '
+                f"{rebuttals[s.argument - 1]}"
+            )
+        if first and s.playbook.get("press"):
+            out.append(f"a point to raise politely, once: {s.playbook['press'][0]}")
+        if extra:
+            why = "; ".join(t["why"] for t in s.trades if t.get("why"))
+            out.append(
+                "our proposal lists alternative packages after the first one: say they are free to choose the "
+                f"one that suits them best ({why})"
+            )
+        if s.mood == "irritated":
+            out.append("they sound irritated: acknowledge it sincerely before anything else")
+        elif s.mood == "pressured":
+            out.append("they sound under pressure: be calm and make the next step easy for them")
+        return out
 
     def their_price(self, s, terms):
         """Its sheet as a price at our planned terms (same value to it)."""
@@ -427,7 +473,10 @@ class Negotiator:
             return self.finish(s, sheets, events, theirs, left)
         price, n_claims = self.next_price(s, theirs)
         claims = self.pick(s, n_claims, threads)
-        return self.send(s, [eco.at_price(s.terms, price)], claims, events, theirs)
+        sheets = [eco.at_price(s.terms, price)]
+        if not s.ours and s.trades:
+            sheets += safe(lambda: self.trade_sheets(s, sheets[0]), [])[:2]
+        return self.send(s, sheets, claims, events, theirs)
 
     def moves_left(self, s, events):
         """Messages we may still send: the arena counts a late message as a round too."""
@@ -440,11 +489,11 @@ class Negotiator:
             return s.anchor, FIRST_CLAIMS
         last = s.ours[-1]
         conceded = (s.theirs[-2] - theirs) / s.theirs[-2] if len(s.theirs) > 1 else 0.0
-        fraction = s.fraction * (OPEN_HOLD if s.mood == "open" else 1.0)
+        fraction = FRACTION * (HOLD if s.tactic == "hold" else 1.0)
         price = step(last, theirs, conceded, len(s.ours) == 1, fraction, s.budget, sum(s.gaps), s.term_change)
-        if s.mood == "closing":
-            price = min(max(price, theirs * (1 - CLOSING_GAP)), theirs * 0.998)
-        return round(max(price, last), 2), LATER_CLAIMS
+        if s.tactic == "close_in":
+            price = min(max(price, last + CLOSE_IN * (theirs - last)), theirs * 0.998)
+        return round(max(price, last), 2), LATER_CLAIMS + (s.tactic == "argue")  # an argument gets evidence
 
     def finish(self, s, sheets, events, theirs, left):
         """Its final word, its agreement or our last message: if one of its alternatives costs us
@@ -521,7 +570,8 @@ class Negotiator:
             s.pending["appended"] = True
         tone = "warm" if s.prof.get("warm", True) else "friendly and businesslike"
         traded = any(n["what"] == "clause_trade" for n in self.notes)
-        facts = writer.facts(self.case, s, claims, moved, statements, attachments, traded)
+        facts = self.team_facts(s, first, len(sheets) > 1 and s.state == "open")
+        facts += writer.facts(self.case, s, claims, moved, statements, attachments, traded)
         para = llm.paragraph(
             self.complete,
             writer.brief(self.case, s.prof, latest(events).get("body"), facts, tone, first, [s.research, s.live]),

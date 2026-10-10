@@ -1,23 +1,24 @@
 """The research team, before the first e-mail: four specialist subagents each study one group of
 the data about a supplier (the groups of `docs/design.md`, "What feeds the brief"), a lead
-researcher consolidates their findings and past lessons into a bidding strategy, and a supplier
-subagent writes the playbook the demo bidding (`rehearsal.py`) plays that strategy against.
+researcher consolidates their findings and past lessons into a negotiating strategy, and a
+supplier and a buyer subagent rehearse the arguments against each other (`rehearsal.py`).
 
-Code collects every figure a subagent sees and clamps everything it returns: a brief changes how
-the price engine opens and paces, which arguments come first and what the e-mail writer knows.
-It never sets a price, a term or an accept. No brief (no model, a timeout): the plain engine."""
+The strategy is about what to put on the table, not how fast to move: the terms this supplier is
+likely to value more than they cost us, which arguments it will accept, the tone. Code collects
+every figure a subagent sees and checks everything it returns: a proposed trade is priced with
+the cost function and offered only at a price that costs us no more than our main proposal. No
+brief (no model, a timeout): the plain engine."""
 
 import json
 import logging
 import time
 
-from . import llm, memory
-from .rehearsal import blend, clamp_model
+from . import llm, memory, rehearsal
 
 log = logging.getLogger("buyer")
 BUDGET_S = 40.0  # the whole team per case, before the session opens (no supplier clock runs yet)
-PLAYBOOKS = 3  # answers of the supplier subagent per supplier, blended (one answer alone varies too much)
-STAGE_S = 15.0  # the specialists together; then the lead and the supplier subagent together
+STAGE_S = 13.0  # the specialists; then the lead and the demo supplier; then the demo buyer
+TRADES = 2  # terms the lead may put next to our main proposal
 NOISE = ("holiday", "iso ", "certificate", "contact person", "packaging", "trade fair")
 CLAIM_KINDS = ("should_cost", "order_history", "index", "notice", "rival", "forecast", "scorecard", "hedged")
 CACHE = {}  # case_id -> briefs: a case resumed after a crash must not wait for the team again
@@ -65,46 +66,28 @@ ARENA = """What we know about how these suppliers negotiate:
 
 LEAD = (
     """You are the lead researcher of the purchasing team of Hollerau Pumpenwerke. Your analysts
-studied one supplier before a negotiation. Consolidate their findings into a bidding strategy for
-our price engine, which opens below the quote and then moves a share of the gap to the supplier's
-counter each round.
+studied one supplier before a negotiation. Consolidate their findings into a negotiating strategy.
+Our price engine sets the prices and the pace; your job is what we put on the table and how we
+argue.
 
 """
     + ARENA
     + """
 
 Return JSON only:
-{"shift": number from -0.05 to 0, how much lower than usual we open, as a share of the quote.
-  Lower only with evidence of a deep floor (a large margin over should-cost, free capacity,
-  cheaper rivals). 0 when the evidence is thin or the supplier is touchy, near its cost, fully
-  booked or frozen on price.
- "fraction": number from 0.2 to 0.3, the share of the gap we move per round. Low to hold out
-  against a supplier that keeps conceding. Usual: 0.3.
+{"trades": up to 2 objects {"field": a negotiable field of the case other than unit_price,
+  "value": one of that field's allowed options exactly as the case lists it, "why": one short
+  sentence}. A trade is a term this supplier is likely to value more than it costs us: faster
+  payment for one short of cash, a later delivery or a longer contract for a full order book, an
+  index clause for one exposed to a volatile material, more volume for idle machines. Code prices
+  each trade and offers it next to our main proposal at a price that costs us no more, so the
+  supplier's choice shows what it values. [] when the findings point to none.
  "claim_order": the kinds of argument this supplier will accept, strongest first, from: KINDS.
  "tone": "warm" or "businesslike".
  "notes": two or three sentences for the colleague who writes our e-mails: who this supplier is,
   what it cares about and what we can honestly offer it. No figures, no dates.
  "reason": one sentence on why this strategy.}"""
 ).replace("KINDS", ", ".join(CLAIM_KINDS))
-
-SUPPLIER = (
-    """You play the sales lead of a supplier in a rehearsal of a price negotiation with your
-customer Hollerau Pumpenwerke. Below is what the customer's analysts found out about your company.
-Stay in character: decide how you would really bid, given your costs, your order book, your cash
-and how much you need this customer.
-
-"""
-    + ARENA
-    + """
-
-State your playbook. Return JSON only:
-{"floor": the lowest price you would finally take, as a share of your quote (0.7 to 0.995),
- "first_drop": your first concession as a share of your quote (0 to 0.2),
- "step": the most you concede in the round after, as a share of your quote (0.001 to 0.04),
- "counters": how many counters you make before your final offer (1 to 6),
- "patience": the cumulative gap you bear before you end the talks (0.1 to 0.6),
- "eager": true if you keep lowering your price even when the customer barely moves, else false}"""
-)
 
 
 def rows(pkg, sql, params=(), limit=8):
@@ -291,23 +274,18 @@ def digest(pkg, case, sid, group):
     return "\n".join(filter(None, out))
 
 
-def clamp(raw):
-    """The lead's strategy with every value in range or from its list; junk falls back to usual."""
-
-    def number(key, lo, hi, default):
-        try:
-            return min(hi, max(lo, float(raw.get(key, default))))
-        except (TypeError, ValueError):
-            return default
-
-    def listed(key, allowed):
-        value = raw.get(key)
-        return [v for v in value if v in allowed] if isinstance(value, list) else []
-
+def clamp(raw, case):
+    """The lead's strategy with every value from the case or from its list; junk is dropped."""
+    options = case.get("term_options") or {}
+    trades = []
+    for t in raw.get("trades") if isinstance(raw.get("trades"), list) else []:
+        field = t.get("field") if isinstance(t, dict) else None
+        if field in case.get("negotiable", []) and field != "unit_price" and t.get("value") in options.get(field, []):
+            trades.append({"field": field, "value": t["value"], "why": " ".join(str(t.get("why") or "").split())[:160]})
+    order = raw.get("claim_order")
     return {
-        "shift": round(number("shift", -0.05, 0.0, 0.0), 3),
-        "fraction": round(number("fraction", 0.2, 0.3, 0.3), 2),
-        "claim_order": listed("claim_order", CLAIM_KINDS),
+        "trades": trades[:TRADES],
+        "claim_order": [k for k in order if k in CLAIM_KINDS] if isinstance(order, list) else [],
         "tone": raw.get("tone") if raw.get("tone") in ("warm", "businesslike") else None,
         "notes": " ".join(str(raw.get("notes") or "").split())[:600],
         "reason": str(raw.get("reason") or "")[:300],
@@ -315,8 +293,8 @@ def clamp(raw):
 
 
 def briefs(case, pkg, complete, budget_s=BUDGET_S):
-    """{supplier_id: brief} for a case: the specialists' findings, the lead's clamped strategy and
-    the demo supplier's playbook. {} without a model; a supplier whose lead was late has no brief."""
+    """{supplier_id: brief} for a case: the specialists' findings, the lead's checked strategy and
+    the demo bidding's playbook. {} without a model; a supplier whose lead was late has no brief."""
     if complete is None:
         return {}
     if case["case_id"] in CACHE:
@@ -356,18 +334,26 @@ def briefs(case, pkg, complete, budget_s=BUDGET_S):
                 ],
             )
         )
-        playbooks = [llm.submit(complete, SUPPLIER, user) for _ in range(PLAYBOOKS)]
-        second[sid] = (findings, llm.submit(complete, LEAD, user), playbooks)
+        second[sid] = (findings, user, llm.submit(complete, LEAD, user), llm.submit(complete, rehearsal.SUPPLIER, user))
+    stage = min(end, time.monotonic() + STAGE_S)
+    third = {}
+    for sid, (findings, user, lead, supplier) in second.items():
+        strategy = llm.read_json(lead, stage - time.monotonic())
+        view = rehearsal.supplier_view(llm.read_json(supplier, stage - time.monotonic()))
+        buyer = None
+        if view["arguments"]:  # the demo bidding's second half: our side answers its arguments
+            buyer = llm.submit(complete, rehearsal.BUYER, f"{user}\n\n{rehearsal.exchange(view)}")
+        third[sid] = (findings, strategy, view, buyer)
     stage = min(end, time.monotonic() + STAGE_S)
     out = {}
-    for sid, (findings, lead, playbooks) in second.items():
-        strategy = llm.read_json(lead, stage - time.monotonic())
-        answers = [llm.read_json(f, stage - time.monotonic()) for f in playbooks]
+    for sid, (findings, strategy, view, buyer) in third.items():
         if strategy is None:
             continue
         out[sid] = {
-            **clamp(strategy),
-            "model": blend([clamp_model(a) for a in answers if a]),
+            **clamp(strategy, case),
+            "playbook": rehearsal.playbook(
+                view, llm.read_json(buyer, stage - time.monotonic()), any(findings.values())
+            ),
             "findings": {g: f.get("findings") for g, f in findings.items() if f.get("findings")},
         }
     log.info("%s research in %.1fs: %s", case["case_id"], time.monotonic() - t0, json.dumps(out, ensure_ascii=False))

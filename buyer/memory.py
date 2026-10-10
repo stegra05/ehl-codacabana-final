@@ -19,9 +19,9 @@ DEBRIEF = """You are the debrief analyst of the purchasing team of Hollerau Pump
 one negotiation went, in shares of the supplier's quote: where we opened, our price path, its
 price path, its reasons in its own words, and the score (1.0 is the best deal that was possible,
 0 is no better than its first offer).
-Our bidder can change four things only: how low it opens, which share of the gap to the
-supplier's counter it moves per round, which kind of argument it cites first, and its tone. Code
-picks all other terms. Threats, deadlines, bluffs and requests for cost data have been tested and
+Our team can change four things only: which terms it offers as a trade next to its main proposal,
+which kind of argument it cites first, how it answers the supplier's arguments, and its tone.
+Code sets the prices and the pace. Threats, deadlines, bluffs and requests for cost data have been tested and
 do not work, never suggest them.
 Write the one lesson for the next negotiation with this KIND of supplier (owner type, traits,
 goal): what its path and reasons show about how it concedes and when it stops, and which of the
@@ -45,10 +45,10 @@ def path(side):
     q = side.quote or 1.0
     return {
         "opened": round(side.ours[0] / q, 3),
-        "fraction": side.fraction,
         "ours": [round(p / q, 3) for p in side.ours],
         "theirs": [round(p / q, 3) for p in side.theirs],
-        "mood": side.mood,
+        "tactics": side.tactics,
+        "trades": [f"{t['field']}={t['value']}" for t in side.trades],
     }
 
 
@@ -102,7 +102,7 @@ def recall(case, n=RECALL):
         t = (r.get("threads") or [{}])[0]
         out.append(
             f"{r.get('goal')} {r.get('type')}, {r.get('bidders')} bidder(s), owner {'/'.join(r.get('owners') or [])}, "
-            f"traits {r.get('signals')}: opened at {t.get('opened')} of the quote, moved {t.get('fraction')} of "
-            f"the gap per round, its prices {t.get('theirs')}, score {r.get('score')}. {r.get('lesson') or ''}"
+            f"traits {r.get('signals')}: opened at {t.get('opened')} of the quote, offered trades "
+            f"{t.get('trades') or []}, its prices {t.get('theirs')}, score {r.get('score')}. {r.get('lesson') or ''}"
         )
     return out

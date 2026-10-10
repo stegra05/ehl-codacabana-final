@@ -371,6 +371,21 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
 
 ## Agent experiments
 
+- 2026-10-11 `arena` **The team reworked: trades from the lead, an argument rehearsal, tactics from
+  the live analyst** (sandbox, 00:34, no quota). The lead no longer proposes an opening or a pace
+  (both cost score, entries below) but up to two trades; code prices each at the cost of our
+  opening sheet and sends it as an extra sheet. Dry run on practice case files: payment 14 days
+  for the cash-short foundry (P01, what its best session did), contract 36 months and 56 days'
+  lead time for the fully booked supplier (P10), a copper clause for P14. On the sandbox the
+  sheets went out and the suppliers answered them (the foundry took 30 days' payment and a
+  February start); scores D01 0.996, 0.996 against 0.996 plain, D02 0.693, 0.714 (plain 0.672
+  an hour before, not played this round: the 10-session limit). So no measured gain yet beyond
+  the +0.02 to +0.04 the analyst's `hold` already gave. Three things the runs taught:
+  `close_in` as a jump to 1.5 % under its price gave a bidder 2 EUR at once (13.19 to 15.18 on
+  D02), now half the gap; without data on a supplier the rehearsal invented "our records show"
+  weak points, now dropped unless the specialists had data; with two bidders the analyst's 3 s
+  cost one late message, now skipped when the clocks leave under 10 s.
+
 - 2026-10-10 `arena` **Best of many is not what one run scores.** All 213 scored practice sessions
   of the team (`logs/sessions/practice/`, 23:50): the mean of the best per case is 0.830, the
   mean of the medians per case is 0.72 (P01 0.93, P02 0.507, P03 0.923, P04 0.86, P05 0.81, P07

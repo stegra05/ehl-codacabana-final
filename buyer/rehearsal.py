@@ -1,92 +1,83 @@
-"""The demo bidding before the real one: a demo supplier bids against a demo buyer, in code and in
-shares of the quote, so a whole grid of buyer strategies plays in milliseconds. The demo supplier
-is the playbook the supplier subagent wrote from the research (`research.SUPPLIER`), executed the
-way the arena's suppliers behaved (`docs/learnings.md`, Supplier behaviour); the demo buyer is the
-policy's own price step. The strategy with the lowest demo deal price opens the real bidding."""
+"""The demo bidding before the real one: a supplier subagent and a buyer subagent argue the case
+against each other. The supplier, in character and knowing what our analysts found, says which
+arguments it will bring, which weak points it hopes we miss and what it would give price for. The
+buyer answers each argument and picks the weak points to press. What comes out is a playbook for
+the real bidding: the live analyst matches a supplier e-mail to one of the expected arguments and
+the writer gets our prepared answer. Words only: every price and term stays with code, and a line
+with a figure in it is dropped (the writer may not use one)."""
 
-import statistics
+import re
 
-# The demo bidding may only hold lower and slower than the policy's defaults, never open higher or
-# move faster: the supplier agrees where our sheet meets its counter, so a higher opening (0.83
-# and 0.805 instead of 0.78) and a faster pace (0.4) each cost 3 % of the price on D02.
-SHIFTS = (-0.05, -0.025, 0.0)  # opening price against the policy's default, share of the quote
-FRACTIONS = (0.2, 0.3)  # share of the gap we move per round
-# The demo supplier, clamped: (low, high, default). Defaults are the typical practice supplier.
-MODEL = {
-    "floor": (0.7, 0.995, 0.9),  # the lowest price it takes, share of its quote
-    "first_drop": (0.0, 0.2, 0.04),  # its round-1 concession: a cap, not a reaction to our anchor
-    "step": (0.001, 0.04, 0.012),  # the most it concedes in round 2, shrinking after
-    "counters": (1, 6, 4),  # counters it makes before its final offer
-    "patience": (0.1, 0.6, 0.4),  # cumulative gap between our sheets and its counters it bears
-}
-SHRINK = 0.6  # its step cap from one round to the next
-TIE = 0.003  # demo prices this close are the same: the playbook is an estimate
+SUPPLIER = """You play the sales lead of a supplier in a rehearsal of a negotiation with your customer
+Hollerau Pumpenwerke. Below is the case and what the customer's analysts found out about your
+company. Stay in character and be honest with yourself: this rehearsal is private.
+Return JSON only:
+{"arguments": the up to 4 arguments you will bring to defend your price or refuse a request, one
+  sentence each, strongest first,
+ "weak_points": the up to 3 points in your position you hope the customer does not raise, one
+  sentence each,
+ "wants": the up to 3 things other than price you would give a better price for, one short phrase each}
+Write no figures, dates or names."""
+
+BUYER = """You are the senior buyer of Hollerau Pumpenwerke in a rehearsal of a negotiation. Below is
+the case, what our analysts found, and what the supplier's sales lead said in the rehearsal: the
+arguments it will bring and the weak points it hopes we miss.
+Find our best answer to each of its arguments: reasoning that is fair, factual and hard to
+dismiss. An answer may acknowledge its point, put it in proportion and point to what we already
+bring (our full volume, a long term, reliable payment). An answer never promises or offers
+anything new, sets no condition, and is never a threat, a deadline, a bluff or a request for its
+cost breakdown (all tested, none works).
+Return JSON only:
+{"rebuttals": one object per supplier argument, {"to": the argument's number, "answer": our answer
+  in one or two sentences},
+ "press": the up to 2 weak points worth raising, each as one polite, respectful sentence we could
+  write, taken only from what the analysts found, never about its finances; [] when the analysts
+  found nothing}
+Write no figures, dates or names: code adds the data."""
+
+DIGIT = re.compile(r"\d")
 
 
-def blend(models):
-    """One playbook from several answers of the supplier subagent (its answers vary from call to
-    call): the median of each value, the majority on `eager`."""
-    models = [m for m in models if m]
-    if not models:
-        return None
-    out = {key: statistics.median_low(m[key] for m in models) for key in MODEL}
-    out["eager"] = sum(m["eager"] for m in models) * 2 > len(models)
-    return out
+def lines(value, limit, chars=260):
+    """A subagent's list as clean sentences: strings only, no figures, capped in number and length."""
+    out = []
+    for item in value if isinstance(value, list) else []:
+        text = " ".join(str(item).split())[:chars] if isinstance(item, str) else ""
+        if text and not DIGIT.search(text):
+            out.append(text)
+    return out[:limit]
 
 
-def clamp_model(raw):
-    """The supplier subagent's playbook with every value in range; gaps and junk get the default."""
+def supplier_view(raw):
+    """What the supplier subagent said, clamped."""
     raw = raw or {}
-    out = {}
-    for key, (lo, hi, default) in MODEL.items():
-        try:
-            out[key] = min(hi, max(lo, type(default)(raw.get(key, default))))
-        except (TypeError, ValueError):
-            out[key] = default
-    out["eager"] = raw.get("eager") is True  # concedes its step whatever we move (job shops with idle machines)
-    return out
+    return {
+        "arguments": lines(raw.get("arguments"), 4),
+        "weak_points": lines(raw.get("weak_points"), 3),
+        "wants": lines(raw.get("wants"), 3, 80),
+    }
 
 
-def bid(step, model, anchor, fraction, budget, rounds=10):
-    """One demo negotiation: (deal price as a share of the quote, how it ended)."""
-    theirs = prev = 1.0
-    ours, used = [], 0.0
-    for n in range(rounds):
-        if n == 0:
-            price = anchor
-        else:
-            conceded = (prev - theirs) / prev if n == 1 else 0.0
-            price = step(ours[-1], theirs, conceded, n == 1, fraction, budget, used)
-        move = price - ours[-1] if ours else 0.0
-        ours.append(price)
-        used += max(0.0, (theirs - price) / theirs)
-        if n == 0:
-            want = 1.0 - model["first_drop"]
-        else:
-            cap = model["step"] * SHRINK ** (n - 1)
-            want = theirs - (cap if model["eager"] else min(0.8 * move, cap))
-        want = max(model["floor"], want)
-        if price >= want:
-            return price, "agreed"  # it agrees the moment our sheet reaches the counter it would make
-        prev, theirs = theirs, want
-        if n + 1 >= model["counters"] or used > model["patience"]:
-            return theirs, "final_offer"
-    return theirs, "round_limit"
+def exchange(view):
+    """The supplier's side of the rehearsal as the buyer subagent reads it."""
+    numbered = "\n".join(f"{i}. {a}" for i, a in enumerate(view["arguments"], 1))
+    weak = "\n".join(f"- {w}" for w in view["weak_points"])
+    return f"THE SUPPLIER'S ARGUMENTS:\n{numbered}\nWEAK POINTS IT HOPES WE MISS:\n{weak or '- none named'}"
 
 
-def tune(step, model, ratio, budget, proposal=None, low=0.0, high=1.0):
-    """The opening ratio and the fraction with the lowest demo deal price, among the grid around the
-    policy's default `ratio` and the lead researcher's `proposal` (shift, fraction). Ties go to the
-    default, which practice has proven. Returns (ratio, fraction, [(ratio, fraction, price, end)])."""
-    grid = [(d, f) for d in SHIFTS for f in FRACTIONS]
-    if proposal and proposal not in grid:
-        grid.append(proposal)
-    rows = []
-    for shift, fraction in grid:
-        anchor = round(min(high, max(low, ratio + shift)), 4)
-        price, end = bid(step, model, anchor, fraction, budget)
-        rows.append((anchor, fraction, round(price, 4), end))
-    low_price = min(r[2] for r in rows)
-    near = [r for r in rows if r[2] <= low_price + TIE]
-    best = min(near, key=lambda r: (abs(r[0] - ratio), abs(r[1] - 0.3), r[2]))
-    return best[0], best[1], rows
+def playbook(view, raw, informed=True):
+    """The rehearsal's result: each expected argument with our answer ("" when the buyer found
+    none), the weak points to press and what the supplier wants besides price. `informed`: our
+    analysts had data on this supplier; without it a "weak point" is a guess, and we never write
+    a supplier something our records do not show."""
+    raw = raw or {}
+    answers = {}
+    for r in raw.get("rebuttals") if isinstance(raw.get("rebuttals"), list) else []:
+        if isinstance(r, dict) and isinstance(r.get("to"), int) and lines([r.get("answer")], 1, 400):
+            answers[r["to"]] = lines([r["answer"]], 1, 400)[0]
+    return {
+        "arguments": view["arguments"],
+        "rebuttals": [answers.get(i, "") for i in range(1, len(view["arguments"]) + 1)],
+        "press": lines(raw.get("press"), 2) if informed else [],
+        "wants": view["wants"],
+    }
