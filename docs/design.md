@@ -54,12 +54,14 @@ result, trace ──> debrief ──> buyer/lessons.jsonl ───────�
 | `buyer/research.py` | before the session opens (no supplier clock runs; 8 to 18 s seen, 40 s cap): one specialist per data group of the table below (economics rows 1 to 3, persona 4 and 6, history 5 and 7, leverage 8 and 9) reads a digest that code collected; the lead turns findings and recalled lessons into the negotiating strategy | up to two trades (a negotiable term and one of its allowed values the supplier should value more than it costs us), the order of the claim kinds, tone, notes for the writer |
 | `policy.trade_sheets` | prices each trade: the same sheet with that one term changed, at the price where it costs us exactly what our opening sheet costs; sent next to the opening sheet | nothing a model chose: the supplier's pick shows what it values, and main's package comparison takes its answer when it costs us less |
 | `buyer/rehearsal.py` | the demo bidding: a supplier subagent names the arguments it will bring, its weak points and what it wants besides price; a buyer subagent answers each argument | the writer's facts: our prepared answer when the supplier makes that argument, one weak point in the opening (only when the specialists had data); lines with figures are dropped |
-| `buyer/analyst.py` | reads every supplier e-mail, the opening quote included (2 to 4 s, out of the writer's time; skipped when the clocks leave under 10 s) | mood for the writer (irritated, pressured: acknowledge first); tactic: `hold` moves 0.7 of our step, `close_in` closes half the gap, `argue` adds one more verified claim; which expected argument the e-mail made |
-| `buyer/memory.py` | after a scored case: code writes the paths in shares of the quote, a debrief subagent one lesson; keyed on goal, case type, owner type and traits, never on IDs | what the next lead reads (5 most similar). The final writes none |
+| `buyer/analyst.py` | reads every supplier e-mail, the opening quote included (2 to 4 s, out of the writer's time; skipped when the clocks leave under 10 s) | mood for the writer (irritated, pressured: acknowledge first); tactic: `hold` moves 0.7 of our step, `argue` adds one more verified claim; which expected argument the e-mail made; the points that deserve a direct answer; the terms it says would help it |
+| `policy.feedback`, `pick`, `want_sheet` | code weaves its feedback into the next move: its fixed sentences on our evidence ("took it into account", "does not change our calculation") reorder our claims (a kind it counted first, a kind it waved off never again); a negotiable term it says would help goes on the table once as an option priced at the cost of our sheet and within 5 % of its price; the writer answers its points first | nothing a model priced |
+| `buyer/memory.py` | after a scored case: code writes the paths in shares of the quote, a debrief subagent one lesson; keyed on goal, case type, owner type and traits, never on IDs | what the next lead reads: one aggregate of at least three distinct comparable outcomes, no model-written lesson text. The final writes none |
 
 What a model may not do, each learned the hard way (`learnings.md`, Agent experiments): set an
-opening or a pace, add a persona trait that moves an anchor or a rate, jump to the supplier's
-price, write a supplier something our records do not show.
+opening, add a persona trait that moves an anchor or a rate, move us towards the supplier's price
+(`close_in` is gone: all three times the analyst called it, it misread the reply), write a supplier
+something our records do not show.
 
 ## Principle
 

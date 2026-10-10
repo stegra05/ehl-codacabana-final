@@ -371,6 +371,19 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
 
 ## Agent experiments
 
+- 2026-10-11 `arena` **Its feedback woven into the next move** (sandbox, 01:26, no quota; merged
+  with Joao's reliability fixes: shared-deadline subagent reads, first-message volume, one
+  forecast claim, aggregate memory; his higher opening and tighter closing jump left out). Code
+  reads the supplier's fixed sentences on our evidence and reorders the claims; the analyst names
+  the points to answer and the terms it says would help, which go on the table once as an option
+  at the cost of our sheet. D02 0.714 twice against 0.672 plain in the same hour, no late message.
+  D01 0.983 against 0.996 plain an hour earlier: the analyst called `close_in` on a warm reply and
+  we moved half the gap (49.18 to 49.54), ending at 49.70 instead of 49.30. It misread all three
+  times it called it tonight, so the tactic is removed. It also listed every term of the offer
+  as "would help" and produced a 12-month option 15 % under our price; options now stay within
+  5 % of our sheet and the prompt asks for explicit statements only. These last fixes are covered
+  by unit tests, not yet by an arena run.
+
 - 2026-10-11 `arena` **The team reworked: trades from the lead, an argument rehearsal, tactics from
   the live analyst** (sandbox, 00:34, no quota). The lead no longer proposes an opening or a pace
   (both cost score, entries below) but up to two trades; code prices each at the cost of our
@@ -714,3 +727,18 @@ shows evidence.
   openings against standard / early payment as a 2x2, several runs per credit stratum.
 - A `selective` rebuttal (naming the cost driver the supplier left out of its letter) moves more
   than a plain index claim.
+- **Hypothesis, not established:** allow price-led anchors to move at most 2 percentage
+  points closer to the quote when code's demo predicts a lower deal price; keep the 30 % concession
+  default and relationship/raised anchors fixed. The recent 10-case comparison was mixed and
+  non-randomized, so this is a narrow candidate for paired practice runs, not evidence of a gain.
+  Memory now needs three distinct same-goal/same-type outcomes and passes only aggregated numeric
+  paths to research; one-off generated advice cannot set strategy.
+- **Hypothesis, not established:** when the analyst detects an explicit closing mood, tighten
+  the final approach from 1.5 % to 1.25 % below the supplier's counter. This applies only to that
+  signal and remains below its counter; it may improve acceptance but can cost score if the supplier
+  would have accepted a lower offer. Compare on paired practice sessions before retaining it.
+- **Initial hosted check of the combined Louis candidate:** the 10-case batch averaged 0.7846,
+  versus 0.7644 in the preceding batch and the recorded dashboard baseline of 0.802. P01, P07, P08
+  and P18 scored higher than their preceding-batch values; the other six were unchanged. Four cases
+  exceeded 0.8. This is one stochastic session per case, so it does not isolate either policy
+  change or establish a gain. Keep both as candidates pending replicated, paired practice runs.

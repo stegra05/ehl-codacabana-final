@@ -171,7 +171,7 @@ def facts(case, s, claims, moved, statements, attachments, traded):
     return out
 
 
-def statements(case, s, sheets):
+def statements(case, s, sheets, first=False):
     """Code sentences with figures that answer its asks: the binding volume, in round 1 and
     whenever it asks ("Which volume can you commit to?" came 152 times; a figure was "taken
     into account", a description was not)."""
@@ -180,7 +180,7 @@ def statements(case, s, sheets):
     if "payment" in s.asks and ("payment_days" not in case["negotiable"] or "payment_days" in fixed):
         days = closing_terms(case, sheets[0], s.std).get("payment_days")
         out.append(f"Payment is fixed at {days} days under this agreement and cannot be shortened.")
-    if not ("volume" in s.asks or not s.ours):
+    if not ("volume" in s.asks or first):
         return out
     sheet = sheets[0]
     volume = sheet.get("volume_per_year") or fixed.get("volume_per_year") or case["buyer"]["need_per_year"]

@@ -38,9 +38,8 @@ DEEP = 0.06  # a first concession this large (share of its quote) means a deep f
 MIN_MOVE = 0.002  # every sheet moves at least this share of the price
 FIRST_CLAIMS, LATER_CLAIMS = 3, 1
 HOLD = 0.7  # the live analyst's "hold": it still concedes, we move this share of our usual step
-CLOSE_IN = 0.5  # "close_in": the end is near, we close this share of the gap (never a jump to its price)
 ANALYST_MIN_S = 10.0  # the clocks must leave this much for analyst and writer together, else no analyst
-TRADE_MIN = 0.7  # a trade sheet's price never sits below this share of what the supplier quotes for it
+TRADE_BAND = 0.05  # an option next to our sheet is priced within this share of our sheet's price
 DONE = {"agreed", "final_offer"}
 
 # What the supplier's e-mail asks of us
@@ -65,6 +64,58 @@ def asks(body):
     patterns read them; no model, no latency."""
     text = body or ""
     return [k for k, pat in ASKS.items() if re.search(pat, text, re.I)]
+
+
+# How it names our evidence when it answers it ("We checked the price history data you cited; it
+# holds, but it does not change our calculation."): claim kind -> its words. 1,100 such sentences in
+# the sessions to date use these names and one of the two verdicts below.
+CITED = {
+    "order_history": r"price history",
+    "rival": r"rival quote|competitive (offer|situation)",
+    "should_cost": r"should[- ]cost",
+    "forecast": r"volume change|forecast",
+    "scorecard": r"delivery|quality",
+    "index": r"index change",
+    "notice": r"notice period",
+}
+COUNTED = r"into account|adjusted|fair point|factored|incorporated|did not know"
+DISMISSED = r"does not (change|bear|impact)|cannot give up|frozen|not our reality|could not verify|does not match"
+EVIDENCE = {  # for the writer
+    "order_history": "our past order prices",
+    "rival": "the competing offer",
+    "should_cost": "our cost estimate",
+    "forecast": "our volume forecast",
+    "scorecard": "its delivery and quality record",
+    "index": "the cost index movements",
+    "notice": "the notice period",
+}
+SUITS = {**eco.FRIENDLY, "payment_days": -1}  # which way a term suits a supplier: +1 more, -1 less
+TERMS = {  # for the writer: a negotiable field as a supplier would call it
+    "payment_days": "the payment term",
+    "contract_months": "the contract length",
+    "volume_per_year": "the volume",
+    "lead_time_days": "the delivery time",
+    "index_clause": "a price adjustment clause",
+    "effective_date": "the start date",
+    "incoterm": "the delivery terms",
+    "ppm_commitment": "the quality commitment",
+    "chargeback_eur_per_complaint": "the complaint charge",
+    "tooling_eur": "the tooling charge",
+}
+
+
+def feedback(body):
+    """(kinds of our evidence its e-mail says it counted, kinds it says change nothing)."""
+    counted, dismissed = set(), set()
+    for sentence in re.split(r"(?<=[.!?])\s+", body or ""):
+        if "you cited" not in sentence.lower():
+            continue
+        kinds = {k for k, pat in CITED.items() if re.search(pat, sentence, re.I)}
+        if re.search(DISMISSED, sentence, re.I):
+            dismissed |= kinds
+        elif re.search(COUNTED, sentence, re.I):
+            counted |= kinds
+    return counted, dismissed
 
 
 class Side:
@@ -98,9 +149,14 @@ class Side:
         self.playbook = {}  # the demo bidding: its expected arguments, our answers, points to press
         self.live = ""  # the live analyst's notes on its last e-mail
         self.mood = None  # the live analyst on its last e-mail: the writer's mood
-        self.tactic = None  # and our next move: steady | hold | close_in | argue
+        self.tactic = None  # and our next move: steady | hold | argue
         self.tactics = []  # every tactic played, for the debrief
         self.argument = 0  # which expected argument its last e-mail made (1-based), 0 for none
+        self.points = []  # what its last e-mail said that deserves a direct answer (live analyst)
+        self.wants = []  # negotiable terms its last e-mail said would help it (live analyst)
+        self.offered = set()  # terms we already put next to our sheet as an option
+        self.counted, self.dismissed = set(), set()  # kinds of our evidence it counted / waved off, so far
+        self.heard = (set(), set())  # the same, in its last e-mail only
 
 
 class Negotiator:
@@ -212,34 +268,62 @@ class Negotiator:
             findings=brief.get("findings"),
         )
 
-    def trade_sheets(self, s, main):
-        """The lead's trades as extra sheets next to our opening sheet `main`: each changes one
-        term and carries the price at which it costs us exactly what `main` costs, so whichever
-        the supplier picks, we lose nothing and learn what it values. A trade whose price would
-        sit at or above what the supplier quotes for those terms, or far below it, is not offered."""
-        case, out = self.case, []
+    def option_sheet(self, s, main, field, value):
+        """`main` with one term changed, at the price where it costs us exactly what `main` costs;
+        None when that price sits at or above what the supplier quotes for those terms, when it
+        differs from our sheet's price by more than a few percent (an option 15 % cheaper for a
+        shorter contract reads as a second, lower anchor), or when the sheet breaks a must-have."""
+        case = self.case
+        terms = {**main, field: value}
+        if terms == main or not eco.must_haves_ok(case, terms, s.std):
+            return None
         c_main = eco.cost(case, main, s.std, s.est)
+        lo, hi = 0.0, main["unit_price"] * 3
+        c_lo, c_hi = (eco.cost(case, eco.at_price(terms, p), s.std, s.est) for p in (lo, hi))
+        if not c_lo < c_main < c_hi:
+            return None
+        for _ in range(50):  # C rises with the price
+            mid = (lo + hi) / 2
+            lo, hi = (mid, hi) if eco.cost(case, eco.at_price(terms, mid), s.std, s.est) < c_main else (lo, mid)
+        sheet = eco.at_price(terms, int(lo * 100) / 100)
+        quoted = eco.price_for_value(case, terms, s.est, eco.value(case, eco.at_price(s.terms, s.quote), s.est))
+        near = abs(sheet["unit_price"] / main["unit_price"] - 1) <= TRADE_BAND
+        return sheet if near and sheet["unit_price"] < 0.995 * quoted else None
+
+    def trade_sheets(self, s, main):
+        """The lead's trades as extra sheets next to our opening sheet `main`: whichever the
+        supplier picks, we lose nothing and learn what it values."""
+        out = []
         for trade in s.trades:
-            terms = {**main, trade["field"]: trade["value"]}
-            if terms == main or not eco.must_haves_ok(case, terms, s.std):
-                continue
-            lo, hi = 0.0, main["unit_price"] * 3
-            if (
-                not eco.cost(case, eco.at_price(terms, lo), s.std, s.est)
-                < c_main
-                < eco.cost(case, eco.at_price(terms, hi), s.std, s.est)
-            ):
-                continue
-            for _ in range(50):  # C rises with the price
-                mid = (lo + hi) / 2
-                lo, hi = (mid, hi) if eco.cost(case, eco.at_price(terms, mid), s.std, s.est) < c_main else (lo, mid)
-            sheet = eco.at_price(terms, int(lo * 100) / 100)
-            quoted = eco.price_for_value(case, terms, s.est, eco.value(case, eco.at_price(s.terms, s.quote), s.est))
-            if not TRADE_MIN * quoted <= sheet["unit_price"] < 0.995 * quoted:
-                continue
-            out.append(sheet)
-            self.note(s.sid, "trade_sheet", trade=trade, price=sheet["unit_price"], quoted=round(quoted, 2))
+            sheet = self.option_sheet(s, main, trade["field"], trade["value"])
+            if sheet and trade["field"] not in s.offered:
+                s.offered.add(trade["field"])
+                out.append(sheet)
+                self.note(s.sid, "trade_sheet", trade=trade, price=sheet["unit_price"])
         return out
+
+    def want_sheet(self, s, main):
+        """It said a negotiable term would help it: put that term on the table once, as an option
+        next to our sheet, at the allowed value that suits a supplier most (the fastest payment,
+        the longest contract; where a term has no such direction, the value our estimate says is
+        worth most to it) and at a price that costs us no more than our sheet. Its own words
+        decide what we offer; code decides the price."""
+        options = self.case.get("term_options") or {}
+        for field in s.wants:
+            if field in s.offered or field not in main:
+                continue
+            sheets = [self.option_sheet(s, main, field, v) for v in options.get(field) or []]
+            sheets = [sh for sh in sheets if sh]
+            if sheets:
+                s.offered.add(field)
+                side = SUITS.get(field)
+                if side and all(isinstance(sh[field], int | float) for sh in sheets):
+                    best = max(sheets, key=lambda sh: side * sh[field])
+                else:
+                    best = max(sheets, key=lambda sh: eco.value(self.case, sh, s.est))
+                self.note(s.sid, "want_sheet", field=field, value=best[field], price=best["unit_price"])
+                return [best]
+        return []
 
     def trade_clause(self, s, quote, full_cost):
         """An index clause the supplier values more than it costs us (its driver rose over the
@@ -341,24 +425,45 @@ class Negotiator:
         next price and our evidence, the argument it recognised picks our prepared answer, its
         asks join what the patterns found. Its time comes out of the writer's; late or off, the
         move goes on with the patterns alone."""
-        s.mood, s.tactic, s.argument = None, None, 0
+        s.mood, s.tactic, s.argument, s.points, s.wants = None, None, 0, [], []
         if self.writer_s < ANALYST_MIN_S:  # several threads share the clocks: the move comes first
             return
         t0 = time.monotonic()
         arguments = s.playbook.get("arguments") or []
-        seen = analyst.read(self.complete, self.case, body, s.ours, s.theirs, arguments, self.writer_s / 2)
+        fields = [f for f in self.case["negotiable"] if f != "unit_price"] + list(self.case.get("fixed_terms") or {})
+        seen = analyst.read(self.complete, self.case, body, s.ours, s.theirs, arguments, fields, self.writer_s / 2)
         self.writer_s -= time.monotonic() - t0
         if seen is None:
             return
         s.asks = [k for k in ASKS if k in s.asks or k in seen["asks"]]
         s.mood, s.tactic, s.argument, s.live = seen["mood"], seen["tactic"], seen["argument"], seen["notes"]
+        s.points, s.wants = seen["points"], seen["would_help"]
         s.tactics.append(s.tactic)
         self.note(s.sid, "analyst", seconds=round(time.monotonic() - t0, 1), **seen)
 
-    def team_facts(self, s, first, extra):
+    def team_facts(self, s, first, extra, wanted=()):
         """What the team adds to the writer's facts: our prepared answer to the argument its e-mail
         made, a weak point to press in the opening, the trades on offer, the mood to meet."""
-        out = []
+        out = [f'they wrote: "{p}" Answer this directly.' for p in s.points]
+        counted, dismissed = s.heard
+        if counted:
+            names = ", ".join(EVIDENCE[k] for k in sorted(counted))
+            out.append(f"they checked and counted our point on {names}: thank them for it and build on it")
+        if dismissed:
+            names = ", ".join(EVIDENCE[k] for k in sorted(dismissed))
+            out.append(f"they said our point on {names} does not change their view: accept that and do not press it")
+        negotiable = self.case["negotiable"]
+        for field in s.wants:
+            if field in TERMS and field not in negotiable:
+                out.append(
+                    f"they would like a change to {TERMS[field]}: it is fixed in this agreement, say so kindly and "
+                    "point to what we do give"
+                )
+            elif field in TERMS and wanted and field in wanted[0]:
+                out.append(
+                    f"they said a change to {TERMS[field]} would help them: our proposal now includes an option "
+                    "with exactly that, point them to it"
+                )
         rebuttals = s.playbook.get("rebuttals") or []
         if s.argument and s.argument <= len(rebuttals) and rebuttals[s.argument - 1]:
             out.append(
@@ -445,6 +550,9 @@ class Negotiator:
             s.last_sheet = sheets[0]["terms"]
             s.last_reply = last
             s.asks = asks(last.get("body"))
+            s.heard = feedback(last.get("body"))
+            s.counted |= s.heard[0]
+            s.dismissed |= s.heard[1]
             self.read_signals(s, last.get("body"))
             if self.briefs is not None and status not in DONE:
                 self.listen(s, last.get("body"))
@@ -476,7 +584,8 @@ class Negotiator:
         sheets = [eco.at_price(s.terms, price)]
         if not s.ours and s.trades:
             sheets += safe(lambda: self.trade_sheets(s, sheets[0]), [])[:2]
-        return self.send(s, sheets, claims, events, theirs)
+        wanted = safe(lambda: self.want_sheet(s, sheets[0]), []) if s.ours and s.wants else []
+        return self.send(s, sheets + wanted, claims, events, theirs, wanted)
 
     def moves_left(self, s, events):
         """Messages we may still send: the arena counts a late message as a round too."""
@@ -491,8 +600,6 @@ class Negotiator:
         conceded = (s.theirs[-2] - theirs) / s.theirs[-2] if len(s.theirs) > 1 else 0.0
         fraction = FRACTION * (HOLD if s.tactic == "hold" else 1.0)
         price = step(last, theirs, conceded, len(s.ours) == 1, fraction, s.budget, sum(s.gaps), s.term_change)
-        if s.tactic == "close_in":
-            price = min(max(price, last + CLOSE_IN * (theirs - last)), theirs * 0.998)
         return round(max(price, last), 2), LATER_CLAIMS + (s.tactic == "argue")  # an argument gets evidence
 
     def finish(self, s, sheets, events, theirs, left):
@@ -517,7 +624,9 @@ class Negotiator:
 
     def pick(self, s, n, threads):
         """The next unused claims for this supplier: in an RFQ the cheapest rival offer first (a new
-        offer is a new argument every round), then its own claims, strongest first."""
+        offer is a new argument every round), then its own claims, strongest first. Its feedback
+        steers the rest: a kind of evidence it counted comes before the others, a kind it waved
+        off and never counted is not cited again."""
         out = []
         rivals = []
         for other, events in threads.items():
@@ -528,12 +637,21 @@ class Negotiator:
                 price = self.their_price(s, t)
                 if price < s.theirs[-1]:
                     rivals.append((price, rival_offer(other, oid, t["unit_price"])))
-        pool = [c for _, c in sorted(rivals, key=lambda r: r[0])[:1]] + s.claims
+        waved_off = s.dismissed - s.counted
+        own = [c for c in s.claims if c["kind"] not in waved_off]
+        own.sort(key=lambda c: c["kind"] not in s.counted)  # stable: the planned order within each group
+        pool = [c for _, c in sorted(rivals, key=lambda r: r[0])[:1]] + own
+        selected_kinds = set()
         for c in pool:
             key = [(s.sid, i) if c.get("rival") else i for i in c["ids"]]
             if any(k in self.used for k in key):
                 continue
+            # Bundle forecast IDs often express the same volume story. One forecast argument
+            # per message avoids duplicate claim checks while leaving other evidence available.
+            if c["kind"] == "forecast" and c["kind"] in selected_kinds:
+                continue
             out.append(c)
+            selected_kinds.add(c["kind"])
             if len(out) >= n:
                 break
         return out
@@ -556,13 +674,13 @@ class Negotiator:
         content = base64.b64encode("\n".join(lines).encode()).decode()
         return [{"name": "forecast.csv", "type": "csv", "content_b64": content}]
 
-    def send(self, s, sheets, claims, events, theirs):
+    def send(self, s, sheets, claims, events, theirs, wanted=()):
         first = not s.ours
         moved = len(s.theirs) > 1 and s.theirs[-1] < s.theirs[-2] - 0.005
         price = sheets[0]["unit_price"]
         keys = [(s.sid, i) if c.get("rival") else i for c in claims for i in c["ids"]]
-        s.pending = {"state": s.prev_state, "keys": keys}
-        statements = writer.statements(self.case, s, sheets)
+        s.pending = {"state": s.prev_state, "keys": keys, "asks": list(s.asks)}
+        statements = writer.statements(self.case, s, sheets, first=first)
         attachments = self.attachments(s)
         if s.state not in ("mirror",):
             s.ours.append(price)
@@ -570,7 +688,7 @@ class Negotiator:
             s.pending["appended"] = True
         tone = "warm" if s.prof.get("warm", True) else "friendly and businesslike"
         traded = any(n["what"] == "clause_trade" for n in self.notes)
-        facts = self.team_facts(s, first, len(sheets) > 1 and s.state == "open")
+        facts = self.team_facts(s, first, first and len(sheets) > 1 and s.state == "open", wanted)
         facts += writer.facts(self.case, s, claims, moved, statements, attachments, traded)
         para = llm.paragraph(
             self.complete,
@@ -616,22 +734,27 @@ class Negotiator:
         if not s or not s.ours or not s.terms:
             return {"message": writer.keepalive_message(events)}
         sheets = [eco.at_price(s.terms, s.ours[-1])]
-        body = writer.email(self.case, sheets, [], [], warm=s.prof.get("warm", True))
+        statements = writer.statements(self.case, s, sheets)
+        attachments = self.attachments(s)
+        s.pending = {"state": s.state, "keys": [], "asks": list(s.asks)}
+        body = writer.email(self.case, sheets, [], statements, warm=s.prof.get("warm", True))
         self.note(sid, "fallback", ours=s.ours[-1])
-        return {
-            "message": {
-                "subject": writer.reply_subject(events, self.case),
-                "body": body,
-                "term_sheets": [{"terms": t} for t in sheets],
-                "refs": [],
-            }
+        message = {
+            "subject": writer.reply_subject(events, self.case),
+            "body": body,
+            "term_sheets": [{"terms": t} for t in sheets],
+            "refs": [],
         }
+        if attachments:
+            message["attachments"] = attachments
+        return {"message": message}
 
     def commit(self, sid):
         """The message reached the supplier: its claims are spent."""
         s = self.sides[sid]
         if s.pending:
             self.used.update(s.pending["keys"])
+            s.asks = [ask for ask in s.asks if ask not in s.pending.get("asks", [])]
             s.pending = None
 
     def rollback(self, sid):

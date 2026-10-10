@@ -10,7 +10,7 @@ from arena_kit.client import ArenaError
 from arena_kit.sim import load_cases
 
 from buyer import economics as eco
-from buyer import llm, runner
+from buyer import llm, runner, writer
 from buyer.policy import Negotiator, Side
 
 
@@ -138,7 +138,7 @@ def test_writer_budget_leaves_time_for_every_live_clock():
     # a: 25 s left; b: must still get a message after a 10 s send, 15 s; c: 35 s
     assert runner.writer_budget("a", replied, ["a", "b", "c"], 10, now=30) == pytest.approx(15)
     assert runner.writer_budget("a", replied, ["a"], 10, now=0) == llm.TIMEOUT_S  # capped
-    assert runner.writer_budget("a", replied, ["a", "b"], 10, now=44) < llm.MIN_S  # no model
+    assert runner.writer_budget("a", replied, ["a", "b"], 10, now=44) < llm.MIN_S  # template only
     assert runner.writer_budget("a", replied, ["a", "b"], 10, now=0) == llm.TIMEOUT_S
 
 
@@ -155,6 +155,29 @@ def test_paragraph_is_bounded_by_wall_clock():
     assert time.monotonic() - t0 < 2.8
     assert llm.paragraph(slow, "brief", 1.0) is None  # no time: not even called
     assert len(calls) == 1
+
+
+@pytest.mark.parametrize(
+    ("text", "reason"),
+    [
+        ("We can move by 5 percent.", "number_or_data_id"),
+        ("We have no alternative.", "restricted_negotiation_information"),
+        ("x" * 901, "over_900_characters"),
+        ("", "empty"),
+    ],
+)
+def test_rejected_paragraphs_log_a_safe_reason_and_use_the_template(text, reason, caplog):
+    assert llm.paragraph(lambda system, brief: text, "brief") is None
+    assert f"writer paragraph rejected: {reason}; template fallback" in caplog.text
+    if text:
+        assert text[:100] not in caplog.text
+
+
+def test_first_message_confirms_the_binding_volume_even_before_a_supplier_asks():
+    case, terms = s01()
+    side = Side("sup:a")
+    side.std = {"volume_per_year": case["buyer"]["need_per_year"]}
+    assert "binding volume" in writer.statements(case, side, [terms], first=True)[0].lower()
 
 
 def test_a_bundle_has_no_should_cost():

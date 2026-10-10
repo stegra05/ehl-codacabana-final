@@ -8,7 +8,7 @@ import logging
 import os
 import re
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait
 
 import httpx
 
@@ -23,14 +23,23 @@ FORBIDDEN = re.compile(
     r"walk away|other options|last chance|desperate|must close|time pressure|target price",
     re.I,
 )
+NUMBER_OR_ID = re.compile(r"\d|\b(?:idx|quote|offer|sc|qn|po|cost|fc|news|doc|ctr):", re.I)
+LEAK = re.compile(
+    r"urgent|urgency|deadline|budget|no alternative|walk away|other options|last chance|"
+    r"desperate|must close|time pressure|target price",
+    re.I,
+)
 
 SYSTEM = """You are a senior buyer at Hollerau Pumpenwerke, a German pump maker, writing to a supplier.
-Write ONLY the middle paragraph of our reply e-mail: 2 to 4 sentences, plain text, no greeting, no
+Write ONLY the middle paragraph of our reply e-mail: 3 to 5 sentences, plain text, no greeting, no
 sign-off, no lists.
 
 In it:
-- answer the supplier's last e-mail like a thoughtful person: respond to what it asked and to the
-  reasons it gave, using only the facts listed under WHAT WE CAN SAY;
+- start from what the supplier just wrote: the first lines under WHAT WE CAN SAY say what it
+  told us (what it wrote, which of our points it counted or waved off, what would help it); answer
+  those first and specifically, so it sees its feedback shaped our reply;
+- respond to what it asked and to the reasons it gave, using only the facts listed under WHAT WE
+  CAN SAY;
 - acknowledge its situation where the notes give one (for example cash needs, full capacity, rising
   costs, a long relationship), sincerely and briefly;
 - if it asks for something we cannot give, say so kindly and point to what we do offer;
@@ -71,15 +80,35 @@ def submit(complete, system, user):
 def read_json(future, timeout=TIMEOUT_S):
     """A subagent's answer as a dict within `timeout` seconds, or None (no model, late, broken, not
     JSON). The caller clamps every value: nothing a model returns binds us unchecked."""
-    if future is None or timeout <= 0:
-        return None
-    try:
-        text = future.result(timeout=timeout) or ""
-        out = json.loads(text[text.index("{") : text.rindex("}") + 1])
-    except Exception as e:  # noqa: BLE001 - a slow or broken model must not cost the move
-        log.warning("subagent failed: %r", e)
-        return None
-    return out if isinstance(out, dict) else None
+    return read_many_json({"subagent": future}, timeout).get("subagent")
+
+
+def read_many_json(futures, timeout=TIMEOUT_S):
+    """Read a group against one shared deadline, retaining every response ready by then.
+
+    Waiting for futures one at a time let the first slow subagent consume the whole stage and
+    hide answers that had already completed. Queued work is cancelled when possible.
+    """
+    futures = {name: future for name, future in futures.items() if future is not None}
+    if not futures:
+        return {}
+    done, pending = wait(futures.values(), timeout=max(0.0, timeout))
+    by_future = {future: name for name, future in futures.items()}
+    out = {name: None for name in futures}
+    for future in pending:
+        future.cancel()
+        log.warning("subagent timeout: %s", by_future[future])
+    for future in done:
+        name = by_future[future]
+        try:
+            text = future.result() or ""
+            raw = json.loads(text[text.index("{") : text.rindex("}") + 1])
+            out[name] = raw if isinstance(raw, dict) else None
+            if out[name] is None:
+                log.warning("subagent invalid response: %s (not an object)", name)
+        except Exception as e:  # noqa: BLE001 - a broken model must not cost the move
+            log.warning("subagent invalid response: %s (%s)", name, type(e).__name__)
+    return out
 
 
 def ask_json(complete, system, user, timeout=TIMEOUT_S):
@@ -91,8 +120,9 @@ def paragraph(complete, brief, timeout=TIMEOUT_S):
     model, no time, late, broken or unsafe)."""
     if complete is None:
         return None
+    timeout = max(0.0, timeout)
     if timeout < MIN_S:
-        log.warning("writer skipped: %.1fs left on the clocks", timeout)
+        log.warning("writer skipped: %.1fs available; template fallback", timeout)
         return None
     t0 = time.monotonic()
     try:
@@ -101,8 +131,20 @@ def paragraph(complete, brief, timeout=TIMEOUT_S):
         log.warning("writer model failed after %.1fs: %s", time.monotonic() - t0, e)
         return None
     text = " ".join(text.split())
-    if not text or len(text) > 900 or FORBIDDEN.search(text):
-        log.warning("writer paragraph dropped: %r", text[:200])
+    if not text:
+        reason = "empty"
+    elif len(text) > 900:
+        reason = "over_900_characters"
+    elif NUMBER_OR_ID.search(text):
+        reason = "number_or_data_id"
+    elif LEAK.search(text):
+        reason = "restricted_negotiation_information"
+    elif FORBIDDEN.search(text):
+        reason = "restricted_content"
+    else:
+        reason = None
+    if reason:
+        log.warning("writer paragraph rejected: %s; template fallback", reason)
         return None
     log.info("writer paragraph in %.1fs", time.monotonic() - t0)
     return text

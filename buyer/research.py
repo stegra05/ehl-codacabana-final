@@ -312,7 +312,7 @@ def briefs(case, pkg, complete, budget_s=BUDGET_S):
                 system = SPECIALIST.format(name=group, scope=scope, goal=goal)
                 jobs[sid, group] = llm.submit(complete, system, f"{head}\n\nSUPPLIER {sid}\n{data}")
     stage = min(end, time.monotonic() + STAGE_S)
-    found = {key: llm.read_json(f, stage - time.monotonic()) for key, f in jobs.items()}
+    found = llm.read_many_json(jobs, stage - time.monotonic())
     lessons = memory.recall(case)
     second = {}
     for sid in suppliers:
@@ -336,24 +336,30 @@ def briefs(case, pkg, complete, budget_s=BUDGET_S):
         )
         second[sid] = (findings, user, llm.submit(complete, LEAD, user), llm.submit(complete, rehearsal.SUPPLIER, user))
     stage = min(end, time.monotonic() + STAGE_S)
+    answers = llm.read_many_json(
+        {
+            (sid, role): f
+            for sid, (_, _, lead, supplier) in second.items()
+            for role, f in (("lead", lead), ("supplier", supplier))
+        },
+        stage - time.monotonic(),
+    )
     third = {}
-    for sid, (findings, user, lead, supplier) in second.items():
-        strategy = llm.read_json(lead, stage - time.monotonic())
-        view = rehearsal.supplier_view(llm.read_json(supplier, stage - time.monotonic()))
+    for sid, (findings, user, _, _) in second.items():
+        view = rehearsal.supplier_view(answers.get((sid, "supplier")))
         buyer = None
         if view["arguments"]:  # the demo bidding's second half: our side answers its arguments
             buyer = llm.submit(complete, rehearsal.BUYER, f"{user}\n\n{rehearsal.exchange(view)}")
-        third[sid] = (findings, strategy, view, buyer)
+        third[sid] = (findings, answers.get((sid, "lead")), view, buyer)
     stage = min(end, time.monotonic() + STAGE_S)
+    rebuttals = llm.read_many_json({sid: buyer for sid, (_, _, _, buyer) in third.items()}, stage - time.monotonic())
     out = {}
-    for sid, (findings, strategy, view, buyer) in third.items():
+    for sid, (findings, strategy, view, _) in third.items():
         if strategy is None:
             continue
         out[sid] = {
             **clamp(strategy, case),
-            "playbook": rehearsal.playbook(
-                view, llm.read_json(buyer, stage - time.monotonic()), any(findings.values())
-            ),
+            "playbook": rehearsal.playbook(view, rebuttals.get(sid), any(findings.values())),
             "findings": {g: f.get("findings") for g, f in findings.items() if f.get("findings")},
         }
     log.info("%s research in %.1fs: %s", case["case_id"], time.monotonic() - t0, json.dumps(out, ensure_ascii=False))
