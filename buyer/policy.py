@@ -61,6 +61,7 @@ class Side:
         self.prev_state = "open"  # the state before the message in flight
         self.pending = None  # the message in flight: what to undo if it times out
         self.tried = set()  # (field, value) we switched away from
+        self.term_change = False  # its last counter changed our non-price terms
         self.last_reply = None
 
 
@@ -98,10 +99,6 @@ class Negotiator:
             ratio = max(ratio, 0.95)  # its list price does not move far; a deep cut only costs patience
         if "capacity_full" in signals:
             ratio, s.budget = max(ratio, 0.93), min(s.budget, 0.16)
-        if "approval_2pct" in signals:
-            # bigger steps go to its pricing committee: these suppliers ended early after deep
-            # anchors (P02, P07, P10, P18); a mild anchor and small gaps keep them conceding
-            ratio, s.budget = max(ratio, 0.92), min(s.budget, 0.18)
         if near_cost:
             ratio, s.budget = max(ratio, 0.97), min(s.budget, 0.14)
         current = case["buyer"].get("current_unit_price")
@@ -224,7 +221,9 @@ class Negotiator:
         s.std = standard_terms(events) or s.std
         fresh = s.last_reply is not last
         if fresh:
+            terms_before = dict(s.terms)
             self.adopt(s, sheets)
+            s.term_change = any(sheets[0]["terms"].get(k, v) != v for k, v in terms_before.items() if k != "unit_price")
             s.theirs.append(self.their_price(s, sheets[0]["terms"]))
             s.last_reply = last
         theirs = s.theirs[-1]
@@ -252,8 +251,10 @@ class Negotiator:
         gap = (theirs - last) / theirs
         conceded = (s.theirs[-2] - theirs) / s.theirs[-2] if len(s.theirs) > 1 else 0.0
         share = FRACTION
-        if len(s.ours) == 1 and conceded >= DEEP:
-            share = 0.08  # a deep floor: it moves fast on its own; meeting it now would stop it
+        if len(s.ours) == 1 and conceded >= DEEP and not s.term_change:
+            # a deep floor: a pure price drop this large means it moves fast on its own (job shops,
+            # P05, D02); a drop that came with terms it added (an index clause, P08, P18) is not one
+            share = 0.08
         left = max(0.0, s.budget - sum(s.gaps))
         new_gap = min(gap * (1 - share), left / 2)
         if s.budget < 0.2:  # a touchy supplier: small, steady gaps
