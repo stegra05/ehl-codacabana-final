@@ -17,10 +17,17 @@ reader design that is not merged. The architecture diagram is on page 1 of
 | `buyer/economics.py` | C of a sheet; the accept gate (`deal_cost`); what a sheet is worth to the supplier (`supplier_value` plus overtime for a faster delivery than it quoted); term planning: every allowed combination priced at the supplier's own valuation, lowest C, ties to the supplier's side; the relationship-optimal price |
 | `buyer/claims.py` | claim bank: should-cost below its price, our order prices, each cost driver's largest fall over any window up to 12 months, notice period, forecast, scorecard, case rival quotes, hedge and open-book notes; rival offers in an RFQ |
 | `buyer/personas.py` | owner type, persona signals from notes, letters, quote remarks and news, cost of money |
-| `buyer/policy.py` | per thread: anchor by goal and persona, 30 % of the gap per round, held low after a deep first concession, patience budget for near-cost, fully booked and relationship-goal suppliers; adopts its counter terms when they cost us less, mirrors a better alternative, takes a required index clause; claims 3 in round 1, then 1 per round; close on final offer, agreement or round limit |
+| `buyer/policy.py` | per thread: anchor by goal and persona, 30 % of the gap per round, held low after a deep first concession, patience budget for near-cost, fully booked and relationship-goal suppliers; compares complete quoted packages including index clauses against the current plan at supplier-equivalent value, switches once to the best eligible package, mirrors only an unchanged valid quoted package; claims 3 in round 1, then 1 per round; close on final offer, agreement or round limit |
 | `buyer/reader.py` | the supplier's asks from its fixed sentences (volume, proof, faster payment, our target); no model |
 | `buyer/writer.py`, `buyer/llm.py` | the e-mail: a model paragraph that answers the supplier's last e-mail and its asks (no digits, IDs or leaks, else the template), then code sentences with figures (the binding volume), claims and the proposal from code; the forecast rows as a CSV when proof is asked |
 | `buyer/runner.py` | one message at a time per session, to the thread whose 60 s clock has run longest; keepalive questions for finished bidders; rollback when a send times out; a guarded move resends our last sheet; the model's time budgeted so every live clock still gets a message; a terminal reply ends the case; accept the cheapest standing sheet that keeps the must-haves and beats the alternative (relationship charge included), after a refused close decide again on what stands; Live Final waves that never raise and resume a crashed case |
+
+Quoted alternatives must keep must-haves, fixed terms and the alternative-cost gate.
+Outgoing mirrors preserve the evaluated effective package without snapping options.
+After reading a new reply, an active relationship target is recalculated for the
+current package and supplier estimate. Fixed-payment answers are code-written even
+without a model; forecast prose is tied to claims actually cited in that message.
+Supplier-equivalent values remain estimates, not observed acceptance thresholds.
 
 ## Principle
 

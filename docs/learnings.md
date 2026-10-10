@@ -11,6 +11,33 @@ session or data ID) and what it means for the agent. Tags: `arena` seen in a ses
 the data package, `rules` from `docs/api.md` or the kit's code. Untested ideas go under
 Hypotheses. Correct or delete entries that turn out wrong.
 
+## Complete-package evaluation, 10 October evening
+
+- 2026-10-10 `arena` Practice session `9b63768bad5febe5` offered a higher-price
+  alternative (5.40 with a 5% deadband) whose total cost was EUR 259,116.84,
+  below the 5.30 / zero-deadband standing quote at EUR 259,970.83. This is a
+  quoted-package comparison, not proof of an achievable later negotiation score.
+  Consequence: evaluate index alternatives together with every other quoted term.
+- 2026-10-10 `rules` `complete_offer` snaps values and can replace an explicit
+  allowed `None` with the first option. Mirroring must validate the quoted domain
+  directly and preserve the effective package, including fixed terms and defaults.
+- 2026-10-10 `rules` Local simulator comparison against main `3c02621`: 24 case
+  definitions, 12 scenarios, with and without package data, 576 paired runs.
+  Eight scores improved, 568 stayed equal, none worsened; simulated mean
+  0.661334 to 0.662484. All improvements were variants of P01. Another 48 pairs
+  renamed case IDs and preserved decisions. Both variants had 409 matrix deals,
+  zero exceptions and zero invalid accepted deals. Both still emitted invalid
+  proposals in 52 stress runs (48 impossible constraints, four payment floors).
+  These preexisting proposal failures remain unresolved. No hosted sessions or
+  model calls were used. This is regression evidence, not hosted score evidence
+  or proof against overfitting. Local reproducibility bundle:
+  `/private/tmp/general-offer-pr-evidence` (not a repository dependency).
+- 2026-10-10 `rules` A rejected local candidate adopted any cheaper successive
+  counter even when it surrendered valuable non-price conditions. It worsened
+  225 of 576 simulations. The retained change requires the complete quoted
+  package to beat the current plan at supplier-equivalent value. No new anchors,
+  patience thresholds, case/supplier branches or hidden score targets were added.
+
 ## Takeaways for the agent
 
 1. **Stay below the supplier's counter until the end; it agrees the moment our sheet reaches the
