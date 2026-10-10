@@ -1,0 +1,522 @@
+{
+ "case": "case:P11",
+ "session": "61878e686b092ec3",
+ "briefing": {
+  "constraints": {
+   "negotiable": [
+    "ppm_commitment",
+    "chargeback_eur_per_complaint",
+    "unit_price"
+   ],
+   "options": {
+    "ppm_commitment": [
+     300,
+     800,
+     1500,
+     2500
+    ],
+    "chargeback_eur_per_complaint": [
+     0,
+     150,
+     300,
+     500
+    ]
+   },
+   "fixed": {
+    "payment_days": 60,
+    "lead_time_days": 56,
+    "volume_per_year": 15900,
+    "contract_months": 12,
+    "effective_date": "2027-01-01",
+    "index_clause": null,
+    "incoterm": "FCA",
+    "tooling_eur": 0
+   },
+   "must_haves": [
+    {
+     "field": "ppm_commitment",
+     "op": "<=",
+     "value": 1500
+    }
+   ],
+   "round_limit": 10
+  },
+  "economics": {
+   "goal": "quality_first",
+   "type": "quality",
+   "need_per_year": 15900,
+   "horizon_years": 1.0,
+   "current_unit_price": 45.15,
+   "fallback_unit_price": 47.86,
+   "alternative": "quote",
+   "c_alt": 894383.19
+  },
+  "market": {
+   "part:310020": {
+    "quotes": [
+     {
+      "id": "quote:7300011",
+      "supplier_id": "sup:70140",
+      "quote_date": "2026-09-13",
+      "unit_price": 45.15,
+      "price_unit": 1,
+      "lead_time_days": 56,
+      "payment_days": 10
+     },
+     {
+      "id": "quote:7200011",
+      "supplier_id": "sup:70190",
+      "quote_date": "2026-09-12",
+      "unit_price": 53.56,
+      "price_unit": 1,
+      "lead_time_days": 42,
+      "payment_days": 30
+     },
+     {
+      "id": "quote:7100007",
+      "supplier_id": "sup:70140",
+      "quote_date": "2025-09-20",
+      "unit_price": 49.2,
+      "price_unit": 1,
+      "lead_time_days": 64,
+      "payment_days": 60
+     },
+     {
+      "id": "quote:7100008",
+      "supplier_id": "sup:70190",
+      "quote_date": "2025-09-20",
+      "unit_price": 57.4,
+      "price_unit": 1,
+      "lead_time_days": 44,
+      "payment_days": 30
+     }
+    ],
+    "prices": [
+     {
+      "supplier_id": "sup:70140",
+      "valid_from": "2026-01-01",
+      "price": 45.15,
+      "price_unit": 1
+     },
+     {
+      "supplier_id": "sup:70140",
+      "valid_from": "2025-01-01",
+      "price": 46.33,
+      "price_unit": 1
+     },
+     {
+      "supplier_id": "sup:70140",
+      "valid_from": "2024-01-01",
+      "price": 46.33,
+      "price_unit": 1
+     },
+     {
+      "supplier_id": "sup:70140",
+      "valid_from": "2023-01-01",
+      "price": 49.05,
+      "price_unit": 1
+     }
+    ],
+    "should_cost": [],
+    "drivers": [
+     {
+      "series": "PPI-C241",
+      "weight": 0.26,
+      "from": "2025-08",
+      "to": "2026-08",
+      "change": 0.0654
+     },
+     {
+      "series": "PPI-D351",
+      "weight": 0.06,
+      "from": "2025-08",
+      "to": "2026-08",
+      "change": -0.0372
+     },
+     {
+      "series": "LCI-C",
+      "weight": 0.31,
+      "from": "2025-06",
+      "to": "2026-06",
+      "change": 0.0266
+     }
+    ]
+   }
+  }
+ },
+ "stance": {},
+ "plans": {
+  "sup:70140": {
+   "importance": {
+    "tier": "strategic",
+    "score": 5,
+    "why": [
+     "our only active source for this part",
+     "owns the tooling",
+     "an A-class supplier",
+     "a large share of our spend"
+    ],
+    "spend_share": 0.0223
+   },
+   "full_cost": 37.6,
+   "cost_confidence": "low",
+   "near_cost": false,
+   "margin": 0.04,
+   "floor": 39.1,
+   "floor_binding": false,
+   "floor_terms": {
+    "ppm_commitment": 300,
+    "chargeback_eur_per_complaint": 0
+   },
+   "c_open": 817578.0,
+   "c_start": 773932.5,
+   "c_floor": 648322.5,
+   "room": 125610.0,
+   "capture": 0.75,
+   "capture_why": [
+    "goal base 0.65",
+    "usually moves in a negotiation"
+   ],
+   "target_c": 679725.0,
+   "target": null,
+   "opening_gap": 0.1,
+   "opening_min": 42.3,
+   "opening_max": null,
+   "stance": {},
+   "justified": null,
+   "record": {
+    "events": 6,
+    "asked_pct": -0.18,
+    "settled_pct": -2.37,
+    "moved_pct": 2.18
+   },
+   "we_pay_late_days": 10.4,
+   "levers": {
+    "ppm_commitment": {
+     "300": -43645.5,
+     "800": -40068.0,
+     "1500": -35059.5,
+     "2500": -27904.5
+    },
+    "chargeback_eur_per_complaint": {
+     "0": 0.0,
+     "150": -15264.0,
+     "300": -30528.0,
+     "500": -45792.0
+    }
+   }
+  }
+ },
+ "notes": [
+  {
+   "t": 1791662277.6,
+   "supplier": null,
+   "what": "briefing",
+   "constraints": {
+    "negotiable": [
+     "ppm_commitment",
+     "chargeback_eur_per_complaint",
+     "unit_price"
+    ],
+    "options": {
+     "ppm_commitment": [
+      300,
+      800,
+      1500,
+      2500
+     ],
+     "chargeback_eur_per_complaint": [
+      0,
+      150,
+      300,
+      500
+     ]
+    },
+    "fixed": {
+     "payment_days": 60,
+     "lead_time_days": 56,
+     "volume_per_year": 15900,
+     "contract_months": 12,
+     "effective_date": "2027-01-01",
+     "index_clause": null,
+     "incoterm": "FCA",
+     "tooling_eur": 0
+    },
+    "must_haves": [
+     {
+      "field": "ppm_commitment",
+      "op": "<=",
+      "value": 1500
+     }
+    ],
+    "round_limit": 10
+   },
+   "economics": {
+    "goal": "quality_first",
+    "type": "quality",
+    "need_per_year": 15900,
+    "horizon_years": 1.0,
+    "current_unit_price": 45.15,
+    "fallback_unit_price": 47.86,
+    "alternative": "quote",
+    "c_alt": 894383.19
+   }
+  },
+  {
+   "t": 1791662277.8,
+   "supplier": null,
+   "what": "prep",
+   "stance": {},
+   "steps": [],
+   "took_s": 0.2
+  },
+  {
+   "t": 1791662278.8,
+   "supplier": "sup:70140",
+   "what": "plan",
+   "importance": {
+    "tier": "strategic",
+    "score": 5,
+    "why": [
+     "our only active source for this part",
+     "owns the tooling",
+     "an A-class supplier",
+     "a large share of our spend"
+    ],
+    "spend_share": 0.0223
+   },
+   "full_cost": 37.6,
+   "cost_confidence": "low",
+   "near_cost": false,
+   "margin": 0.04,
+   "floor": 39.1,
+   "floor_binding": false,
+   "c_open": 817578.0,
+   "c_start": 773932.5,
+   "c_floor": 648322.5,
+   "room": 125610.0,
+   "capture": 0.75,
+   "capture_why": [
+    "goal base 0.65",
+    "usually moves in a negotiation"
+   ],
+   "target_c": 679725.0,
+   "target": null,
+   "opening_gap": 0.1,
+   "opening_min": 42.3,
+   "opening_max": null,
+   "stance": {},
+   "we_pay_late_days": 10.4,
+   "justified": null,
+   "asked": null
+  },
+  {
+   "t": 1791662278.8,
+   "supplier": "sup:70140",
+   "what": "setup",
+   "quote": {
+    "unit_price": 47.0,
+    "ppm_commitment": 6400
+   },
+   "std": {
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": "private",
+    "country": "PL",
+    "category": "castings",
+    "signals": [
+     "cash_need"
+    ],
+    "rate": 0.12,
+    "warm": true
+   },
+   "full_cost": null,
+   "near_cost": false,
+   "terms": {
+    "ppm_commitment": 300,
+    "chargeback_eur_per_complaint": 0,
+    "unit_price": 42.3
+   },
+   "quote_at_terms": 47.0,
+   "anchor": 42.3,
+   "target": null,
+   "floor": null,
+   "budget": 0.4,
+   "claims": [
+    "Electricity producer prices changed -3.7% from 2025-08 to 2026-08 (idx:PPI-D351@2025-08, idx:PPI-D351@2026-08).",
+    "Our last 3 orders for this part were at EUR 45.15 (po:4500014429-10, po:4500014373-10, po:4500014306-10).",
+    "Our forecast for this part is up 20.0% (fc:310020@2026-09).",
+    "Your deliveries ran at 2376 ppm in 2026Q3 (sc:70140@2026Q3)."
+   ]
+  },
+  {
+   "t": 1791662279.0,
+   "supplier": "sup:70140",
+   "what": "send",
+   "state": "open",
+   "theirs": 47.0,
+   "ours": 42.3,
+   "claims": [
+    "index",
+    "order_history",
+    "forecast"
+   ],
+   "rounds": [
+    10,
+    10,
+    0.3
+   ],
+   "asks": [],
+   "attached": []
+  },
+  {
+   "t": 1791662304.6,
+   "supplier": "sup:70140",
+   "what": "send",
+   "state": "open",
+   "theirs": 46.5,
+   "ours": 43.56,
+   "claims": [
+    "scorecard"
+   ],
+   "rounds": [
+    9,
+    9,
+    0.3
+   ],
+   "asks": [
+    "payment"
+   ],
+   "attached": []
+  },
+  {
+   "t": 1791662326.2,
+   "supplier": "sup:70140",
+   "what": "send",
+   "state": "open",
+   "theirs": 46.0,
+   "ours": 44.29,
+   "claims": [],
+   "rounds": [
+    8,
+    8,
+    0.3
+   ],
+   "asks": [
+    "payment"
+   ],
+   "attached": []
+  },
+  {
+   "t": 1791662340.2,
+   "supplier": "sup:70140",
+   "what": "send",
+   "state": "open",
+   "theirs": 45.5,
+   "ours": 44.65,
+   "claims": [],
+   "rounds": [
+    7,
+    7,
+    0.3
+   ],
+   "asks": [
+    "payment"
+   ],
+   "attached": []
+  },
+  {
+   "t": 1791662360.8,
+   "supplier": "sup:70140",
+   "what": "send",
+   "state": "open",
+   "theirs": 45.5,
+   "ours": 44.91,
+   "claims": [],
+   "rounds": [
+    6,
+    6,
+    0.3
+   ],
+   "asks": [
+    "payment"
+   ],
+   "attached": []
+  },
+  {
+   "t": 1791662380.6,
+   "supplier": "sup:70140",
+   "what": "send",
+   "state": "open",
+   "theirs": 45.5,
+   "ours": 45.09,
+   "claims": [],
+   "rounds": [
+    5,
+    5,
+    0.3
+   ],
+   "asks": [
+    "payment"
+   ],
+   "attached": []
+  },
+  {
+   "t": 1791662398.1,
+   "supplier": "sup:70140",
+   "what": "send",
+   "state": "open",
+   "theirs": 45.5,
+   "ours": 45.21,
+   "claims": [],
+   "rounds": [
+    4,
+    4,
+    0.3
+   ],
+   "asks": [
+    "payment"
+   ],
+   "attached": []
+  },
+  {
+   "t": 1791662411.8,
+   "supplier": "sup:70140",
+   "what": "accept",
+   "c": 750082.5,
+   "offer": "offer:70140-7"
+  }
+ ],
+ "result": {
+  "deal": true,
+  "supplier_id": "sup:70140",
+  "terms": {
+   "payment_days": 60,
+   "lead_time_days": 56,
+   "volume_per_year": 15900,
+   "contract_months": 12,
+   "effective_date": "2027-01-01",
+   "index_clause": null,
+   "incoterm": "FCA",
+   "tooling_eur": 0.0,
+   "ppm_commitment": 300,
+   "chargeback_eur_per_complaint": 0.0,
+   "unit_price": 45.5
+  },
+  "c_open": 817578.0,
+  "c_deal": 750082.5,
+  "c_best": 722500.02,
+  "score": 0.7098962346486538
+ },
+ "assessment": {
+  "sup:70140": {
+   "c_floor": 648322.5,
+   "c_best": 722500.02,
+   "floor_error_pct": -10.27,
+   "cost_confidence": "low",
+   "c_deal": 750082.5,
+   "captured": 0.537
+  }
+ }
+}

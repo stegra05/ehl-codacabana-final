@@ -15,7 +15,7 @@ from pathlib import Path
 from arena_kit.client import ArenaError
 from arena_kit.play import ENDED, RemoteTable, fetch_documents, latest, moves_left, quota_used_up
 
-from . import llm
+from . import briefing, llm, prep
 from .policy import Negotiator, Side, deadline_near, keepalive_message
 
 log = logging.getLogger("buyer")
@@ -24,6 +24,9 @@ KEEPALIVE_AFTER_S = 35  # a finished thread gets a question this long after the 
 CLOCK_S = 60  # each thread's clock, from the supplier's reply
 MARGIN_S = 5  # reserved on every clock for building and delivering the message
 FIRST_SEND_S = 10  # what a send (the supplier's reply) takes until we have measured one
+FIRST_ROUND_S = 25  # a round (our message built and sent, its reply) until we have measured one
+CLOSE_MARGIN_S = 90  # close this long before the wave's cap (the kit's CLOSE_BEFORE_CAP_S)
+ROUND_MARGIN_S = 15  # or the slowest round plus this, if that is longer
 CLOSE_TRIES = 3  # a 409 on the close: read what stands now and decide again
 
 
@@ -35,7 +38,24 @@ def writer_budget(sid, replied, live, send_s, now):
     return min(llm.TIMEOUT_S, *left)
 
 
-def play_case(table, case_id, pkg=None, deadline=None, complete=None):
+def rounds_by_clock(cap, now, round_s, n_open):
+    """Rounds every open thread may still play before we must close: the seconds left over what
+    one round of each open thread takes, since the threads are served one message at a time.
+    None without a cap."""
+    if not cap:
+        return None
+    return max(0.0, cap - CLOSE_MARGIN_S - now) / (round_s * max(1, n_open))
+
+
+def play_case(table, case_id, pkg=None, deadline=None, complete=None, case=None):
+    """Play one case. `case`: its case file from the case list, if known before the session opens:
+    then the preparation agent runs first, while no supplier clock is running."""
+    neg = None
+    if case is not None:
+        neg = Negotiator(case, pkg, complete)
+        out = prep.run(complete, case, pkg, neg.brief)
+        neg.stance = out.get("stance") or {}
+        neg.note(None, "prep", **out)
     opened = time.monotonic()  # the supplier clocks run from their first e-mail, before our setup
     case, threads = table.open(case_id)
     if getattr(table, "done", None):  # resumed a case that had already ended
@@ -43,7 +63,9 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
     for events in threads.values():
         for m in events:
             fetch_documents(table, m)
-    neg = Negotiator(case, pkg, complete)
+    if neg is None:
+        neg = Negotiator(case, pkg, complete)
+    neg.case = neg.bank.case = case
     for sid, events in threads.items():
         try:
             neg.setup(sid, events)
@@ -55,6 +77,7 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
     failed = dict.fromkeys(threads, 0)
     replied = dict.fromkeys(threads, opened)
     send_s = FIRST_SEND_S  # the slowest send so far
+    rounds = []  # seconds per round so far: our message built and sent, its reply
     # round 1 goes out cheapest quote first: if a clock runs out, it is the least promising one's
     order = sorted(threads, key=lambda sid: neg.sides[sid].quote or float("inf"))
     rank = {sid: i for i, sid in enumerate(order)}
@@ -66,7 +89,8 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
     def live(sid):
         return latest(threads[sid]).get("status") not in ENDED
 
-    while not deadline_near(deadline):
+    while not deadline_near(deadline, max(CLOSE_MARGIN_S, max(rounds, default=0) + ROUND_MARGIN_S)):
+        t_round = time.monotonic()
         todo = sorted(open_threads(), key=lambda s: (replied[s], rank[s]))
         waiting = [
             s
@@ -85,8 +109,11 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
         else:
             sid = todo[0]
             budget = writer_budget(sid, replied, [s for s in threads if live(s)], send_s, time.monotonic())
+            cap = deadline() if callable(deadline) else deadline
+            round_s = sum(rounds) / len(rounds) if rounds else FIRST_ROUND_S
+            by_clock = rounds_by_clock(cap, time.time(), round_s, len(todo))
             try:
-                move = neg.move(sid, threads, budget)
+                move = neg.move(sid, threads, budget, by_clock)
             except Exception:  # a field the policy did not expect: the thread must not fall silent
                 log.exception("%s %s: move failed", case_id, sid)
                 failed[sid] += 1
@@ -119,6 +146,7 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
             break
         threads[sid] += [{**message, "from": "buyer"}, reply]
         replied[sid] = time.monotonic()
+        rounds.append(time.monotonic() - t_round)
     if result is None:
         for events in threads.values():  # the latest quote PDFs: standard terms for the close
             for m in events[-2:]:
@@ -152,22 +180,40 @@ def close(table, case_id, neg, threads):
 
 
 def save(session_id, case_id, neg, result):
+    """The run log: the briefing, the preparation agent's stance, every decision, the result and
+    the assessment of our C floor against the C_best the arena reveals."""
     RUNS.mkdir(parents=True, exist_ok=True)
     keep = ("deal", "supplier_id", "terms", "c_open", "c_deal", "c_best", "score")
     path = RUNS / f"{case_id.split(':')[-1]}_{session_id}.json"
-    out = {"case": case_id, "session": session_id, "notes": neg.notes, "result": {k: result.get(k) for k in keep}}
+    assessment = briefing.assess({sid: s.plan for sid, s in neg.sides.items()}, result)
+    if assessment:
+        log.info("%s assessment %s", case_id, assessment)
+    out = {
+        "case": case_id,
+        "session": session_id,
+        "briefing": neg.brief,
+        "stance": neg.stance,
+        "plans": {sid: s.plan for sid, s in neg.sides.items()},
+        "notes": neg.notes,
+        "result": {k: result.get(k) for k in keep},
+        "assessment": assessment,
+    }
     path.write_text(json.dumps(out, indent=1, default=str))
 
 
-def play_all(client, case_ids, pkg=None, parallel=8, complete=None):
-    """Practice or sandbox: many cases at once. {case_id: result or the exception that stopped it}."""
+def play_all(client, case_ids, pkg=None, parallel=8, complete=None, cap=None, cases=None):
+    """Practice or sandbox: many cases at once. {case_id: result or the exception that stopped it}.
+    `cap`: seconds per case, played like a Live Final wave's cap. `cases`: case files by ID, for
+    the preparation agent."""
     used_up = threading.Event()
+    cases = cases or {}
 
     def one(case_id):
         if used_up.is_set():
             return case_id, ArenaError(429, "not started: the practice quota is used up")
         try:
-            return case_id, play_case(RemoteTable(client), case_id, pkg, complete=complete)
+            deadline = time.time() + cap if cap else None
+            return case_id, play_case(RemoteTable(client), case_id, pkg, deadline, complete, cases.get(case_id))
         except ArenaError as e:
             if quota_used_up(e):
                 used_up.set()
@@ -190,7 +236,7 @@ def play_waves(client, pkg=None, waves=5, parallel=10, poll=2.0, complete=None):
     def one(case, deadline):
         for attempt in range(2):
             try:
-                return play_case(RemoteTable(client, case), case["case_id"], pkg, deadline, complete)
+                return play_case(RemoteTable(client, case), case["case_id"], pkg, deadline, complete, case)
             except Exception as e:  # noqa: BLE001 - one broken case must not stop the others
                 log.exception("%s failed (attempt %d)", case["case_id"], attempt + 1)
                 err = e

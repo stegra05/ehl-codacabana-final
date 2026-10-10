@@ -99,15 +99,25 @@ OWNERS = {
 }
 
 
-def brief(case, prof, last_body, facts, tone, question_allowed):
-    """What the model needs for the paragraph: who the supplier is, what it wrote, what we may say."""
+def brief(case, prof, last_body, facts, tone, question_allowed, relationship=None, stance=None):
+    """What the model needs for the paragraph: who the supplier is (and what it is to us), the
+    preparation agent's assessment, what it wrote, what we may say."""
     who = OWNERS.get(prof.get("owner_type"), "a supplier")
     if prof.get("country") and prof.get("country") != "DE":
         who += f" based in {prof['country']}"
+    if relationship:
+        who += f", {relationship}"
     traits = [TRAITS[s] for s in prof.get("signals", []) if s in TRAITS]
+    stance = stance or {}
+    prep = []
+    if stance.get("assessment"):
+        prep.append(f"OUR ASSESSMENT: {stance['assessment']}")
+    if stance.get("values"):
+        prep.append(f"WHAT IT VALUES: {', '.join(stance['values'])}")
     out = [
         f"CASE: {case.get('title')} (we are the buyer; goal: {case['buyer'].get('category_goal')})",
         f"SUPPLIER: {who}." + (f" From our notes: {'; '.join(traits)}." if traits else ""),
+        *prep,
         f"ITS LAST E-MAIL:\n{(last_body or '')[:1800]}",
         "WHAT WE CAN SAY:",
         *[f"- {f}" for f in facts],

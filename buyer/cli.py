@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import statistics
+import time
 from pathlib import Path
 
 from arena_kit import ArenaClient, ArenaError, RemoteTable, play, play_all
@@ -40,6 +41,14 @@ def pull(client, set_):
     print(f"{saved} new sessions in {out}")
 
 
+def case_files(client, set_):
+    """The set's case files by ID (free: no session), for the preparation agent."""
+    try:
+        return {c["case_id"]: c for c in client.cases(set_)}
+    except ArenaError:
+        return {}
+
+
 def main(argv=None):
     load_env()
     ap = argparse.ArgumentParser(prog="buyer")
@@ -50,14 +59,17 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser = functools.partial(sub.add_parser, parents=[verbose])
     data = {"default": os.environ.get("ARENA_DATA"), "help": "data package folder"}
+    cap = {"type": float, "help": "play like a Live Final wave: close this many seconds after the case starts"}
     p = sub.add_parser("play", help="play one case")
     p.add_argument("case_id")
     p.add_argument("--agent", default="buyer", choices=AGENTS)
     p.add_argument("--data", **data)
+    p.add_argument("--cap", **cap)
     r = sub.add_parser("run", help="play every playable case of a set in parallel; final: wave by wave")
     r.add_argument("--set", default="practice", choices=["practice", "sandbox", "final"])
     r.add_argument("--agent", default="buyer", choices=AGENTS)
     r.add_argument("--data", **data)
+    r.add_argument("--cap", **cap)
     r.add_argument("--parallel", type=int, default=8, help="cases at once (at most 10)")
     r.add_argument("--waves", type=int, default=5, help="final: stop after this many waves have closed")
     r.add_argument("--cases", help="practice or sandbox: only these cases, e.g. P01,P08")
@@ -83,7 +95,9 @@ def main(argv=None):
             if naive:
                 result = play(table, args.case_id, naive_factory()())
             else:
-                result = runner.play_case(table, args.case_id, pkg, complete=complete)
+                deadline = time.time() + args.cap if args.cap else None
+                case = case_files(client, "sandbox" if args.case_id.split(":")[-1].startswith("D") else "practice")
+                result = runner.play_case(table, args.case_id, pkg, deadline, complete, case.get(args.case_id))
         except ArenaError as e:  # e.g. not hosted, the quota, a paused key: the arena says why
             raise SystemExit(str(e)) from None
         print(json.dumps(summary(result), indent=2))
@@ -99,14 +113,16 @@ def main(argv=None):
         for case_id, result in out.items():
             print(case_id, result if isinstance(result, Exception) else summary(result))
     else:
-        ids = [c["case_id"] for c in hosted(client.cases(args.set))]
+        listed = client.cases(args.set)
+        ids = [c["case_id"] for c in hosted(listed)]
         if args.cases:
             ids = [i for i in ids if i.split(":")[-1] in args.cases.split(",")]
         parallel = min(args.parallel, 10)
         if naive:
             out = play_all(lambda: RemoteTable(client), ids, naive_factory(), parallel)
         else:
-            out = runner.play_all(client, ids, pkg, parallel, complete=complete)
+            files = {c["case_id"]: c for c in listed}
+            out = runner.play_all(client, ids, pkg, parallel, complete=complete, cap=args.cap, cases=files)
         for case_id, result in out.items():
             print(case_id, result if isinstance(result, Exception) else summary(result))
         scores = [r["score"] for r in out.values() if isinstance(r, dict) and r.get("score") is not None]

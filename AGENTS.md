@@ -61,6 +61,7 @@ supplier bots (LLM personas with hidden economics) and closes one term sheet per
 | `docs/design.md` | the agent we are building: modules, data, policy, build order |
 | `docs/challenge.md`, `api.md`, `submission.md` | Tacto's brief, API and cost formula, hand-in (upstream copies) |
 | `buyer/policy.py`, `runner.py` | the price engine: per-thread policy and the loop that plays a case (`docs/design.md`, Implemented) |
+| `buyer/briefing.py`, `prep.py` | the preparation agent: the case briefing, supplier importance, C floor and plan variables (code); the model's stance loop over the package before the session opens |
 | `buyer/economics.py`, `claims.py`, `personas.py`, `writer.py`, `llm.py` | C and term planning, claim bank, persona signals, e-mail and model paragraph |
 | `buyer/cli.py` | `buyer play`, `buyer run`, `buyer pull` |
 | `tests/` | end to end against `arena-sim`, no network, no model |
@@ -79,6 +80,7 @@ uv sync                                         # install (Python 3.12)
 uv run arena data                               # data package into data/
 uv run arena me                                 # key works? quota left?
 uv run buyer play case:D01 -v                   # sandbox: free
+uv run buyer play case:D01 --cap 480 -v         # played like a Live Final wave (close 90 s before the cap)
 uv run buyer play case:P01 -v                   # practice: costs 1 of the team's 200
 uv run buyer run --set practice --parallel 10   # all hosted practice cases: costs 10
 uv run buyer pull --set practice                # finished sessions -> logs/sessions/

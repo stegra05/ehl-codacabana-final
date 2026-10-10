@@ -272,6 +272,29 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
 
 ## Agent experiments
 
+- 2026-10-10 `arena` **v9 (pacing by the clock, supplier importance, the preparation agent's
+  briefing and stance), 8 practice and 4 sandbox sessions, `logs/practice-v9.log`.** Scores:
+  P01 0.970, P03 0.923, P04 0.860, P07 0.744, P11 0.710, P05 0.762, P10 0.672, P02 0.507 (mean
+  0.768 against 0.779 for the previous bests on the same cases, within the 1 to 2 % supplier
+  noise); D01 0.988 and D02 0.693, identical to the previous engine. Every case was played under
+  `--cap 480`, like a wave. The model endpoint answered 404 in every session (the `.env` model
+  is not served at `api.openai.com`), so the writer used the template and the preparation agent
+  returned no stance: the runs measure the code plan and the pacing, not the model. What the
+  logs show: (1) in P05 the runner planned 4 to 5 rounds per thread (390 s over three threads at
+  25 to 35 s a round) and moved 43 to 50 % of the gap after the deep-floor hold; the case ended
+  by final offers after 3 rounds (166 s), deal 28.50 inside the earlier spread of 27.86 to
+  30.18, so the clock never bound; single-supplier cases get 13 or more rounds by the clock and
+  play the plain 30 % path. (2) The C floor against the revealed C_best: own-plant should-cost
+  plus the sustainable margin lands 2.7 to 3.0 % above C_best (P01, P03; P02 2.5 % in a replay)
+  and above the quote itself for P01, P02 and P17, so it is a reference, never a bound there;
+  the generic German estimate sits 30 % above C_best for the P05 job shops (useless as a floor);
+  80 % of the quote (no estimate) sits 8 to 18 % below C_best (P04, P07, P11, D01). (3) The
+  importance tiers on the hosted cases: strategic P01, P02, P03, P10, P11 (sole source, A-class,
+  spend); important P08; standard the rest. Their effects (anchor at most 10 % below a strategic
+  quote, patience 0.4 / 0.7, a binding floor only for P10 at 26.74) changed no deal: P10 still
+  agreed at 31.60, P02 at 371.88, P11 at 45.50. → The pacing and the plan are safe to ship; the
+  stance loop and the model paragraph need a working endpoint before they can be measured.
+
 - 2026-10-10 `rules` **v8 (robustness and the reader), no quota spent.** All 21 case files
   (the nine never hosted included) and both sandbox cases play through `arena-sim` with the
   agent and no guarded error (`tests/test_cases.py`). New: every move and setup is guarded (a
@@ -372,9 +395,21 @@ shows evidence.
 - 2026-10-10 `rules` Case files of all 21 cases come free from `GET /v1/cases` (no session, no
   quota). Hosted for practice: P01, P02, P03, P04, P05, P07, P08, P10, P11, P18; the other nine
   exist as case files only. Our probe used 15 practice sessions.
+- 2026-10-10 `rules` **The wave cap, in numbers.** 480 s per wave, the close 90 s before it
+  (or the slowest round plus 15 s), a round 25 to 35 s with the arena's suppliers: a single
+  thread gets 11 to 15 rounds (the round limit binds), a three-bidder RFQ 4 to 5 rounds per
+  thread (the clock binds), four bidders 3. `buyer/runner.py` passes the rounds by the clock
+  to the policy, which moves up to 50 % of the gap when they are fewer than the round limit
+  leaves (`policy.pace`); `--cap 480` plays practice and sandbox the same way.
+- 2026-10-10 `rules` The sandbox suppliers answer within a second, a whole D02 plays in 3 s:
+  the sandbox checks the plan and the plumbing, never the clock.
 - 2026-10-10 `rules` Our writer (`buyer/llm.py`) posts to an OpenAI-compatible chat completions
   endpoint: `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_EFFORT` (not `OPENAI_API_KEY`,
-  `LLM_PROVIDER` is not read); without `LLM_MODEL` the e-mails use the template. `gpt-6-luna` answered a short call in 2.0 s and wrote three move suggestions in
+  `LLM_PROVIDER` is not read); without `LLM_MODEL` the e-mails use the template. On 10 Oct
+  evening the configured model got a 404 from `api.openai.com` in every session: check
+  `uv run buyer play case:D01 -v` for "writer paragraph in" before any run that should
+  measure the model. `ARENA_DATA` in that `.env` pointed to a stale folder: pass
+  `--data data/package`. `gpt-6-luna` answered a short call in 2.0 s and wrote three move suggestions in
   12 s. Tacto: their house agent runs on a small, cheap model, and reading the data beats a
   bigger model.
 - 2026-10-10 `rules` In an RFQ every thread's 60-second clock runs while we work on another.
@@ -385,6 +420,12 @@ shows evidence.
 
 ## Hypotheses (untested in the arena)
 
+- The preparation agent's stance (`buyer/prep.py`: capture and opening deltas, patience, the
+  order of arguments, an assessment for the e-mails) moves anything. Untested: the model
+  endpoint answered 404 in every v9 session.
+- The capture target (closing when its counter reaches the share of the room from its quote to
+  the C floor) saves rounds in a wave without costing price. It bound in no v9 session: only P10
+  had a binding floor and its counters stopped above the target.
 - Records on P02 (0.85) and P08 (0.73) come from a lower round-1 counter, not from later rounds:
   our later rounds converge to the same price whatever the gap (P02 371.9 in v4 to v6).
 - Three sheets of equal C for us in round 1 reveal what each lever is worth to the supplier
