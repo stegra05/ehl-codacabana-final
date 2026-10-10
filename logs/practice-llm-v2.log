@@ -1,0 +1,102 @@
+00:05:53 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:05:53 model answered in 0.9s
+00:05:53 model ready in 0.9s
+00:05:53 HTTP Request: GET https://arena.tacto.ai/v1/cases?set=practice "HTTP/1.1 200 OK"
+00:05:53 HTTP Request: POST https://arena.tacto.ai/v1/sessions "HTTP/1.1 200 OK"
+00:05:53 session 2d53e1598051cdca
+00:05:53 HTTP Request: POST https://arena.tacto.ai/v1/sessions "HTTP/1.1 200 OK"
+00:05:53 session cd361f44c021c8ef
+00:05:53 HTTP Request: POST https://arena.tacto.ai/v1/sessions "HTTP/1.1 200 OK"
+00:05:53 session 0b76ede2e0c2425b
+00:05:53 HTTP Request: GET https://arena.tacto.ai/v1/sessions/2d53e1598051cdca/attachments/att:70710-0-quote "HTTP/1.1 200 OK"
+00:05:54 case:P08 sup:70710 {'t': 1791669954.0, 'supplier': 'sup:70710', 'what': 'setup', 'quote': {'unit_price': 6.05, 'payment_days': 30, 'index_clause': None, 'contract_months': 12}, 'full_cost': None, 'near_cost': False, 'terms': {'unit_price': 4.76, 'index_clause': None, 'payment_days': 90, 'contract_months': 36}, 'quote_at_terms': 6.1, 'anchor': 4.76, 'target': None, 'budget': 1.0}
+00:05:54 HTTP Request: GET https://arena.tacto.ai/v1/sessions/cd361f44c021c8ef/attachments/att:70740-0-quote "HTTP/1.1 200 OK"
+00:05:54 case:P18 sup:70740 {'t': 1791669954.1, 'supplier': 'sup:70740', 'what': 'setup', 'quote': {'unit_price': 6.1, 'payment_days': 30, 'index_clause': None, 'contract_months': 12}, 'full_cost': None, 'near_cost': False, 'terms': {'unit_price': 4.77, 'index_clause': None, 'payment_days': 45, 'contract_months': 36}, 'quote_at_terms': 6.12, 'anchor': 4.77, 'target': None, 'budget': 1.0}
+00:05:54 HTTP Request: GET https://arena.tacto.ai/v1/sessions/0b76ede2e0c2425b/attachments/att:70110-0-quote "HTTP/1.1 200 OK"
+00:05:54 case:P01 sup:70110 {'t': 1791669954.2, 'supplier': 'sup:70110', 'what': 'setup', 'quote': {'unit_price': 138.55, 'effective_date': '2026-11-01'}, 'full_cost': 132.64, 'near_cost': False, 'terms': {'unit_price': 125.83, 'effective_date': '2026-11-01', 'payment_days': 14}, 'quote_at_terms': 137.78, 'anchor': 125.83, 'target': 131.27, 'budget': 0.3}
+00:06:00 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:06:00 model answered in 6.5s
+00:06:00 case:P01 sup:70110 {'t': 1791669960.7, 'supplier': 'sup:70110', 'what': 'model_move', 'read': 'Brandlhuber cites rising costs and offers its quoted price, while emphasizing its regional partnership and asking what volume we will commit to. It has not made a counter beyond its opening offer.', 'plan': 'Lead with the verified index, should-cost and notice claims, then offer at the relationship floor on L1, whose faster payment supports its cash needs. This is a firm but partnership-minded opening, paired with our full-demand commitment.', 'asked': [{'row': 'L1', 'unit_price': 131.27}], 'fixes': []}
+00:06:00 case:P01 sup:70110 {'t': 1791669960.7, 'supplier': 'sup:70110', 'what': 'send', 'state': 'open', 'theirs': 138.55, 'ours': 131.27, 'asks': [], 'attached': []}
+00:06:01 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:06:01 model answered in 7.5s
+00:06:01 case:P08 sup:70710 {'t': 1791669961.5, 'supplier': 'sup:70710', 'what': 'model_move', 'read': 'They have quoted their stated price on thirty-day payment, a twelve-month term, and no index clause, and asked what volume we will commit. They cite rising input costs, while their earlier letter says material is covered at fixed prices for the near term.', 'plan': 'Open at a measured discount rather than below the level that risks insulting them, using the most relevant verified index and coverage evidence. Offer the full-demand commitment and a long term on L0 to provide planning security while keeping our total cost low.', 'asked': [{'row': 'L0', 'unit_price': 5.0}], 'fixes': []}
+00:06:01 case:P08 sup:70710 {'t': 1791669961.5, 'supplier': 'sup:70710', 'what': 'send', 'state': 'open', 'theirs': 6.1, 'ours': 5.0, 'asks': [], 'attached': []}
+00:06:03 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:06:03 model answered in 9.0s
+00:06:03 case:P18 sup:70740 {'t': 1791669963.1, 'supplier': 'sup:70740', 'what': 'model_move', 'read': 'They offered their quoted price and standard terms, described increases in several cost indices, and asked what volume we would commit to. Their note also signals that an indexed price basis is under consideration.', 'plan': 'Lead with the verified index movements and our recent purchase history, then offer a binding commitment for our full demand and a long contract term. The long-term, longer-payment package at L4 gives them planning security while reducing our cost at equivalent supplier value.', 'asked': [{'row': 'L4', 'unit_price': 4.81}], 'fixes': []}
+00:06:03 case:P18 sup:70740 {'t': 1791669963.1, 'supplier': 'sup:70740', 'what': 'switch_terms', 'why': "the model's row", 'terms': {'index_clause': None, 'payment_days': 90, 'contract_months': 36}}
+00:06:03 case:P18 sup:70740 {'t': 1791669963.1, 'supplier': 'sup:70740', 'what': 'send', 'state': 'open', 'theirs': 6.18, 'ours': 4.81, 'asks': [], 'attached': []}
+00:06:29 HTTP Request: POST https://arena.tacto.ai/v1/sessions/cd361f44c021c8ef/threads/sup:70740/messages "HTTP/1.1 200 OK"
+00:06:29 case:P18 sup:70740 {'t': 1791669989.7, 'supplier': 'sup:70740', 'what': 'switch_terms', 'why': 'complete quoted package costs us less', 'terms': {'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 0.0, 'base_month': '2026-08'}, 'payment_days': 30, 'contract_months': 36}}
+00:06:33 HTTP Request: POST https://arena.tacto.ai/v1/sessions/0b76ede2e0c2425b/threads/sup:70110/messages "HTTP/1.1 200 OK"
+00:06:34 HTTP Request: POST https://arena.tacto.ai/v1/sessions/2d53e1598051cdca/threads/sup:70710/messages "HTTP/1.1 200 OK"
+00:06:37 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:06:37 model answered in 7.8s
+00:06:37 case:P18 sup:70740 {'t': 1791669997.5, 'supplier': 'sup:70740', 'what': 'model_move', 'read': 'They accepted the binding full-demand commitment and long contract term, but said a fixed price is not feasible and included the AS-14404 index clause. They lowered the price and offered different payment terms; we should acknowledge that movement and keep our commitment clear.', 'plan': 'Move partway toward their counter while retaining the indexed L0 package. C4 is relevant to their invitation to review the cost calculation, and avoids repeating claims they have already addressed.', 'asked': [{'row': 'L0', 'unit_price': 4.87}], 'fixes': []}
+00:06:37 case:P18 sup:70740 {'t': 1791669997.5, 'supplier': 'sup:70740', 'what': 'send', 'state': 'open', 'theirs': 5.43, 'ours': 4.87, 'asks': ['volume'], 'attached': []}
+00:06:39 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:06:39 model answered in 5.4s
+00:06:39 case:P01 sup:70110 {'t': 1791669999.1, 'supplier': 'sup:70110', 'what': 'model_move', 'read': 'Brandlhuber acknowledges the evidence and our faster-payment terms, appreciates the binding volume commitment, and has reduced its offer. It maintains its cost explanation and has not opened its calculation.', 'plan': 'Move partway toward its counter while keeping the faster-payment terms that matter to its cash needs and retaining our relationship floor. The order-history evidence is a fresh, relevant point; the proposed price remains below its counter.', 'asked': [{'row': 'L0', 'unit_price': 132.0}], 'fixes': []}
+00:06:39 case:P01 sup:70110 {'t': 1791669999.1, 'supplier': 'sup:70110', 'what': 'send', 'state': 'open', 'theirs': 133.7, 'ours': 132.0, 'asks': ['volume'], 'attached': []}
+00:06:45 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:06:45 model answered in 10.4s
+00:06:45 case:P08 sup:70710 {'t': 1791670005.4, 'supplier': 'sup:70710', 'what': 'model_move', 'read': 'They appreciate our full-demand commitment and have offered a lower price on a longer term, but say they cannot fix the price for that term and require an AS-14404 clause. They offered alternative payment terms and cite fixed-price material coverage as a reason the recent index decline does not reduce their current costs.', 'plan': 'Their proposal is a meaningful move, so we should respond with a measured step rather than meet their counter. Keep the long-term, full-demand commitment and seek a lower total cost using our historical purchase evidence.', 'asked': [{'row': 'L0', 'unit_price': 5.2}], 'fixes': []}
+00:06:45 case:P08 sup:70710 {'t': 1791670005.4, 'supplier': 'sup:70710', 'what': 'send', 'state': 'open', 'theirs': 5.67, 'ours': 5.2, 'asks': [], 'attached': []}
+00:06:55 HTTP Request: POST https://arena.tacto.ai/v1/sessions/cd361f44c021c8ef/threads/sup:70740/messages "HTTP/1.1 200 OK"
+00:06:56 HTTP Request: POST https://arena.tacto.ai/v1/sessions/0b76ede2e0c2425b/threads/sup:70110/messages "HTTP/1.1 200 OK"
+00:07:03 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:07:03 model answered in 7.1s
+00:07:03 case:P18 sup:70740 {'t': 1791670023.0, 'supplier': 'sup:70740', 'what': 'model_move', 'read': 'They lowered their price again on the indexed, long-term package and asked for the figures behind our forecast. They have accepted our full-demand commitment and the planning security of the longer term.', 'plan': 'Move partway toward their latest counter on L0, keeping the indexed package rather than returning to fixed pricing. Cite the forecast evidence they requested and keep the proposal below their counter.', 'asked': [{'row': 'L0', 'unit_price': 5.0}], 'fixes': []}
+00:07:03 case:P18 sup:70740 {'t': 1791670023.0, 'supplier': 'sup:70740', 'what': 'send', 'state': 'open', 'theirs': 5.3, 'ours': 5.0, 'asks': ['proof'], 'attached': ['forecast.csv']}
+00:07:03 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:07:03 model answered in 6.6s
+00:07:03 case:P01 sup:70110 {'t': 1791670023.6, 'supplier': 'sup:70110', 'what': 'model_move', 'read': 'Brandlhuber appreciates the binding full-demand commitment and has lowered its offer while keeping the same payment and effective-date terms. It says its cost calculation remains internal and that the order-history evidence does not change its calculation.', 'plan': 'Move partway toward its latest offer while keeping the faster payment terms that support its cash needs and retaining the current line. Cite the fresh forecast claim as relevant context for a stable partnership, while keeping our proposal below its counter.', 'asked': [{'row': 'L0', 'unit_price': 132.27}], 'fixes': []}
+00:07:03 case:P01 sup:70110 {'t': 1791670023.6, 'supplier': 'sup:70110', 'what': 'send', 'state': 'open', 'theirs': 132.9, 'ours': 132.27, 'asks': ['volume'], 'attached': []}
+00:07:06 HTTP Request: POST https://arena.tacto.ai/v1/sessions/2d53e1598051cdca/threads/sup:70710/messages "HTTP/1.1 200 OK"
+00:07:14 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:07:14 model answered in 7.2s
+00:07:14 case:P08 sup:70710 {'t': 1791670034.0, 'supplier': 'sup:70710', 'what': 'model_move', 'read': 'They appreciated our commitment but say a long-term fixed price is unavailable and retain an AS-14404 index clause; they offered two indexed price options. They acknowledged our purchase-history data without changing their calculation.', 'plan': 'Make a measured move to the code-priced counter while retaining our long-term, full-demand commitment. Cite the previously unused offer to walk us through their calculation, and keep L0 as the main sheet.', 'asked': [{'row': 'L0', 'unit_price': 5.29}], 'fixes': []}
+00:07:14 case:P08 sup:70710 {'t': 1791670034.0, 'supplier': 'sup:70710', 'what': 'send', 'state': 'open', 'theirs': 5.49, 'ours': 5.29, 'asks': [], 'attached': []}
+00:07:15 HTTP Request: POST https://arena.tacto.ai/v1/sessions/cd361f44c021c8ef/threads/sup:70740/messages "HTTP/1.1 200 OK"
+00:07:21 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:07:21 model answered in 5.9s
+00:07:21 case:P18 sup:70740 {'t': 1791670041.1, 'supplier': 'sup:70740', 'what': 'model_move', 'read': 'They have reduced the price again and ask what higher volume we can bind. They have already accepted our full-demand commitment and long contract term; their message signals that a binding volume may help bridge the remaining gap.', 'plan': 'Move partway toward their latest counter on the indexed L0 terms, while remaining below their price. Reaffirm the full-demand commitment and use the unused delivery-performance claim as fresh evidence.', 'asked': [{'row': 'L0', 'unit_price': 5.06}], 'fixes': []}
+00:07:21 case:P18 sup:70740 {'t': 1791670041.1, 'supplier': 'sup:70740', 'what': 'send', 'state': 'open', 'theirs': 5.2, 'ours': 5.06, 'asks': ['volume'], 'attached': []}
+00:07:29 HTTP Request: POST https://arena.tacto.ai/v1/sessions/0b76ede2e0c2425b/threads/sup:70110/messages "HTTP/1.1 200 OK"
+00:07:29 HTTP Request: GET https://arena.tacto.ai/v1/sessions/0b76ede2e0c2425b/attachments/att:70110-3-quote "HTTP/1.1 200 OK"
+00:07:29 case:P01 sup:70110 {'t': 1791670049.4, 'supplier': 'sup:70110', 'what': 'accept', 'c': 1117582.76, 'offer': 'offer:70110-3'}
+00:07:29 HTTP Request: POST https://arena.tacto.ai/v1/sessions/0b76ede2e0c2425b/threads/sup:70110/messages "HTTP/1.1 200 OK"
+00:07:33 HTTP Request: POST https://arena.tacto.ai/v1/sessions/2d53e1598051cdca/threads/sup:70710/messages "HTTP/1.1 200 OK"
+00:07:41 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:07:41 model answered in 7.8s
+00:07:41 case:P08 sup:70710 {'t': 1791670061.5, 'supplier': 'sup:70710', 'what': 'model_move', 'read': 'They have moved on price while maintaining that the index clause is necessary for the long term, and they ask for the basis of our forecast. They also offer a calculation meeting, and we should acknowledge their movement while providing the requested forecast evidence.', 'plan': 'Take a measured step toward their counter while retaining the full-demand commitment and long-term planning security. Keep L0 as the main line and cite the forecast evidence they requested.', 'asked': [{'row': 'L0', 'unit_price': 5.33}], 'fixes': []}
+00:07:41 case:P08 sup:70710 {'t': 1791670061.5, 'supplier': 'sup:70710', 'what': 'send', 'state': 'open', 'theirs': 5.43, 'ours': 5.33, 'asks': ['proof'], 'attached': ['forecast.csv']}
+00:07:42 HTTP Request: POST https://arena.tacto.ai/v1/sessions/cd361f44c021c8ef/threads/sup:70740/messages "HTTP/1.1 200 OK"
+00:07:42 case:P18 sup:70740 {'t': 1791670062.1, 'supplier': 'sup:70740', 'what': 'signals', 'new': ['spare_capacity']}
+00:07:42 HTTP Request: GET https://arena.tacto.ai/v1/sessions/cd361f44c021c8ef/attachments/att:70740-4-quote "HTTP/1.1 200 OK"
+00:07:42 HTTP Request: GET https://arena.tacto.ai/v1/sessions/cd361f44c021c8ef/attachments/att:70740-4-delivery_schedule "HTTP/1.1 200 OK"
+00:07:42 case:P18 sup:70740 {'t': 1791670062.4, 'supplier': 'sup:70740', 'what': 'accept', 'c': 250966.41, 'offer': 'offer:70740-4'}
+00:07:42 HTTP Request: POST https://arena.tacto.ai/v1/sessions/cd361f44c021c8ef/threads/sup:70740/messages "HTTP/1.1 200 OK"
+00:08:03 HTTP Request: POST https://arena.tacto.ai/v1/sessions/2d53e1598051cdca/threads/sup:70710/messages "HTTP/1.1 200 OK"
+00:08:13 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:08:13 model answered in 10.6s
+00:08:13 case:P08 sup:70710 {'t': 1791670093.7, 'supplier': 'sup:70710', 'what': 'model_move', 'read': 'They moved their indexed offer and acknowledged the volume and forecast evidence, but say a long-term agreement requires an AS-14404 clause. They ask what binding volume we can commit to; we have already offered our full demand over the term.', 'plan': 'Take a measured step toward their counter while keeping the full-demand commitment and long-term planning security. Keep the current L0 sheet as the main proposal and avoid adding another claim this round.', 'asked': [{'row': 'L0', 'unit_price': 5.35}], 'fixes': []}
+00:08:13 case:P08 sup:70710 {'t': 1791670093.7, 'supplier': 'sup:70710', 'what': 'send', 'state': 'open', 'theirs': 5.38, 'ours': 5.35, 'asks': ['volume', 'proof'], 'attached': []}
+00:08:33 HTTP Request: POST https://arena.tacto.ai/v1/sessions/2d53e1598051cdca/threads/sup:70710/messages "HTTP/1.1 200 OK"
+00:08:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/2d53e1598051cdca/attachments/att:70710-5-quote "HTTP/1.1 200 OK"
+00:08:34 case:P08 sup:70710 {'t': 1791670114.0, 'supplier': 'sup:70710', 'what': 'accept', 'c': 1014289.85, 'offer': 'offer:70710-5'}
+00:08:34 HTTP Request: POST https://arena.tacto.ai/v1/sessions/2d53e1598051cdca/threads/sup:70710/messages "HTTP/1.1 200 OK"
+00:08:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions?set=practice "HTTP/1.1 200 OK"
+00:08:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/2d53e1598051cdca "HTTP/1.1 200 OK"
+00:08:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/2d53e1598051cdca/backoffice "HTTP/1.1 200 OK"
+00:08:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/cd361f44c021c8ef "HTTP/1.1 200 OK"
+00:08:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/cd361f44c021c8ef/backoffice "HTTP/1.1 200 OK"
+00:08:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/0b76ede2e0c2425b "HTTP/1.1 200 OK"
+00:08:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/0b76ede2e0c2425b/backoffice "HTTP/1.1 200 OK"
+case:P01 {'deal': True, 'supplier_id': 'sup:70110', 'terms': {'payment_days': 14, 'lead_time_days': 42, 'volume_per_year': 8150, 'contract_months': 12, 'effective_date': '2026-11-01', 'index_clause': None, 'incoterm': 'FCA', 'tooling_eur': 0.0, 'ppm_commitment': 900, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 132.27}, 'c_open': 1153779.74, 'c_deal': 1107332.38, 'c_best': 1096815.78, 'score': 0.8153815149087271}
+case:P08 {'deal': True, 'supplier_id': 'sup:70710', 'terms': {'payment_days': 90, 'lead_time_days': 10, 'volume_per_year': 94800, 'contract_months': 36, 'effective_date': '2027-01-01', 'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 0.0, 'base_month': '2026-08'}, 'incoterm': 'DAP', 'tooling_eur': 0.0, 'ppm_commitment': 50, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 5.22}, 'c_open': 1135887.28, 'c_deal': 1014289.85, 'c_best': 960309.33, 'score': 0.6925552439813769}
+case:P18 {'deal': True, 'supplier_id': 'sup:70740', 'terms': {'payment_days': 30, 'lead_time_days': 14, 'volume_per_year': 23700, 'contract_months': 36, 'effective_date': '2027-01-01', 'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 0.0, 'base_month': '2026-08'}, 'incoterm': 'DAP', 'tooling_eur': 0.0, 'ppm_commitment': 70, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 5.1}, 'c_open': 295173.23, 'c_deal': 250966.41, 'c_best': 222651.27, 'score': 0.60956460636199}
+mean score: 70.6 over 3 cases
+3 new sessions in logs/sessions/practice
+practice sessions left today: 204

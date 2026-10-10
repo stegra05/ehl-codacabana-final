@@ -1,0 +1,60 @@
+00:15:38 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:15:38 model answered in 0.8s
+00:15:38 model ready in 0.8s
+00:15:38 HTTP Request: GET https://arena.tacto.ai/v1/cases?set=practice "HTTP/1.1 200 OK"
+00:15:38 HTTP Request: POST https://arena.tacto.ai/v1/sessions "HTTP/1.1 200 OK"
+00:15:38 session aeb0ec97caa3c417
+00:15:38 HTTP Request: POST https://arena.tacto.ai/v1/sessions "HTTP/1.1 429 Too Many Requests"
+00:15:38 case:P02: HTTP 429: at most 10 open sessions per key
+00:15:38 HTTP Request: GET https://arena.tacto.ai/v1/sessions/aeb0ec97caa3c417/attachments/att:70110-0-quote "HTTP/1.1 200 OK"
+00:15:38 case:P01 sup:70110 {'t': 1791670538.8, 'supplier': 'sup:70110', 'what': 'setup', 'quote': {'unit_price': 138.55, 'effective_date': '2026-11-01'}, 'full_cost': 132.64, 'near_cost': False, 'terms': {'unit_price': 125.83, 'effective_date': '2026-11-01', 'payment_days': 14}, 'quote_at_terms': 137.78, 'anchor': 125.83, 'target': 131.27, 'budget': 0.3}
+00:15:46 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:15:46 model answered in 7.5s
+00:15:46 case:P01 sup:70110 {'t': 1791670546.3, 'supplier': 'sup:70110', 'what': 'model_move', 'read': 'Brandlhuber maintains its proposed increase, citing energy, material and wage costs, and emphasizes the long-standing relationship. It asked what volume we would commit to.', 'plan': 'Use the first message for the strongest verified cost and notice points, while pairing our price proposal with the faster payment it values. The L0 opening follows the code’s opening policy and keeps the proposal below the supplier’s expected counter.', 'asked': [{'row': 'L0', 'unit_price': 125.83}], 'fixes': []}
+00:15:46 case:P01 sup:70110 {'t': 1791670546.3, 'supplier': 'sup:70110', 'what': 'send', 'state': 'open', 'theirs': 138.55, 'ours': 125.83, 'asks': [], 'attached': []}
+00:16:15 HTTP Request: POST https://arena.tacto.ai/v1/sessions/aeb0ec97caa3c417/threads/sup:70110/messages "HTTP/1.1 200 OK"
+00:16:21 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:16:21 model answered in 5.5s
+00:16:21 case:P01 sup:70110 {'t': 1791670581.3, 'supplier': 'sup:70110', 'what': 'model_move', 'read': 'Brandlhuber accepted the cited data, acknowledged the notice point, and reduced its offer in recognition of our full-volume commitment and prompt payment. It maintains its cost explanation and has not provided its calculation.', 'plan': 'Move partway toward its counter while keeping our proposal below the price at which it would agree, preserving room for further movement. Keep the current early-payment terms, which matter to the supplier, and cite the verified order history as additional support.', 'asked': [{'row': 'L0', 'unit_price': 128.19}], 'fixes': []}
+00:16:21 case:P01 sup:70110 {'t': 1791670581.3, 'supplier': 'sup:70110', 'what': 'send', 'state': 'open', 'theirs': 133.7, 'ours': 128.19, 'asks': [], 'attached': []}
+00:16:42 HTTP Request: POST https://arena.tacto.ai/v1/sessions/aeb0ec97caa3c417/threads/sup:70110/messages "HTTP/1.1 200 OK"
+00:16:48 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+00:16:48 model answered in 5.7s
+00:16:48 case:P01 sup:70110 {'t': 1791670608.2, 'supplier': 'sup:70110', 'what': 'model_move', 'read': 'Brandlhuber accepted the order-history evidence and lowered its offer, while maintaining that its calculation is internal and that current costs differ from past prices. It has kept the early-payment and effective-date terms unchanged.', 'plan': 'Move partway toward its latest price while keeping our proposal below its counter, preserving room to negotiate toward the relationship floor. Keep the early-payment terms it values and support our full-demand commitment with the forecast claim.', 'asked': [{'row': 'L0', 'unit_price': 129.18}], 'fixes': []}
+00:16:48 case:P01 sup:70110 {'t': 1791670608.2, 'supplier': 'sup:70110', 'what': 'send', 'state': 'open', 'theirs': 131.5, 'ours': 129.18, 'asks': [], 'attached': []}
+00:17:08 HTTP Request: POST https://arena.tacto.ai/v1/sessions/aeb0ec97caa3c417/threads/sup:70110/messages "HTTP/1.1 200 OK"
+00:17:08 case:P01 sup:70110 {'t': 1791670628.8, 'supplier': 'sup:70110', 'what': 'send', 'state': 'closing', 'theirs': 130.5, 'ours': 131.27, 'asks': ['volume'], 'attached': []}
+00:17:33 HTTP Request: POST https://arena.tacto.ai/v1/sessions/aeb0ec97caa3c417/threads/sup:70110/messages "HTTP/1.1 200 OK"
+00:17:33 HTTP Request: GET https://arena.tacto.ai/v1/sessions/aeb0ec97caa3c417/attachments/att:70110-4-quote "HTTP/1.1 200 OK"
+00:17:33 case:P01 sup:70110 {'t': 1791670653.6, 'supplier': 'sup:70110', 'what': 'accept', 'c': 1116649.07, 'offer': 'offer:70110-4'}
+00:17:33 HTTP Request: POST https://arena.tacto.ai/v1/sessions/aeb0ec97caa3c417/threads/sup:70110/messages "HTTP/1.1 200 OK"
+00:17:33 HTTP Request: GET https://arena.tacto.ai/v1/sessions?set=practice "HTTP/1.1 200 OK"
+00:17:33 HTTP Request: GET https://arena.tacto.ai/v1/sessions/6d7c4f0bd7b7b706 "HTTP/1.1 200 OK"
+00:17:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/6d7c4f0bd7b7b706/backoffice "HTTP/1.1 200 OK"
+00:17:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/6e9ec1cb0f942c89 "HTTP/1.1 200 OK"
+00:17:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/6e9ec1cb0f942c89/backoffice "HTTP/1.1 200 OK"
+00:17:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/880a29bfdef45c47 "HTTP/1.1 200 OK"
+00:17:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/880a29bfdef45c47/backoffice "HTTP/1.1 200 OK"
+00:17:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/0db9516739613a56 "HTTP/1.1 200 OK"
+00:17:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/0db9516739613a56/backoffice "HTTP/1.1 200 OK"
+00:17:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/2c9453d386c7f3f9 "HTTP/1.1 200 OK"
+00:17:34 HTTP Request: GET https://arena.tacto.ai/v1/sessions/2c9453d386c7f3f9/backoffice "HTTP/1.1 200 OK"
+00:17:35 HTTP Request: GET https://arena.tacto.ai/v1/sessions/fcbe45bc5e9f6932 "HTTP/1.1 200 OK"
+00:17:35 HTTP Request: GET https://arena.tacto.ai/v1/sessions/fcbe45bc5e9f6932/backoffice "HTTP/1.1 200 OK"
+00:17:35 HTTP Request: GET https://arena.tacto.ai/v1/sessions/9cf732e9a0fec534 "HTTP/1.1 200 OK"
+00:17:35 HTTP Request: GET https://arena.tacto.ai/v1/sessions/9cf732e9a0fec534/backoffice "HTTP/1.1 200 OK"
+00:17:35 HTTP Request: GET https://arena.tacto.ai/v1/sessions/215395eb1507c5fe "HTTP/1.1 200 OK"
+00:17:35 HTTP Request: GET https://arena.tacto.ai/v1/sessions/215395eb1507c5fe/backoffice "HTTP/1.1 200 OK"
+00:17:35 HTTP Request: GET https://arena.tacto.ai/v1/sessions/9b85edd1f11edfd8 "HTTP/1.1 200 OK"
+00:17:35 HTTP Request: GET https://arena.tacto.ai/v1/sessions/9b85edd1f11edfd8/backoffice "HTTP/1.1 200 OK"
+00:17:35 HTTP Request: GET https://arena.tacto.ai/v1/sessions/facfadac9dd90956 "HTTP/1.1 200 OK"
+00:17:36 HTTP Request: GET https://arena.tacto.ai/v1/sessions/facfadac9dd90956/backoffice "HTTP/1.1 200 OK"
+00:17:36 HTTP Request: GET https://arena.tacto.ai/v1/sessions/aeb0ec97caa3c417 "HTTP/1.1 200 OK"
+00:17:36 HTTP Request: GET https://arena.tacto.ai/v1/sessions/aeb0ec97caa3c417/backoffice "HTTP/1.1 200 OK"
+00:17:36 HTTP Request: GET https://arena.tacto.ai/v1/sessions/62d66654c4d4f0bc "HTTP/1.1 200 OK"
+00:17:36 HTTP Request: GET https://arena.tacto.ai/v1/sessions/62d66654c4d4f0bc/backoffice "HTTP/1.1 200 OK"
+case:P01 {'deal': True, 'supplier_id': 'sup:70110', 'terms': {'payment_days': 14, 'lead_time_days': 42, 'volume_per_year': 8150, 'contract_months': 12, 'effective_date': '2026-11-01', 'index_clause': None, 'incoterm': 'FCA', 'tooling_eur': 0.0, 'ppm_commitment': 900, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 131.27}, 'c_open': 1153779.74, 'c_deal': 1102027.72, 'c_best': 1096815.78, 'score': 0.9085046053680266}
+case:P02 HTTP 429: at most 10 open sessions per key
+mean score: 90.9 over 1 cases
+12 new sessions in logs/sessions/practice
+practice sessions left today: 189

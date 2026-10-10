@@ -1,0 +1,155 @@
+23:49:22 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+23:49:22 model answered in 1.3s
+23:49:22 model ready in 1.3s
+23:49:22 HTTP Request: POST https://arena.tacto.ai/v1/sessions "HTTP/1.1 200 OK"
+23:49:22 session cb4e65a381e9353a
+23:49:22 HTTP Request: GET https://arena.tacto.ai/v1/sessions/cb4e65a381e9353a/attachments/att:DEMO-F1-0-quote "HTTP/1.1 200 OK"
+23:49:22 case:D01 sup:DEMO-F1 {'t': 1791668962.5, 'supplier': 'sup:DEMO-F1', 'what': 'setup', 'quote': {'unit_price': 52.9, 'payment_days': 30, 'contract_months': 12, 'effective_date': '2026-12-01'}, 'full_cost': None, 'near_cost': False, 'terms': {'unit_price': 48.88, 'payment_days': 60, 'contract_months': 24, 'effective_date': '2026-12-01'}, 'quote_at_terms': 53.21, 'anchor': 48.88, 'target': None, 'budget': 0.3}
+23:49:29 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+23:49:29 model answered in 7.2s
+23:49:29 case:D01 sup:DEMO-F1 {'t': 1791668969.7, 'supplier': 'sup:DEMO-F1', 'what': 'model_move', 'read': 'The foundry cites rising wages and metal costs and emphasizes its family ownership and long relationship. It asks what volume we will commit to; its offer keeps short payment terms and a shorter contract.', 'plan': 'Lead with the verified should-cost, notice, and order-history evidence, while offering the full demand under a longer contract for planning security. The proposed price follows the supplied opening guidance, with the more favorable long-term payment and coverage terms reflected in the sheet.', 'asked': [{'row': 'L1', 'unit_price': 48.88}], 'fixes': []}
+23:49:29 case:D01 sup:DEMO-F1 {'t': 1791668969.7, 'supplier': 'sup:DEMO-F1', 'what': 'send', 'state': 'open', 'theirs': 53.21, 'ours': 48.88, 'asks': [], 'attached': []}
+23:50:09 HTTP Request: POST https://arena.tacto.ai/v1/sessions/cb4e65a381e9353a/threads/sup:DEMO-F1/messages "HTTP/1.1 200 OK"
+23:50:09 case:D01 sup:DEMO-F1 {'t': 1791669009.0, 'supplier': 'sup:DEMO-F1', 'what': 'switch_terms', 'why': 'complete quoted package costs us less', 'terms': {'payment_days': 30, 'contract_months': 24, 'effective_date': '2026-12-01'}}
+23:50:18 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+23:50:18 model answered in 9.2s
+23:50:18 case:D01 sup:DEMO-F1 {'t': 1791669018.2, 'supplier': 'sup:DEMO-F1', 'what': 'model_move', 'read': 'The foundry accepted the full-demand commitment and the longer contract, acknowledged the evidence, and offered alternatives at different payment terms. It asked what binding volume we can commit to and says a higher volume could improve its price.', 'plan': 'Offer a measured move at the current thirty-day-payment terms, below its corresponding counter, while committing all of our full demand over the longer contract. Cite the unused scorecard claim, and recognize its movement and the value of planning security.', 'asked': [{'row': 'L2', 'unit_price': 49.05}], 'fixes': []}
+23:50:18 case:D01 sup:DEMO-F1 {'t': 1791669018.2, 'supplier': 'sup:DEMO-F1', 'what': 'switch_terms', 'why': "the model's row", 'terms': {'payment_days': 30, 'contract_months': 12, 'effective_date': '2026-12-01'}}
+23:50:18 case:D01 sup:DEMO-F1 {'t': 1791669018.2, 'supplier': 'sup:DEMO-F1', 'what': 'send', 'state': 'open', 'theirs': 50.11, 'ours': 49.05, 'asks': ['volume'], 'attached': []}
+23:50:46 HTTP Request: POST https://arena.tacto.ai/v1/sessions/cb4e65a381e9353a/threads/sup:DEMO-F1/messages "HTTP/1.1 200 OK"
+23:50:55 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+23:50:55 model answered in 8.5s
+23:50:55 case:D01 sup:DEMO-F1 {'t': 1791669055.3, 'supplier': 'sup:DEMO-F1', 'what': 'model_move', 'read': 'The foundry acknowledges our cited evidence but says it does not change its calculation, and it has held its price at the shorter-term offer. It signals that it values the relationship and planning security, while asking for a binding volume commitment.', 'plan': 'Commit our full demand to a longer contract and offer the foundry the more favorable payment timing as a fair exchange for another price reduction. The proposed price is a measured move toward its counter, with the improved terms reflected in the sheet.', 'asked': [{'row': 'L1', 'unit_price': 49.79}], 'fixes': []}
+23:50:55 case:D01 sup:DEMO-F1 {'t': 1791669055.3, 'supplier': 'sup:DEMO-F1', 'what': 'switch_terms', 'why': "the model's row", 'terms': {'payment_days': 60, 'contract_months': 24, 'effective_date': '2026-12-01'}}
+23:50:55 case:D01 sup:DEMO-F1 {'t': 1791669055.3, 'supplier': 'sup:DEMO-F1', 'what': 'send', 'state': 'open', 'theirs': 50.79, 'ours': 49.79, 'asks': [], 'attached': []}
+23:51:34 HTTP Request: POST https://arena.tacto.ai/v1/sessions/cb4e65a381e9353a/threads/sup:DEMO-F1/messages "HTTP/1.1 200 OK"
+23:51:34 case:D01 sup:DEMO-F1 {'t': 1791669094.3, 'supplier': 'sup:DEMO-F1', 'what': 'switch_terms', 'why': 'complete quoted package costs us less', 'terms': {'payment_days': 30, 'contract_months': 24, 'effective_date': '2026-12-01'}}
+23:51:47 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+23:51:47 model answered in 12.9s
+23:51:47 case:D01 sup:DEMO-F1 {'t': 1791669107.2, 'supplier': 'sup:DEMO-F1', 'what': 'model_move', 'read': 'The foundry appreciates our twenty-four-month commitment and offers two price/payment alternatives, while asking for figures behind our payment-timing proposal and keeping its cost calculation internal. It has moved since its earlier offer, and is seeking a binding full-demand commitment.', 'plan': 'Acknowledge its movement and commit our full demand for the term, then make the measured move to the code-guided price while offering sixty-day payment terms. Explain the payment comparison using the supplied financing-cost estimates; this longer payment timing is a fair exchange and gives us a lower total cost than the same supplier-value offer on shorter payment terms.', 'asked': [{'row': 'L1', 'unit_price': 49.9}], 'fixes': []}
+23:51:47 case:D01 sup:DEMO-F1 {'t': 1791669107.3, 'supplier': 'sup:DEMO-F1', 'what': 'switch_terms', 'why': "the model's row", 'terms': {'payment_days': 60, 'contract_months': 24, 'effective_date': '2026-12-01'}}
+23:51:47 case:D01 sup:DEMO-F1 {'t': 1791669107.3, 'supplier': 'sup:DEMO-F1', 'what': 'send', 'state': 'open', 'theirs': 50.1, 'ours': 49.9, 'asks': [], 'attached': []}
+23:52:09 HTTP Request: POST https://arena.tacto.ai/v1/sessions/cb4e65a381e9353a/threads/sup:DEMO-F1/messages "HTTP/1.1 200 OK"
+23:52:15 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+23:52:15 model answered in 5.8s
+23:52:15 case:D01 sup:DEMO-F1 {'t': 1791669135.8, 'supplier': 'sup:DEMO-F1', 'what': 'model_move', 'read': 'The foundry has moved to its current offer on the longer contract with extended payment terms, and emphasizes the value of the relationship. It seeks a fair agreement; our full-demand commitment and planning security are central to our proposal.', 'plan': 'Acknowledge its movement and offer another measured step toward its price, while committing our full demand under a long contract. Keep the proposal below its current counter so the negotiation can continue.', 'asked': [{'row': 'L0', 'unit_price': 49.9}], 'fixes': []}
+23:52:15 case:D01 sup:DEMO-F1 {'t': 1791669135.8, 'supplier': 'sup:DEMO-F1', 'what': 'send', 'state': 'open', 'theirs': 50.0, 'ours': 49.9, 'asks': [], 'attached': []}
+23:52:37 HTTP Request: POST https://arena.tacto.ai/v1/sessions/cb4e65a381e9353a/threads/sup:DEMO-F1/messages "HTTP/1.1 200 OK"
+23:52:37 HTTP Request: GET https://arena.tacto.ai/v1/sessions/cb4e65a381e9353a/attachments/att:DEMO-F1-5-quote "HTTP/1.1 200 OK"
+23:52:37 case:D01 sup:DEMO-F1 {'t': 1791669157.1, 'supplier': 'sup:DEMO-F1', 'what': 'accept', 'c': 409600.0, 'offer': 'offer:DEMO-F1-5'}
+23:52:37 HTTP Request: POST https://arena.tacto.ai/v1/sessions/cb4e65a381e9353a/threads/sup:DEMO-F1/messages "HTTP/1.1 200 OK"
+23:52:37 HTTP Request: GET https://arena.tacto.ai/v1/sessions/cb4e65a381e9353a "HTTP/1.1 200 OK"
+23:52:37 HTTP Request: GET https://arena.tacto.ai/v1/sessions?set=sandbox "HTTP/1.1 200 OK"
+23:52:37 HTTP Request: GET https://arena.tacto.ai/v1/sessions/0d274c0e5592920d "HTTP/1.1 200 OK"
+23:52:37 HTTP Request: GET https://arena.tacto.ai/v1/sessions/0d274c0e5592920d/backoffice "HTTP/1.1 200 OK"
+23:52:37 HTTP Request: GET https://arena.tacto.ai/v1/sessions/5d8ee34cf6e32146 "HTTP/1.1 200 OK"
+23:52:37 HTTP Request: GET https://arena.tacto.ai/v1/sessions/5d8ee34cf6e32146/backoffice "HTTP/1.1 200 OK"
+23:52:37 HTTP Request: GET https://arena.tacto.ai/v1/sessions/11a32dbb949e54f9 "HTTP/1.1 200 OK"
+23:52:38 HTTP Request: GET https://arena.tacto.ai/v1/sessions/11a32dbb949e54f9/backoffice "HTTP/1.1 200 OK"
+23:52:38 HTTP Request: GET https://arena.tacto.ai/v1/sessions/dc92cf2e8e8981ce "HTTP/1.1 200 OK"
+23:52:38 HTTP Request: GET https://arena.tacto.ai/v1/sessions/dc92cf2e8e8981ce/backoffice "HTTP/1.1 200 OK"
+23:52:38 HTTP Request: GET https://arena.tacto.ai/v1/sessions/e300829ecd9f0782 "HTTP/1.1 200 OK"
+23:52:38 HTTP Request: GET https://arena.tacto.ai/v1/sessions/e300829ecd9f0782/backoffice "HTTP/1.1 200 OK"
+23:52:38 HTTP Request: GET https://arena.tacto.ai/v1/sessions/d613081ed432117d "HTTP/1.1 200 OK"
+23:52:38 HTTP Request: GET https://arena.tacto.ai/v1/sessions/d613081ed432117d/backoffice "HTTP/1.1 200 OK"
+23:52:38 HTTP Request: GET https://arena.tacto.ai/v1/sessions/3868a0f62406ae4f "HTTP/1.1 200 OK"
+23:52:39 HTTP Request: GET https://arena.tacto.ai/v1/sessions/3868a0f62406ae4f/backoffice "HTTP/1.1 200 OK"
+23:52:39 HTTP Request: GET https://arena.tacto.ai/v1/sessions/c8ca4cce5772301b "HTTP/1.1 200 OK"
+23:52:39 HTTP Request: GET https://arena.tacto.ai/v1/sessions/c8ca4cce5772301b/backoffice "HTTP/1.1 200 OK"
+23:52:39 HTTP Request: GET https://arena.tacto.ai/v1/sessions/679a11f0b8fab432 "HTTP/1.1 200 OK"
+23:52:39 HTTP Request: GET https://arena.tacto.ai/v1/sessions/679a11f0b8fab432/backoffice "HTTP/1.1 200 OK"
+23:52:39 HTTP Request: GET https://arena.tacto.ai/v1/sessions/f934f0f4b49ce24d "HTTP/1.1 200 OK"
+23:52:39 HTTP Request: GET https://arena.tacto.ai/v1/sessions/f934f0f4b49ce24d/backoffice "HTTP/1.1 200 OK"
+23:52:39 HTTP Request: GET https://arena.tacto.ai/v1/sessions/74e1f139079d6789 "HTTP/1.1 200 OK"
+23:52:39 HTTP Request: GET https://arena.tacto.ai/v1/sessions/74e1f139079d6789/backoffice "HTTP/1.1 200 OK"
+23:52:40 HTTP Request: GET https://arena.tacto.ai/v1/sessions/a60d14e51f556f48 "HTTP/1.1 200 OK"
+23:52:40 HTTP Request: GET https://arena.tacto.ai/v1/sessions/a60d14e51f556f48/backoffice "HTTP/1.1 200 OK"
+23:52:40 HTTP Request: GET https://arena.tacto.ai/v1/sessions/c198737f25c6168b "HTTP/1.1 200 OK"
+23:52:40 HTTP Request: GET https://arena.tacto.ai/v1/sessions/c198737f25c6168b/backoffice "HTTP/1.1 200 OK"
+23:52:40 HTTP Request: GET https://arena.tacto.ai/v1/sessions/d75108f8568c8e8e "HTTP/1.1 200 OK"
+23:52:40 HTTP Request: GET https://arena.tacto.ai/v1/sessions/d75108f8568c8e8e/backoffice "HTTP/1.1 200 OK"
+23:52:40 HTTP Request: GET https://arena.tacto.ai/v1/sessions/6a5aa1dbbd1591eb "HTTP/1.1 200 OK"
+23:52:40 HTTP Request: GET https://arena.tacto.ai/v1/sessions/6a5aa1dbbd1591eb/backoffice "HTTP/1.1 200 OK"
+23:52:40 HTTP Request: GET https://arena.tacto.ai/v1/sessions/550dc6c2d85a864e "HTTP/1.1 200 OK"
+23:52:41 HTTP Request: GET https://arena.tacto.ai/v1/sessions/550dc6c2d85a864e/backoffice "HTTP/1.1 200 OK"
+23:52:41 HTTP Request: GET https://arena.tacto.ai/v1/sessions/fc3e61de77783f97 "HTTP/1.1 200 OK"
+23:52:41 HTTP Request: GET https://arena.tacto.ai/v1/sessions/fc3e61de77783f97/backoffice "HTTP/1.1 200 OK"
+23:52:41 HTTP Request: GET https://arena.tacto.ai/v1/sessions/d95ab360a8a4da15 "HTTP/1.1 200 OK"
+23:52:41 HTTP Request: GET https://arena.tacto.ai/v1/sessions/d95ab360a8a4da15/backoffice "HTTP/1.1 200 OK"
+23:52:41 HTTP Request: GET https://arena.tacto.ai/v1/sessions/66e6e335637e927e "HTTP/1.1 200 OK"
+23:52:41 HTTP Request: GET https://arena.tacto.ai/v1/sessions/66e6e335637e927e/backoffice "HTTP/1.1 200 OK"
+23:52:41 HTTP Request: GET https://arena.tacto.ai/v1/sessions/aab2385c7cf0d953 "HTTP/1.1 200 OK"
+23:52:41 HTTP Request: GET https://arena.tacto.ai/v1/sessions/aab2385c7cf0d953/backoffice "HTTP/1.1 200 OK"
+23:52:42 HTTP Request: GET https://arena.tacto.ai/v1/sessions/723af973b365671f "HTTP/1.1 200 OK"
+23:52:42 HTTP Request: GET https://arena.tacto.ai/v1/sessions/723af973b365671f/backoffice "HTTP/1.1 200 OK"
+23:52:42 HTTP Request: GET https://arena.tacto.ai/v1/sessions/5c5279651730992d "HTTP/1.1 200 OK"
+23:52:42 HTTP Request: GET https://arena.tacto.ai/v1/sessions/5c5279651730992d/backoffice "HTTP/1.1 200 OK"
+23:52:42 HTTP Request: GET https://arena.tacto.ai/v1/sessions/1d7ec649a7192810 "HTTP/1.1 200 OK"
+23:52:42 HTTP Request: GET https://arena.tacto.ai/v1/sessions/1d7ec649a7192810/backoffice "HTTP/1.1 200 OK"
+23:52:42 HTTP Request: GET https://arena.tacto.ai/v1/sessions/8383a6cf9667f42f "HTTP/1.1 200 OK"
+23:52:42 HTTP Request: GET https://arena.tacto.ai/v1/sessions/8383a6cf9667f42f/backoffice "HTTP/1.1 200 OK"
+23:52:42 HTTP Request: GET https://arena.tacto.ai/v1/sessions/d6b27a606db15423 "HTTP/1.1 200 OK"
+23:52:43 HTTP Request: GET https://arena.tacto.ai/v1/sessions/d6b27a606db15423/backoffice "HTTP/1.1 200 OK"
+23:52:43 HTTP Request: GET https://arena.tacto.ai/v1/sessions/a28b553721967a94 "HTTP/1.1 200 OK"
+23:52:43 HTTP Request: GET https://arena.tacto.ai/v1/sessions/a28b553721967a94/backoffice "HTTP/1.1 200 OK"
+23:52:43 HTTP Request: GET https://arena.tacto.ai/v1/sessions/fcf82908ca122e5f "HTTP/1.1 200 OK"
+23:52:43 HTTP Request: GET https://arena.tacto.ai/v1/sessions/fcf82908ca122e5f/backoffice "HTTP/1.1 200 OK"
+23:52:43 HTTP Request: GET https://arena.tacto.ai/v1/sessions/d86a6f2a41af4911 "HTTP/1.1 200 OK"
+23:52:43 HTTP Request: GET https://arena.tacto.ai/v1/sessions/d86a6f2a41af4911/backoffice "HTTP/1.1 200 OK"
+23:52:43 HTTP Request: GET https://arena.tacto.ai/v1/sessions/4c7df55aa308e8f5 "HTTP/1.1 200 OK"
+23:52:43 HTTP Request: GET https://arena.tacto.ai/v1/sessions/4c7df55aa308e8f5/backoffice "HTTP/1.1 200 OK"
+23:52:44 HTTP Request: GET https://arena.tacto.ai/v1/sessions/fedc7203e636185d "HTTP/1.1 200 OK"
+23:52:44 HTTP Request: GET https://arena.tacto.ai/v1/sessions/fedc7203e636185d/backoffice "HTTP/1.1 200 OK"
+23:52:44 HTTP Request: GET https://arena.tacto.ai/v1/sessions/fddf5f09b258cbe0 "HTTP/1.1 200 OK"
+23:52:44 HTTP Request: GET https://arena.tacto.ai/v1/sessions/fddf5f09b258cbe0/backoffice "HTTP/1.1 200 OK"
+23:52:44 HTTP Request: GET https://arena.tacto.ai/v1/sessions/01dcd6c6e7b3f263 "HTTP/1.1 200 OK"
+23:52:44 HTTP Request: GET https://arena.tacto.ai/v1/sessions/01dcd6c6e7b3f263/backoffice "HTTP/1.1 200 OK"
+23:52:44 HTTP Request: GET https://arena.tacto.ai/v1/sessions/1c5a81a5170bb1c8 "HTTP/1.1 200 OK"
+23:52:44 HTTP Request: GET https://arena.tacto.ai/v1/sessions/1c5a81a5170bb1c8/backoffice "HTTP/1.1 200 OK"
+23:52:44 HTTP Request: GET https://arena.tacto.ai/v1/sessions/17c07ffe462701e6 "HTTP/1.1 200 OK"
+23:52:45 HTTP Request: GET https://arena.tacto.ai/v1/sessions/17c07ffe462701e6/backoffice "HTTP/1.1 200 OK"
+23:52:45 HTTP Request: GET https://arena.tacto.ai/v1/sessions/45a7a607013b1741 "HTTP/1.1 200 OK"
+23:52:45 HTTP Request: GET https://arena.tacto.ai/v1/sessions/45a7a607013b1741/backoffice "HTTP/1.1 200 OK"
+23:52:45 HTTP Request: GET https://arena.tacto.ai/v1/sessions/c770f7ccd35aae2a "HTTP/1.1 200 OK"
+23:52:45 HTTP Request: GET https://arena.tacto.ai/v1/sessions/c770f7ccd35aae2a/backoffice "HTTP/1.1 200 OK"
+23:52:45 HTTP Request: GET https://arena.tacto.ai/v1/sessions/b958b6f08ad1e325 "HTTP/1.1 200 OK"
+23:52:45 HTTP Request: GET https://arena.tacto.ai/v1/sessions/b958b6f08ad1e325/backoffice "HTTP/1.1 200 OK"
+23:52:45 HTTP Request: GET https://arena.tacto.ai/v1/sessions/31f32c11a83e1065 "HTTP/1.1 200 OK"
+23:52:45 HTTP Request: GET https://arena.tacto.ai/v1/sessions/31f32c11a83e1065/backoffice "HTTP/1.1 200 OK"
+23:52:46 HTTP Request: GET https://arena.tacto.ai/v1/sessions/708eeb215e455ced "HTTP/1.1 200 OK"
+23:52:46 HTTP Request: GET https://arena.tacto.ai/v1/sessions/708eeb215e455ced/backoffice "HTTP/1.1 200 OK"
+23:52:46 HTTP Request: GET https://arena.tacto.ai/v1/sessions/a8a307439bdd17b0 "HTTP/1.1 200 OK"
+23:52:46 HTTP Request: GET https://arena.tacto.ai/v1/sessions/a8a307439bdd17b0/backoffice "HTTP/1.1 200 OK"
+23:52:46 HTTP Request: GET https://arena.tacto.ai/v1/sessions/ba3cc33eed6f774e "HTTP/1.1 200 OK"
+23:52:46 HTTP Request: GET https://arena.tacto.ai/v1/sessions/ba3cc33eed6f774e/backoffice "HTTP/1.1 200 OK"
+23:52:46 HTTP Request: GET https://arena.tacto.ai/v1/sessions/32394937bf9f24f1 "HTTP/1.1 200 OK"
+23:52:46 HTTP Request: GET https://arena.tacto.ai/v1/sessions/32394937bf9f24f1/backoffice "HTTP/1.1 200 OK"
+23:52:47 HTTP Request: GET https://arena.tacto.ai/v1/sessions/bbd51c54e3b4cb48 "HTTP/1.1 200 OK"
+23:52:47 HTTP Request: GET https://arena.tacto.ai/v1/sessions/bbd51c54e3b4cb48/backoffice "HTTP/1.1 200 OK"
+23:52:47 HTTP Request: GET https://arena.tacto.ai/v1/sessions/5ed0e840bc1d7ccc "HTTP/1.1 200 OK"
+23:52:47 HTTP Request: GET https://arena.tacto.ai/v1/sessions/5ed0e840bc1d7ccc/backoffice "HTTP/1.1 200 OK"
+23:52:47 HTTP Request: GET https://arena.tacto.ai/v1/sessions/cb4e65a381e9353a "HTTP/1.1 200 OK"
+23:52:47 HTTP Request: GET https://arena.tacto.ai/v1/sessions/cb4e65a381e9353a/backoffice "HTTP/1.1 200 OK"
+{
+  "deal": true,
+  "supplier_id": "sup:DEMO-F1",
+  "terms": {
+    "payment_days": 60,
+    "lead_time_days": 35,
+    "volume_per_year": 4000,
+    "contract_months": 24,
+    "effective_date": "2026-12-01",
+    "index_clause": null,
+    "incoterm": "FCA",
+    "tooling_eur": 0.0,
+    "ppm_commitment": 650,
+    "chargeback_eur_per_complaint": 0.0,
+    "unit_price": 50.0
+  },
+  "c_open": 448810.67,
+  "c_deal": 410350.82,
+  "c_best": 408623.99,
+  "score": 0.957029791960918
+}
+replay: https://arena.tacto.ai/replay/cb4e65a381e9353a
+45 new sessions in logs/sessions/sandbox
