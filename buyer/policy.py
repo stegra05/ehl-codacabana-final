@@ -59,6 +59,8 @@ class Side:
         self.ours = []  # our prices at s.terms, one per message with a sheet
         self.theirs = []  # its price at our terms, one per reply
         self.gaps = []  # relative gap of each of our sheets to its counter
+        self.full = None  # our estimate of its full cost per unit (bounded by its quote)
+        self.menu = []  # extra round-1 sheets: the index clause at equal C for us
         self.state = "open"  # open | mirror | closing | done | ended
         self.prev_state = "open"  # the state before the message in flight
         self.pending = None  # the message in flight: what to undo if it times out
@@ -104,6 +106,12 @@ class Negotiator:
         goal, signals = case["buyer"].get("category_goal"), s.prof["signals"]
         ratio = ANCHOR.get(goal, 0.85)
         near_cost = bool(own_plant and full_cost >= 0.98 * q_price)  # it sells at our cost estimate
+        if full_cost and goal in eco.RELATIONSHIP_GOALS:
+            # it never sells below its cost, so its quote at its standard terms bounds the estimate
+            # (P02: the should-cost sat above the quote; the arena's charge implied 1 % below it)
+            full_cost = min(full_cost, q_price)
+            s.est["full_cost"] = full_cost
+        s.full = full_cost
         if goal in eco.RELATIONSHIP_GOALS:
             s.budget = 0.3
         if "price_frozen" in signals:
@@ -123,8 +131,10 @@ class Negotiator:
         s.quote = safe(
             lambda: round(eco.price_for_value(case, s.terms, s.est, eco.value(case, quote, s.est)), 2), q_price
         )
-        if full_cost and not near_cost:
-            s.target = safe(lambda: eco.relationship_optimum(case, s.terms, s.std, s.est, full_cost * 0.85, s.quote))
+        s.target = self.target_for(s, s.terms)
+        # round 1 also offers the index clause the kit values at zero, at equal C for us; in a
+        # relationship goal not below that structure's optimum, as it may be agreed at once
+        s.menu = safe(lambda: eco.menu(case, s.std, s.est, s.terms, self.target_for(s, s.terms, menu=True)), [])
         s.claims = safe(lambda: self.bank.for_supplier(sid, q_price), [])
         self.note(
             sid,
@@ -138,10 +148,24 @@ class Negotiator:
             quote_at_terms=s.quote,
             anchor=s.anchor,
             target=s.target,
+            menu=s.menu,
             budget=s.budget,
             claims=[c["text"] for c in s.claims],
         )
         return s
+
+    def target_for(self, s, terms, menu=False):
+        """Relationship goals: the price at `terms` below which a lower price costs more in
+        relationship charge than it saves. None without a full-cost estimate or outside those goals.
+        `menu`: the target for the clause sheet of the round-1 menu, computed on the clause terms."""
+        if not s.full:
+            return None
+        if menu:
+            clauses = [o for o in (self.case.get("term_options") or {}).get("index_clause") or [] if o]
+            if not clauses:
+                return None
+            terms = {**terms, "index_clause": max(clauses, key=lambda o: o.get("deadband_pct") or 0)}
+        return safe(lambda: eco.relationship_optimum(self.case, terms, s.std, s.est, s.full * 0.85, s.quote))
 
     def full_cost(self, part, sid):
         """(should-cost of the part, whether it models this supplier's own plant): full cost
@@ -222,7 +246,10 @@ class Negotiator:
             v = eco.value(self.case, eco.at_price(self.case, s.terms, s.theirs[-1]), s.est)
             s.theirs[-1] = round(eco.price_for_value(self.case, new, s.est, v), 2)
         s.terms = {**new}
-        self.note(s.sid, "switch_terms", why=why, terms={k: v for k, v in new.items() if k != "unit_price"})
+        s.target = self.target_for(s, s.terms)  # the optimum moves with the structure (a clause)
+        self.note(
+            s.sid, "switch_terms", why=why, target=s.target, terms={k: v for k, v in new.items() if k != "unit_price"}
+        )
 
     def adopt(self, s, sheets):
         """Its reply changed some of our non-price terms (in its counter or an alternative): it told
@@ -306,7 +333,8 @@ class Negotiator:
             return self.finish(s, sheets, events, theirs, left)
         price, n_claims = self.next_price(s, theirs)
         claims = self.pick(s, n_claims, threads)
-        return self.send(s, [eco.at_price(case, s.terms, price)], claims, events, theirs)
+        sheets = [eco.at_price(case, s.terms, price)] + (s.menu if not s.ours else [])
+        return self.send(s, sheets, claims, events, theirs)
 
     def moves_left(self, s, events):
         """Messages we may still send: the arena counts a late message as a round too."""
@@ -411,6 +439,11 @@ class Negotiator:
             out.append("they moved in their last reply and we appreciate it")
         if claims:
             out.append("the e-mail cites data right after this paragraph (do not repeat it)")
+        if len(sheets) > 1:
+            out.append(
+                "we offer two packages below: a fixed price, or a price that follows the material index with a "
+                "deadband so both sides share that risk; they may choose the structure that suits them"
+            )
         out.append("the proposal with all terms follows after the data (do not repeat it)")
         return out
 
@@ -461,21 +494,39 @@ class Negotiator:
             s.pending["appended"] = True
         tone = "warm" if s.prof.get("warm", True) else "friendly and businesslike"
         facts = self.facts(s, sheets, claims, moved, statements, attachments)
-        para = llm.paragraph(
-            self.complete,
-            writer.brief(self.case, s.prof, latest(events).get("body"), facts, tone, first),
-            self.writer_s,
-        )
-        body = writer.email(
-            self.case,
-            sheets,
-            claims,
-            statements,
-            first=first,
-            moved=moved,
-            warm=s.prof.get("warm", True),
-            paragraph=para,
-        )
+        body = None
+        if llm.FULL:
+            brief, allowed = writer.full_brief(
+                self.case,
+                s.prof,
+                latest(events).get("body"),
+                facts,
+                tone,
+                first,
+                sheets,
+                claims,
+                statements,
+                len(s.ours) + 1,
+            )
+            prose = llm.full_email(self.complete, brief, allowed, self.writer_s)
+            if prose:
+                body = writer.email_full(self.case, sheets, claims, statements, prose)
+        if body is None:
+            para = llm.paragraph(
+                self.complete,
+                writer.brief(self.case, s.prof, latest(events).get("body"), facts, tone, first),
+                self.writer_s,
+            )
+            body = writer.email(
+                self.case,
+                sheets,
+                claims,
+                statements,
+                first=first,
+                moved=moved,
+                warm=s.prof.get("warm", True),
+                paragraph=para,
+            )
         refs = sorted({i for c in claims for i in c["ids"]})
         self.note(
             s.sid,

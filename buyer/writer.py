@@ -122,3 +122,53 @@ def keepalive():
         "Dear Sir or Madam,\n\nthank you for your offer, which we are reviewing internally. Could you confirm "
         "how long it remains valid?\n\nKind regards,\nHollerau Pumpenwerke, Purchasing"
     )
+
+
+def full_brief(case, prof, last_body, facts, tone, question_allowed, sheets, claims, statements, round_no):
+    """Everything the model needs to write the whole prose: who it writes to, what it wrote, what we
+    may say, and exactly what code will append (the proposal and the data), so the prose leads into it."""
+    who = OWNERS.get(prof.get("owner_type"), "a supplier")
+    if prof.get("country") and prof.get("country") != "DE":
+        who += f" based in {prof['country']}"
+    traits = [TRAITS[s] for s in prof.get("signals", []) if s in TRAITS]
+    proposal = [describe(case, s) for s in sheets]
+    allowed = "\n".join(proposal + [c["text"] for c in claims] + list(statements) + [last_body or ""])
+    out = [
+        f"CASE: {case.get('title')} (we are the buyer; goal: {case['buyer'].get('category_goal')}; round {round_no})",
+        f"SUPPLIER: {who}." + (f" From our notes: {'; '.join(traits)}." if traits else ""),
+        f"ITS LAST E-MAIL:\n{(last_body or '')[:2500]}",
+        "WHAT WE CAN SAY:",
+        *[f"- {f}" for f in facts],
+        "OUR PROPOSAL (code appends this after your text; lead into it, do not repeat the full line):",
+        *[f"- {p}" for p in proposal],
+        "DATA CODE APPENDS AFTER YOUR TEXT (you may refer to these arguments in words):",
+        *[f"- {c['text']}" for c in claims],
+        *(["STATEMENTS CODE APPENDS:"] + [f"- {x}" for x in statements] if statements else []),
+        f"FIGURES YOU MAY USE: {', '.join(sorted(_figs(allowed)))}",
+        f"TONE: {tone}",
+        f"QUESTION ALLOWED: {'yes' if question_allowed else 'no'}",
+    ]
+    return "\n".join(out), allowed
+
+
+def _figs(text):
+    import re
+
+    return {t.replace(",", "").rstrip(".") for t in re.findall(r"\d[\d.,]*", text)}
+
+
+def email_full(case, sheets, claims, statements, prose):
+    """The model's prose, then exactly what code promised: the statements, the data lines and the
+    proposal, and the sign-off."""
+    lines = [prose, ""]
+    if statements:
+        lines += list(statements) + [""]
+    if claims:
+        lines += [c["text"] for c in claims] + [""]
+    if len(sheets) == 1:
+        lines.append(f"Our proposal in detail: {describe(case, sheets[0])}.")
+    else:
+        lines.append("Our proposal in detail, one of these packages:")
+        lines += [f"- Option {chr(65 + i)}: {describe(case, s)}" for i, s in enumerate(sheets)]
+    lines += ["", "Kind regards,", "Hollerau Pumpenwerke, Purchasing"]
+    return "\n".join(lines)

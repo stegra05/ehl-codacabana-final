@@ -131,6 +131,45 @@ def at_price(case, terms, price):
     return {**terms, "unit_price": round(price, 2)}
 
 
+def price_for_cost(case, terms, std, est, target_c, hi):
+    """The unit price at which `terms` cost us `target_c` (C rises with price), at most `hi`."""
+    lo = 0.0
+    if cost(case, at_price(case, terms, hi), std, est) <= target_c:
+        return hi
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        if cost(case, at_price(case, terms, mid), std, est) < target_c:
+            lo = mid
+        else:
+            hi = mid
+    return round(lo, 2)
+
+
+def menu(case, std, est, base, floor=None):
+    """One extra sheet for round 1 that trades the lever `supplier_value` prices at zero, an index
+    clause, at the same C for us as `base` (the deadband that costs us least). What the supplier
+    answers shows what the clause is worth to it: Nordmark paid about 6 % of price for a copper
+    clause with a 5 % deadband that costs us 0.8 % (P02), the distributors price it at our cost.
+    `floor`: in a relationship goal, the price below which a cheaper clause sheet costs more than
+    it saves (the supplier agrees to a clause sheet at once, so it must not sit below that)."""
+    if "index_clause" not in case["negotiable"]:
+        return []
+    clauses = [o for o in (case.get("term_options") or {}).get("index_clause") or [] if o]
+    clauses = [o for o in clauses if o != base.get("index_clause")]
+    if not clauses:
+        return []
+    clause = max(clauses, key=lambda o: o.get("deadband_pct") or 0)
+    terms = {**base, "index_clause": clause}
+    if not must_haves_ok(case, terms, std):
+        return []
+    price = price_for_cost(case, terms, std, est, cost(case, base, std, est), base["unit_price"])
+    if price >= base["unit_price"]:
+        return []  # the clause pays for itself: the planner would have chosen it
+    if floor:
+        price = max(price, floor)  # may sit above the fixed anchor: the fixed sheet opens the walk
+    return [at_price(case, terms, price)]
+
+
 def relationship_optimum(case, terms, std, est, lo, hi):
     """Relationship goals: the price in [lo, hi] with the lowest C, relationship charge included
     (C falls with price until the margin charge grows faster). Without a full-cost estimate: lo."""
