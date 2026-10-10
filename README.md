@@ -23,7 +23,7 @@ Environment variables (`.env.example`):
 | `ARENA_URL` | `https://arena.tacto.ai` |
 | `ARENA_API_KEY` | the team key from https://arena.tacto.ai/apply |
 | `ARENA_DATA` | `data/package` |
-| `LLM_PROVIDER`, `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` | the model: `openai` (any compatible endpoint) or `anthropic`; optional `LLM_EFFORT` |
+| `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` | the model, any OpenAI-compatible chat completions endpoint; optional `LLM_EFFORT` |
 
 ## Run
 
@@ -36,9 +36,9 @@ uv run buyer run --set final --parallel 10 -v     # the Live Final: start before
 
 ## Approach
 
-Today the agent is Tacto's reference `LLMAgent` behind our runner: code computes the total cost
-C of every term sheet and refuses bad accepts, the model writes the e-mails. Our strategy replaces
-it layer by layer in `buyer/agent.py`: plan in `docs/design.md`, findings in `docs/learnings.md`.
+Code owns every number: `buyer/policy.py` plans terms and prices with `total_cost`, cites data
+by ID and refuses bad accepts; the model writes one paragraph of each e-mail (`buyer/llm.py`).
+`buyer/runner.py` plays the cases. Design in `docs/design.md`, findings in `docs/learnings.md`.
 
 ## Develop
 

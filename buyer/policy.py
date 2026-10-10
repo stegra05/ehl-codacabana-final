@@ -13,7 +13,6 @@ What the suppliers showed (sandbox and practice, `docs/learnings.md`):
 - a large first concession means a deep floor: then we hold low instead of meeting it."""
 
 import logging
-import threading
 import time
 
 from arena_kit.docs import standard_terms
@@ -35,6 +34,7 @@ BUDGET = 1.0  # patience: the cumulative relative gap we show (no cap for a typi
 DEEP = 0.06  # a first concession this large (share of its quote) means a deep floor
 MIN_MOVE = 0.002  # every sheet moves at least this share of the price
 FIRST_CLAIMS, LATER_CLAIMS = 3, 1
+PARAGRAPH_UNTIL_S = 25  # no model paragraph once a thread's 60 s clock has run this long
 DONE = {"agreed", "final_offer"}
 ENDED = {"walked_away", "no_bid"}
 QUESTION = "Could you share your cost breakdown for this part, so we understand the drivers together?"
@@ -50,6 +50,9 @@ class Side:
         self.est = {}
         self.terms = {}  # our planned non-price terms (with a price placeholder)
         self.quote = None  # its opening price at our terms
+        self.last_sheet = {}  # its previous standing terms
+        self.late = 0  # our messages the arena counted as rounds although they came too late
+        self.since_reply = 0.0  # seconds its 60 s clock has run when we decide
         self.anchor = None
         self.target = None  # relationship goals: the price with the lowest C
         self.budget = BUDGET
@@ -71,7 +74,6 @@ class Negotiator:
         self.bank = ClaimBank(pkg, case)
         self.sides = {}
         self.used = set()  # claim IDs cited in this case (a rival quote: per supplier)
-        self.lock = threading.Lock()
         self.notes = []  # what we decided, for the log
 
     # -- setup -------------------------------------------------------------------------------
@@ -84,6 +86,7 @@ class Negotiator:
         if not sheet_id or quote.get("unit_price") is None:
             s.state = "ended"
             return s
+        s.last_sheet = quote
         part = (case.get("parts") or [None])[0]
         full_cost, own_plant = self.full_cost(part, sid)
         lead = quote.get("lead_time_days") or s.std.get("lead_time_days")
@@ -183,9 +186,17 @@ class Negotiator:
         standing_terms = sheets[0]["terms"]
         clause = standing_terms.get("index_clause")
         if "index_clause" in s.terms and s.terms["index_clause"] != clause and clause:
-            # it will not sell this term at a fixed price (raw-material distributors), and it
-            # refuses a deadband: we take its clause and keep negotiating the price
-            self.switch(s, {**s.terms, "index_clause": clause}, "its index clause")
+            # it will not sell this term at a fixed price (raw-material distributors) and refuses a
+            # deadband: take its clause when its sheet, clause included, costs us less than its
+            # last one (P08, P18: a longer contract came with it) and keeps every must-have; else
+            # keep asking for a fixed price (P02: the copper clause alone cost 1.8 % of spend)
+            new = {**s.terms, "index_clause": clause}
+            c_now = eco.cost(case, standing_terms, s.std, s.est)
+            c_before = eco.cost(case, s.last_sheet, s.std, s.est)
+            if eco.must_haves_ok(case, new, s.std) and c_now < c_before - 1.0:
+                self.switch(s, new, "its index clause")
+            else:
+                self.note(s.sid, "keep_terms", why="its index clause costs us more", c_now=c_now, c_before=c_before)
         best_c = eco.cost(case, eco.at_price(case, s.terms, self.their_price(s, standing_terms)), s.std, s.est)
         for sheet in sheets:
             terms = sheet["terms"]
@@ -205,10 +216,12 @@ class Negotiator:
                 self.switch(s, new, f"its sheet {changed} costs us less")
 
     # -- one move ----------------------------------------------------------------------------
-    def move(self, sid, threads):
-        """The next message to this supplier: {"message": ...}, or None when the thread is done."""
+    def move(self, sid, threads, since_reply=0.0):
+        """The next message to this supplier: {"message": ...}, or None when the thread is done.
+        `since_reply`: seconds since its last reply (its 60 s clock)."""
         case, s, events = self.case, self.sides[sid], threads[sid]
         s.prev_state = s.state
+        s.since_reply = since_reply
         last = latest(events)
         status = last.get("status")
         if s.state == "ended" or status in ENDED:
@@ -225,22 +238,28 @@ class Negotiator:
             self.adopt(s, sheets)
             s.term_change = any(sheets[0]["terms"].get(k, v) != v for k, v in terms_before.items() if k != "unit_price")
             s.theirs.append(self.their_price(s, sheets[0]["terms"]))
+            s.last_sheet = sheets[0]["terms"]
             s.last_reply = last
         theirs = s.theirs[-1]
         if s.state in ("mirror", "closing"):  # we sent its own sheet or our target: done
             s.state = "done"
             return None
-        if status in DONE or moves_left(case, events) <= 0:
-            return self.finish(s, sheets, events, theirs, moves_left(case, events))
+        left = self.moves_left(s, events)
+        if status in DONE or left <= 0:
+            return self.finish(s, sheets, events, theirs, left)
         if s.target and theirs <= s.target * 1.002:
             # relationship goal: below the target a lower price costs more than it saves
             s.state = "closing"
             return self.send(s, [eco.at_price(case, s.terms, max(s.target, theirs))], [], events, theirs)
         if s.ours and theirs <= s.ours[-1]:  # it came below what we offered: take it
-            return self.finish(s, sheets, events, theirs, moves_left(case, events))
+            return self.finish(s, sheets, events, theirs, left)
         price, n_claims, question = self.next_price(s, theirs)
         claims = self.pick(s, n_claims, threads)
         return self.send(s, [eco.at_price(case, s.terms, price)], claims, events, theirs, question)
+
+    def moves_left(self, s, events):
+        """Messages we may still send: the arena counts a late message as a round too."""
+        return moves_left(self.case, events) - s.late
 
     def next_price(self, s, theirs):
         """Our next price at s.terms: open at the anchor; then a share of the gap, held low after a
@@ -337,12 +356,12 @@ class Negotiator:
             s.pending["appended"] = True
         tone = "warm" if s.prof.get("warm", True) else "friendly and businesslike"
         asked = len(s.ours) in (1, 3)
-        para = llm.paragraph(
-            self.complete,
-            writer.brief(
+        para = None
+        if s.since_reply < PARAGRAPH_UNTIL_S:  # late in its clock the template goes out at once
+            brief = writer.brief(
                 self.case, s.prof, latest(events).get("body"), self.facts(s, sheets, claims, moved), tone, asked
-            ),
-        )
+            )
+            para = llm.paragraph(self.complete, brief)
         body = writer.email(
             self.case, sheets, claims, question, first=first, moved=moved, warm=s.prof.get("warm", True), paragraph=para
         )
@@ -376,17 +395,18 @@ class Negotiator:
                 s.gaps.pop()
             s.state = s.pending["state"]
             s.pending = None
-            self.note(sid, "rollback")
+            s.late += 1
+            self.note(sid, "rollback", late=s.late)
 
     # -- close -------------------------------------------------------------------------------
     def fallback_close(self, threads):
         """(supplier, message) after a failed close: accept the cheapest standing sheet that keeps
-        the must-haves, else walk away."""
+        the must-haves and beats the alternative, else walk away."""
         best = None
         for sid, events in threads.items():
             oid, terms = standing(events)
             std = standard_terms(events) or self.sides[sid].std
-            if oid and latest(events).get("status") not in ENDED and eco.must_haves_ok(self.case, terms, std):
+            if oid and latest(events).get("status") not in ENDED and eco.acceptable(self.case, terms, std):
                 c = eco.cost(self.case, terms, std)
                 if best is None or c < best[0]:
                     best = (c, sid, oid)

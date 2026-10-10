@@ -42,6 +42,9 @@ Hypotheses. Correct or delete entries that turn out wrong.
    alternative is sent back as our sheet; it agrees and becomes standing (P10).
 8. **Raw-material distributors refuse a fixed price beyond 12 months and refuse any deadband**
    (P08, P18): take their clause and negotiate the price; insisting on a deadband stalled them.
+   But only when their sheet with the clause costs us less than their last one: Nordmark's copper
+   clause came alone and cost 1.8 % of spend, score 0 (P02 `680eb11405186b42`,
+   `d52ccdd3d2e07b3f`). That rule separates all 24 P02, P08 and P18 sessions correctly.
 9. **RFQ: the arena answers one call per session at a time** and each thread's 60 s clock runs
    from its reply, so sends are serialized by deadline; the cheapest rival offer is a new,
    verified claim to every other bidder every round (P05 0.83, D02 0.73).
@@ -314,10 +317,9 @@ shows evidence.
 - 2026-10-10 `rules` Case files of all 21 cases come free from `GET /v1/cases` (no session, no
   quota). Hosted for practice: P01, P02, P03, P04, P05, P07, P08, P10, P11, P18; the other nine
   exist as case files only. Our probe used 15 practice sessions.
-- 2026-10-10 `rules` The kit's `llm_from_env` reads `LLM_PROVIDER` (`openai`, any compatible
-  endpoint, or `anthropic`), `LLM_MODEL`, `LLM_API_KEY`, `LLM_BASE_URL` and `LLM_EFFORT` (not
-  `OPENAI_API_KEY`); without `LLM_MODEL`, `buyer play` with our agent fails before the
-  first move. `gpt-6-luna` answered a short call in 2.0 s and wrote three move suggestions in
+- 2026-10-10 `rules` Our writer (`buyer/llm.py`) posts to an OpenAI-compatible chat completions
+  endpoint: `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_EFFORT` (not `OPENAI_API_KEY`,
+  `LLM_PROVIDER` is not read); without `LLM_MODEL` the e-mails use the template. `gpt-6-luna` answered a short call in 2.0 s and wrote three move suggestions in
   12 s. Tacto: their house agent runs on a small, cheap model, and reading the data beats a
   bigger model.
 - 2026-10-10 `rules` In an RFQ every thread's 60-second clock runs while we work on another.

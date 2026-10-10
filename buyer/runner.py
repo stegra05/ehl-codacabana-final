@@ -53,7 +53,7 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
             and live(s)
             and todo
             and time.monotonic() - replied[s] > KEEPALIVE_AFTER_S
-            and moves_left(case, threads[s]) > 0
+            and moves_left(case, threads[s]) - neg.sides[s].late > 0
         ]
         if not todo:
             break
@@ -62,7 +62,7 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None):
             message = keepalive_message(threads[sid])
         else:
             sid = todo[0]
-            move = neg.move(sid, threads)
+            move = neg.move(sid, threads, time.monotonic() - replied[sid])
             if move is None:
                 continue
             message = move["message"]

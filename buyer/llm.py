@@ -11,7 +11,7 @@ import time
 import httpx
 
 log = logging.getLogger("buyer")
-TIMEOUT_S = 20.0
+TIMEOUT_S = 15.0
 FORBIDDEN = re.compile(
     r"\d|\b(?:idx|quote|offer|sc|qn|po|cost|fc|news|doc|ctr):|urgent|urgency|deadline|budget|no alternative|"
     r"walk away|other options|last chance|desperate|must close|time pressure|target price",
@@ -37,7 +37,8 @@ tone says firm."""
 
 
 def complete_from_env():
-    """(system, user) -> text with the team's OpenAI-compatible model, or None when not configured."""
+    """(system, user) -> text with the team's model over an OpenAI-compatible chat completions
+    endpoint (`LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_EFFORT`), or None when not configured."""
     model, key = os.environ.get("LLM_MODEL"), os.environ.get("LLM_API_KEY")
     if not model or not key:
         return None
