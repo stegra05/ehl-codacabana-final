@@ -33,3 +33,7 @@ out/
 
 # Agent worktrees
 .claude/worktrees/
+
+# Arena: data package (`uv run arena data`) and session logs (`uv run buyer pull`)
+/data/
+/logs/
