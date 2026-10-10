@@ -235,9 +235,10 @@ class Prober:
                 claims=[c["key"] for c in rows],
             )
 
-        for pct in (1, 2, 4):
+        for pct in (1, 2, 4):  # a concession: our last price up by pct % of theirs, never past theirs
             closer = "Thank you. We can move closer, see below."
-            out[f"step-{pct}"] = opt(f"step-{pct}", f"their price -{pct} %", closer, [at(price * (1 - pct / 100))])
+            step = min(last + price * pct / 100, price * 0.995)
+            out[f"step-{pct}"] = opt(f"step-{pct}", f"our last {last:.2f} + {pct} % of theirs", closer, [at(step)])
         if ours:
             out["split"] = opt(
                 "split",
