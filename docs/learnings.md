@@ -312,6 +312,18 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
 
 ## Agent experiments
 
+- 2026-10-10 `rules` **The Live Final per-case path ran on the sandbox** (Saturday 22:30): D01
+  through `RemoteTable(client, case)` with a wave deadline of 480 s, as `play_waves` calls it:
+  deal 49.70, score 0.988, 113 s. The wave loop itself is covered by `tests/test_waves.py`.
+- 2026-10-10 `arena` **P02's ceiling with the clause is the relationship charge.** The arena's C at
+  358.00 (2,251,140) and at 361.67 (2,248,062) with the same 5 % copper clause and 90 days give
+  Nordmark's cost of money as about 0 and its full cost as about 371.7; the C-minimising price is
+  then 361, where we are (0.735). Another payment term does not help: the charge does not move
+  with it and the payment term costs us 0.67 % per 30 days. The record 0.847 has a structure we
+  cannot derive from these two points.
+- 2026-10-10 `arena` **Run tally against the stop rule** (my 24 practice runs since v8): the last
+  mean gain above 0.01 came with v10 (runs 14 and 15: P08 +0.12, P18 +0.14); runs 16 to 24 since
+  then brought P02 +0.065 (v11) and nothing else, +0.0065 on the mean. Team mean 0.776, rank 3.
 - 2026-10-10 `arena` **After a job shop's deep first drop, hold the anchor (v12).** Dralveck
   (P05, 36.00 to 30.0 or 30.5 on its first counter) agreed at our second sheet in every run: at a
   held anchor 27.86 (0.828) and 27.92 (0.822, `practice-v12b-P05.log`), at 28.03 to 28.07 after an
