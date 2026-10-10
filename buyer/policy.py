@@ -361,8 +361,10 @@ class Negotiator:
         share = FRACTION
         if len(s.ours) == 1 and conceded >= DEEP and not s.term_change:
             # a deep floor: a pure price drop this large means it moves fast on its own (job shops,
-            # P05, D02); a drop that came with terms it added (an index clause, P08, P18) is not one
-            share = 0.08
+            # P05, D02) and agrees at our sheet next: hold the anchor (Dralveck agreed at a held
+            # 27.86, at 28.07 after an 8 % step); a drop that came with terms it added (an index
+            # clause, P08, P18) is not one
+            share = 0.0
         left = max(0.0, s.budget - sum(s.gaps))
         new_gap = min(gap * (1 - share), left / 2)
         if s.budget < 0.2:  # a touchy supplier: small, steady gaps

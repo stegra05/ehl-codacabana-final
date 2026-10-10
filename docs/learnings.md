@@ -312,6 +312,14 @@ first place 0.838). Record = best of all teams on `/v1/live` at about 20:30 (hou
 
 ## Agent experiments
 
+- 2026-10-10 `arena` **After a job shop's deep first drop, hold the anchor (v12).** Dralveck
+  (P05, 36.00 to 30.0 or 30.5 on its first counter) agreed at our second sheet in every run: at a
+  held anchor 27.86 (0.828) and 27.92 (0.822, `practice-v12b-P05.log`), at 28.03 to 28.07 after an
+  8 % step toward it (0.806, 0.81). A 3 % deeper anchor (26.79) got a lower first counter (30.0),
+  a second concession to 28.0 after the hold ("you only moved a few cents, but I want to keep our
+  machines running"), then a walk-away at a cumulative gap of 39 % (`practice-v12-P05.log`,
+  0.746 on Fuchsreiter). D02 with the hold: 0.735, as before. → `DEEP` share 0.0: the minimum move
+  only; the anchor stays at 0.78, the patience budget binds job shops too.
 - 2026-10-10 `arena` **A supplier values an index clause on its rising driver far above what it
   costs us (v11).** Nordmark agreed at once to a CU-NOTATION clause with a 5 % deadband at
   358.00 and 90 days, 4.3 % below its fixed price of 374.06 at 90 days (teammate's run
