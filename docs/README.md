@@ -11,6 +11,8 @@ Ours:
 
 Tacto's, copied from [tacto-ai/negotiation-arena-kit](https://github.com/tacto-ai/negotiation-arena-kit)
 `brief/` at commit `1b5516b` (CC BY 4.0). Upstream is the source of truth.
+These copies describe the arena and the kit's sample runner; use the root [README](../README.md)
+for our buyer's commands.
 
 - `challenge.md`: the participant brief (story, task, score, rules, timeline)
 - `api.md`: the HTTP API, message format, claim checks, the cost function C

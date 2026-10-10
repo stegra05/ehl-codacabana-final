@@ -6,8 +6,9 @@ The [agentic approach](agentic-approach.md) is a separate proposal for a model-s
 inside the current code and clock boundaries. It is not implemented.
 
 **Status.** `main` plays a code-only policy with a model-written paragraph (`buyer/policy.py`,
-run by `buyer/runner.py`): practice mean of best scores 0.776 (from 0.32, table in
-`learnings.md`, Where we stand), sandbox D01 0.99, D02 0.73. What it does is under "Implemented"
+run by `buyer/runner.py`): best recorded score per hosted case averaged 0.776, while the latest
+ten-case validation run averaged 0.727 ([learnings](learnings.md)); sandbox D01 reached 0.99 and
+D02 0.73. What it does is under "Implemented"
 below; the rest of this file is the target design. Julian's draft two (`origin/julian/draft-two`)
 holds a richer stance and reader design that is not merged.
 
@@ -123,16 +124,6 @@ tuned on; all are in-sample (the ten hosted cases), so a hidden case can open wh
 | `FIRST_CLAIMS`, `LATER_CLAIMS` | 3 in round 1, then 1 | D01 |
 | relationship goals | stop at the price with the lowest C (`economics.relationship_optimum`) | D01, P02 |
 | price increase | open at today's price at most | the case's `current_unit_price` |
-
-## Build order
-
-1. Accept and walk-away guard with `total_cost` and `must_haves_ok`.
-2. Term search: every combination of allowed options, scored with standard terms for unstated
-   fields. Fixes coverage and index-clause losses.
-3. Supplier estimate: full cost and cost of money, giving target and walk-away.
-4. Claim bank from `facts.json` and the index tables.
-5. Persona reading and pacing.
-6. Tune on practice traces, one change per batch.
 
 ## Generalise
 

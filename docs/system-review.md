@@ -13,7 +13,7 @@ Reviewed against `main` at `185ad65`, 10 October 2026. This is an assessment of 
 | Known case structures run through the simulator | `tests/test_cases.py` over the available `logs/cases/` files | This checks integration for bundles, RFQs and term options, though the supplier is scripted. |
 | Practice gives measurable outcomes | `buyer pull`, `logs/sessions/`, `exports/`, `docs/learnings.md` | Team members can compare actual cost and score with the arena result. |
 
-The reported hosted-case mean of best scores, 0.727, is in-sample across ten practice cases as recorded in [learnings](learnings.md). It does not establish performance on Sunday's unseen cases. The architecture has no autonomous learning stage; a person reviews traces and changes code between runs.
+The latest ten-case hosted validation run averaged 0.727; the best score recorded for each hosted case averaged 0.776. Both are in-sample results in [learnings](learnings.md) and do not establish performance on Sunday's unseen cases. The architecture has no autonomous learning stage; a person reviews traces and changes code between runs.
 
 ## Review findings, in order
 

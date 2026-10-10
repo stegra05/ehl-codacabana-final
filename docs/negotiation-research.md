@@ -6,6 +6,8 @@ bargaining, procurement practice and LLM negotiators, gathered by ten parallel r
 fit the arena's supplier bots. Each recommendation says what supports it and how to test it. Most
 literature points were read from abstracts and summaries, not full papers: treat effect sizes as
 directional (sources and confidence at the end).
+This is a dated experiment plan. For the implemented path and later results, see
+[architecture](architecture.md) and [learnings](learnings.md).
 
 ## Summary
 
@@ -28,7 +30,7 @@ Recommendations, ranked by expected gain against cost to build:
 | 2 | **Answer the supplier's stated need every message**, also when the term is fixed | P11 Kalwisz asked for faster payment five times ("you haven't addressed this at all"), then stopped at 45.50 | P11 replay |
 | 3 | **Concede in currencies, not price:** hold one or two terms it values back from round 1 and spend one per round as our move | concessions are only answered after a move; logrolling moves price without paying price | sandbox, then P07 / P08 |
 | 4 | **Spend patience in fewer, larger steps** | the bot gives back only 0.2 to 0.7 of each step and stops on a cumulative gap; many small steps burn patience without buying price | sweep `FRACTION` 0.3 / 0.5 / 0.7 on the sandbox (free) |
-| 5 | **Expected-value acceptance after `final_offer`** | pushing after `final_offer` walked once (D01); the gain from one more step is small | not built: the agent always accepts a final offer that passes the gate |
+| 5 | **Expected-value acceptance after `final_offer`** | pushing after `final_offer` walked once (D01); the gain from one more step is small | not built: the current policy stops its normal price path, then the close gate compares valid standing sheets |
 | 6 | **Persona playbook** (table below): the right currency per supplier type | procurement practice and our persona signals agree | per case, one change per batch |
 | 7 | **Writing rules for LLM counterparts:** warm, questions, reasons, trades, a story for the boss | largest LLM negotiation study: warmth and questions close deals, dominance causes impasses | wording only; check replies' back office |
 
@@ -153,10 +155,11 @@ the deadline. Bargaining theory gives the expected-value form: accept now when
 `C_now <= (1 - p) * E[C_next] + p * C_alt`, with p the chance the next push ends the thread.
 
 **For us.**
-- AC_next is in place (`theirs <= ours[-1]` accepts). Keep it.
+- An AC_next-style stopping rule is in place: `theirs <= ours[-1]` ends normal price moves. The close gate then chooses the cheapest valid standing sheet across suppliers or walks.
 - After `final_offer`, p is high (one walk in our pushes so far) and the expected gain of one more
-  step is small (0 to 1 % in our traces). The agent accepts (a push-after-final flag was
-  planned, not built); test a push only across several cases; in cases without an alternative (D01, P05, P06, P10, P14, P17) never push.
+  step is small (0 to 1 % in our traces). The current policy stops or mirrors a cheaper valid
+  quoted alternative; it does not make an expected-value push. Test any push across several cases;
+  in cases without an alternative (D01, P05, P06, P10, P14, P17) never push.
 - Prepare the worst acceptable sheet before message 9 so a late `final_offer` can be taken at once.
 
 ## 6. Estimating the floor

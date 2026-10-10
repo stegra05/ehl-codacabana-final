@@ -40,7 +40,7 @@ Code owns every number: `buyer/policy.py` plans terms and prices with `total_cos
 by ID and refuses bad accepts; the model writes one paragraph of each e-mail (`buyer/llm.py`).
 `buyer/runner.py` plays the cases. Design in `docs/design.md`, findings in `docs/learnings.md`.
 The running module map is in `docs/architecture.md`; current review findings are in
-`docs/system-review.md`.
+`docs/system-review.md`. A bounded agentic proposal is in `docs/agentic-approach.md`.
 
 ## Develop
 
@@ -48,5 +48,5 @@ Rules for people and coding agents: `AGENTS.md`.
 
 ```sh
 uv run pytest -q                 # our agent end to end against the local arena simulator
-uv run ruff check . && uv run ruff format .
+uv run ruff check . && uv run ruff format --check .
 ```
