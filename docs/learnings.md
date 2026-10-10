@@ -53,7 +53,7 @@ Hypotheses. Correct or delete entries that turn out wrong.
 
 ## Where we stand
 
-Best score per hosted case, Saturday 22:30: mean 0.727 (team rank about 4 of 21 on the practice
+Best score per hosted case, Saturday 21:30: mean 0.737 (team rank about 4 of 21 on the practice
 board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in brackets).
 
 | Case | Goal | Ours | Session | Deal | Record (house) | What limits us |
@@ -64,7 +64,7 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
 | P04 | routine | 0.860 | `81e9fd209c3fd659` | 4.94, 90 d, 36 m | 0.874 (0.860) | C_best needs 4.93 |
 | P05 | leverage RFQ | 0.828 | `917135b8156fb8a3` | Dralveck 27.86, 14 d, 35 d | 0.824 (0.555) | ours is the record |
 | P07 | routine | 0.751 | `cacd5028b34d30dc` | 5.35, 45 d, 36 m | 0.779 (0.782) | final offer in round 3 |
-| P08 | leverage | 0.549 | `7701b00c7a9a8b3e` | 5.35, AS-14404 clause | 0.732 (0.752) | final offer in round 2 to 4 |
+| P08 | leverage | 0.648 | `practice-v9.log` | 5.26, AS-14404 clause | 0.732 (0.752) | final offer in round 2 to 4; 5.26 to 5.61 across identical runs |
 | P10 | secure_supply | 0.679 | `7c4f1855794797d6` | 31.50, 56 d, 36 m | 0.702 (0.686) | fully booked, final early |
 | P11 | quality_first | 0.710 | `3ac9ee6cf673cf7c` | 45.50, 300 ppm | 0.807 (0.314) | wants faster payment, which is fixed |
 | P18 | leverage | 0.485 | `6a39d7511267e0ff` | 5.30, AS-14404 clause | 0.677 (0.386) | final offer in round 2 to 3 |
@@ -168,6 +168,13 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
   Dralveck 36.00 to 30.50, D02 J1 17.10 to 14.99) and an anchor above that counter is agreed at
   once. → In a single-supplier leverage case the anchor depth between 0.78 and 0.85 does not
   matter for the price; nothing is gained below 0.78.
+- 2026-10-10 `arena` **The reply signals tell the size of the shop, and the small shops concede
+  most.** `reply_delay_days` 4 to 5 and no validity: the founder-run job shops (Dralveck,
+  Fuchsreiter, DEMO-J1, Kalwisz, Hrvelec), which conceded up to 22 % of their quote; 2 to 3
+  days: family firms (Werdenfels, Brandlhuber, Ravensteiner, DEMO-F1), 1.6 to 13 %; 1 to 2 days:
+  groups (Nordmark, Donautal, Selvbrunn, Wälzlager), 0 to 12 %. 125 sessions. → For a supplier
+  the package does not know, a slow reply without a validity is the job-shop pattern (deep first
+  concession, hold low); the `DEEP` rule reads the same thing from its first counter.
 
 - 2026-10-10 `arena` **Pushing past a final offer ends the case.** D01: one more sheet 0.1 below
   its final 49.70 and the foundry walked away, no deal (sandbox `212404b7930bfc68`, "we have
@@ -284,6 +291,14 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
 
 ## Agent experiments
 
+- 2026-10-10 `arena` **v8 and v9 on practice (12 runs: P08 x5, P18 x6, P02, P11).** No
+  mechanism moved the distributors' first counter (5.43 to 5.60 at anchors 0.787 and 0.85, with or
+  without claims) or Kalwisz's 45.50; a 40 % share of the gap in round 2 got the same 0.10
+  concession as 30 % (P18, two runs). The spread between identical runs decides the best score:
+  P08 ended 5.26 (0.648, our new best, `practice-v9.log`), 5.34, 5.42, 5.57 with the same code.
+  P02 words registered but the price stayed 372 to 373. → The round-1 counter and the two or
+  three capped concessions after it are the supplier's; what we control is to feed every cap
+  (25 to 35 % of the gap, never under 1 %, never over 50 %) and never to lose a round.
 - 2026-10-10 `rules` **v8 (robustness and the reader), no quota spent.** All 21 case files
   (the nine never hosted included) and both sandbox cases play through `arena-sim` with the
   agent and no guarded error (`tests/test_cases.py`). New: every move and setup is guarded (a
