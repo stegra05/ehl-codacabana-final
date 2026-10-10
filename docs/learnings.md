@@ -291,6 +291,15 @@ board). Record = best of all teams on `/v1/live` at about 20:30 (house agent in 
 
 ## Agent experiments
 
+- 2026-10-10 `arena` **A falling cost driver over the best window moves the first counter (v10).**
+  The claim bank only knew 12-month index changes, where the distributors' main driver AS-14404
+  rose 5.9 %; over the window the arena checks (any two months up to 12 apart, ending within the
+  last 12) it fell 5.5 % from 2026-06 to 2026-09 and PPI-C2431 2.3 % from June. Cited in round 1
+  (`practice-v10.log`): Donautal's first counter 5.40 (5.43 to 5.60 in 14 runs before), then
+  5.33, 5.28, 5.26 final, score 0.670; Werdenfels 5.30 (5.50 to 5.60 before), then 5.20, 5.10,
+  final 5.10, score 0.621 (was 0.485). Both gave four counters instead of three. Electricity
+  (PPI-D351) fell 6.1 % from 2025-11 for P01 and P11 (the 12-month figure was 3.7 %). → Every
+  driver's largest fall within 12 months, ranked above notes and order prices.
 - 2026-10-10 `arena` **v8 and v9 on practice (12 runs: P08 x5, P18 x6, P02, P11).** No
   mechanism moved the distributors' first counter (5.43 to 5.60 at anchors 0.787 and 0.85, with or
   without claims) or Kalwisz's 45.50; a 40 % share of the gap in round 2 got the same 0.10
