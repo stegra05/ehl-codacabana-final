@@ -13,7 +13,7 @@ from arena_kit import ArenaClient, ArenaError, RemoteTable, play, play_all
 from arena_kit.cli import load_env, summary
 from arena_kit.play import hosted, play_waves
 
-from . import runner
+from . import llm, runner
 from .agent import AGENTS, load_package, naive_factory
 
 LOGS = Path("logs/sessions")
@@ -46,6 +46,7 @@ def main(argv=None):
     ap.add_argument("-v", "--verbose", action="store_true")
     verbose = argparse.ArgumentParser(add_help=False)  # -v also after the command
     verbose.add_argument("-v", "--verbose", action="store_true", default=argparse.SUPPRESS)
+    verbose.add_argument("--no-llm", action="store_true", default=argparse.SUPPRESS, help="template e-mails only")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser = functools.partial(sub.add_parser, parents=[verbose])
     data = {"default": os.environ.get("ARENA_DATA"), "help": "data package folder"}
@@ -63,6 +64,7 @@ def main(argv=None):
     s = sub.add_parser("pull", help="save finished sessions with trace and back office to logs/sessions/")
     s.add_argument("--set", default="practice", choices=["practice", "sandbox", "final"])
     args = ap.parse_args(argv)
+    args.no_llm = getattr(args, "no_llm", False)
     logging.basicConfig(
         level=logging.INFO if args.verbose else logging.WARNING,
         format="%(asctime)s %(message)s",
@@ -74,13 +76,14 @@ def main(argv=None):
         return pull(client, args.set)
     naive = args.agent == "naive"
     pkg = None if naive else load_package(args.data)
+    complete = None if naive or args.no_llm else llm.complete_from_env()
     if args.cmd == "play":
         table = RemoteTable(client)
         try:
             if naive:
                 result = play(table, args.case_id, naive_factory()())
             else:
-                result = runner.play_case(table, args.case_id, pkg)
+                result = runner.play_case(table, args.case_id, pkg, complete=complete)
         except ArenaError as e:  # e.g. not hosted, the quota, a paused key: the arena says why
             raise SystemExit(str(e)) from None
         print(json.dumps(summary(result), indent=2))
@@ -92,7 +95,7 @@ def main(argv=None):
         if naive:
             out = play_waves(client, naive_factory(), args.waves, parallel)
         else:
-            out = runner.play_waves(client, pkg, args.waves, parallel)
+            out = runner.play_waves(client, pkg, args.waves, parallel, complete=complete)
         for case_id, result in out.items():
             print(case_id, result if isinstance(result, Exception) else summary(result))
     else:
@@ -103,7 +106,7 @@ def main(argv=None):
         if naive:
             out = play_all(lambda: RemoteTable(client), ids, naive_factory(), parallel)
         else:
-            out = runner.play_all(client, ids, pkg, parallel)
+            out = runner.play_all(client, ids, pkg, parallel, complete=complete)
         for case_id, result in out.items():
             print(case_id, result if isinstance(result, Exception) else summary(result))
         scores = [r["score"] for r in out.values() if isinstance(r, dict) and r.get("score") is not None]

@@ -20,7 +20,7 @@ from arena_kit.docs import standard_terms
 from arena_kit.play import latest, moves_left, standing
 
 from . import economics as eco
-from . import writer
+from . import llm, writer
 from .claims import ClaimBank, rival_offer
 from .personas import profile
 
@@ -65,8 +65,8 @@ class Side:
 
 
 class Negotiator:
-    def __init__(self, case, pkg=None):
-        self.case, self.pkg = case, pkg
+    def __init__(self, case, pkg=None, complete=None):
+        self.case, self.pkg, self.complete = case, pkg, complete
         self.bank = ClaimBank(pkg, case)
         self.sides = {}
         self.used = set()  # claim IDs cited in this case (a rival quote: per supplier)
@@ -237,9 +237,7 @@ class Negotiator:
         if s.ours and theirs <= s.ours[-1]:  # it came below what we offered: take it
             return self.finish(s, sheets, events, theirs, moves_left(case, events))
         price, n_claims, question = self.next_price(s, theirs)
-        claims = self.pick(
-            s, n_claims, {k: v for k, v in self.threads_view.items()} if hasattr(self, "threads_view") else {}
-        )
+        claims = self.pick(s, n_claims, threads)
         return self.send(s, [eco.at_price(case, s.terms, price)], claims, events, theirs, question)
 
     def next_price(self, s, theirs):
@@ -302,20 +300,47 @@ class Negotiator:
                 break
         return out
 
+    def facts(self, s, sheets, claims, moved):
+        """Plain statements the model may use, true by construction."""
+        case, out = self.case, []
+        fixed = case.get("fixed_terms") or {}
+        if "volume_per_year" not in case["negotiable"] or fixed.get("volume_per_year"):
+            out.append("our order volume is fixed: it is our full demand for this part over the term, all with them")
+        if "payment_days" not in case["negotiable"]:
+            out.append("payment terms are fixed for this agreement; we pay reliably on the due date")
+        if "contract_months" in case["negotiable"]:
+            out.append("we offer a long contract term, which gives them planning security")
+        if any(c["kind"] == "forecast" for c in claims) or any(c["kind"] == "forecast" for c in s.claims):
+            out.append("our demand forecast for this part is rising")
+        if s.ours and len(s.ours) > 1 and s.ours[-1] > s.ours[-2]:
+            out.append("our proposal moves toward them again")
+        if moved:
+            out.append("they moved in their last reply and we appreciate it")
+        if claims:
+            out.append("the e-mail cites data right after this paragraph (do not repeat it)")
+        out.append("the proposal with all terms follows after the data (do not repeat it)")
+        return out
+
     def send(self, s, sheets, claims, events, theirs, question=None):
         first = not s.ours
         moved = len(s.theirs) > 1 and s.theirs[-1] < s.theirs[-2] - 0.005
         price = sheets[0]["unit_price"]
-        s.pending = {
-            "state": s.prev_state,
-            "keys": [(s.sid, i) if c.get("rival") else i for c in claims for i in c["ids"]],
-        }
+        keys = [(s.sid, i) if c.get("rival") else i for c in claims for i in c["ids"]]
+        s.pending = {"state": s.prev_state, "keys": keys}
         if s.state not in ("mirror",):
             s.ours.append(price)
             s.gaps.append(max(0.0, (theirs - price) / theirs) if theirs else 0.0)
             s.pending["appended"] = True
+        tone = "warm" if s.prof.get("warm", True) else "friendly and businesslike"
+        asked = len(s.ours) in (1, 3)
+        para = llm.paragraph(
+            self.complete,
+            writer.brief(
+                self.case, s.prof, latest(events).get("body"), self.facts(s, sheets, claims, moved), tone, asked
+            ),
+        )
         body = writer.email(
-            self.case, sheets, claims, question, first=first, moved=moved, warm=s.prof.get("warm", True)
+            self.case, sheets, claims, question, first=first, moved=moved, warm=s.prof.get("warm", True), paragraph=para
         )
         refs = sorted({i for c in claims for i in c["ids"]})
         self.note(s.sid, "send", state=s.state, theirs=theirs, ours=price, claims=[c["kind"] for c in claims])

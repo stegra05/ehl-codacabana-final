@@ -22,14 +22,14 @@ RUNS = Path("logs/runs")
 KEEPALIVE_AFTER_S = 35  # a finished thread gets a question this long after the supplier's reply
 
 
-def play_case(table, case_id, pkg=None, deadline=None):
+def play_case(table, case_id, pkg=None, deadline=None, complete=None):
     case, threads = table.open(case_id)
     if getattr(table, "done", None):  # resumed a case that had already ended
         return table.done
     for events in threads.values():
         for m in events:
             fetch_documents(table, m)
-    neg = Negotiator(case, pkg)
+    neg = Negotiator(case, pkg, complete)
     for sid, events in threads.items():
         neg.setup(sid, events)
     replied = {sid: time.monotonic() for sid in threads}
@@ -108,7 +108,7 @@ def save(session_id, case_id, neg, result):
     path.write_text(json.dumps(out, indent=1, default=str))
 
 
-def play_all(client, case_ids, pkg=None, parallel=8):
+def play_all(client, case_ids, pkg=None, parallel=8, complete=None):
     """Practice or sandbox: many cases at once. {case_id: result or the exception that stopped it}."""
     used_up = threading.Event()
 
@@ -116,7 +116,7 @@ def play_all(client, case_ids, pkg=None, parallel=8):
         if used_up.is_set():
             return case_id, ArenaError(429, "not started: the practice quota is used up")
         try:
-            return case_id, play_case(RemoteTable(client), case_id, pkg)
+            return case_id, play_case(RemoteTable(client), case_id, pkg, complete=complete)
         except ArenaError as e:
             if quota_used_up(e):
                 used_up.set()
@@ -130,13 +130,13 @@ def play_all(client, case_ids, pkg=None, parallel=8):
         return dict(pool.map(one, case_ids))
 
 
-def play_waves(client, pkg=None, waves=5, parallel=10, poll=5.0):
+def play_waves(client, pkg=None, waves=5, parallel=10, poll=5.0, complete=None):
     """The Live Final: wait for each wave, play its cases in parallel within the wave's cap."""
     started, closed, caps = {}, set(), {}
 
     def one(case, deadline):
         try:
-            return play_case(RemoteTable(client, case), case["case_id"], pkg, deadline)
+            return play_case(RemoteTable(client, case), case["case_id"], pkg, deadline, complete)
         except Exception as e:  # one broken case must not stop the others
             log.exception("%s failed", case["case_id"])
             return e

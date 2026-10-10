@@ -33,7 +33,9 @@ def describe(case, sheet):
 ASK = "What would you need from us to move further on the price? We are open to discussing any term that helps you."
 
 
-def email(case, sheets, claims, question=None, first=False, moved=False, warm=True):
+def email(case, sheets, claims, question=None, first=False, moved=False, warm=True, paragraph=None):
+    """The e-mail: our words (the model's paragraph, else the template's), then the data
+    arguments and the proposal exactly as code computed them."""
     lines = ["Dear Sir or Madam,", ""]
     if first:
         lines.append("Thank you for your offer and for the time your team has put into it.")
@@ -41,7 +43,9 @@ def email(case, sheets, claims, question=None, first=False, moved=False, warm=Tr
         lines.append("Thank you for your reply and for the step you have taken; we appreciate it.")
     else:
         lines.append("Thank you for your reply.")
-    if warm:
+    if paragraph:
+        lines.append(paragraph)
+    elif warm:
         lines.append(
             "We value our cooperation and we understand the cost pressure on your side; we want an agreement "
             "that keeps our partnership healthy for both of us."
@@ -57,11 +61,52 @@ def email(case, sheets, claims, question=None, first=False, moved=False, warm=Tr
     else:
         lines.append("On this basis we propose one of these packages:")
         lines += [f"- Option {chr(65 + i)}: {describe(case, s)}" for i, s in enumerate(sheets)]
-    lines += ["", ASK]
+    if first and not paragraph:
+        lines += ["", ASK]
     if question:
-        lines.append(question)
+        lines += ["", question]
     lines += ["", "Kind regards,", "Hollerau Pumpenwerke, Purchasing"]
     return "\n".join(lines)
+
+
+TRAITS = {
+    "cash_need": "it is short of cash; when it gets paid matters a lot to it",
+    "capacity_full": "it is fully booked; delivery time and a firm commitment matter to it",
+    "spare_capacity": "it has free capacity and wants work for its machines",
+    "price_frozen": "its management has frozen price cuts; other terms can move",
+    "approval_2pct": "larger price steps need its pricing committee's approval",
+    "deprioritising_us": "it focuses on customers with larger volumes",
+    "hedged": "it bought its material forward at fixed prices",
+    "open_book": "its owner once offered to walk us through its calculation",
+    "stale_costing": "its costing has not followed the actual material prices",
+    "partnership_2022": "it kept supplying at the old price during the 2022 crisis",
+    "reference_customer": "it values having our company as a reference customer",
+    "complains_late_pay": "it complained that our invoices were paid late",
+}
+OWNERS = {
+    "family": "a family-owned company where the relationship matters",
+    "group": "part of a larger group with formal approvals",
+    "founder": "a small founder-run shop",
+    "private": "a privately held company",
+}
+
+
+def brief(case, prof, last_body, facts, tone, question_allowed):
+    """What the model needs for the paragraph: who the supplier is, what it wrote, what we may say."""
+    who = OWNERS.get(prof.get("owner_type"), "a supplier")
+    if prof.get("country") and prof.get("country") != "DE":
+        who += f" based in {prof['country']}"
+    traits = [TRAITS[s] for s in prof.get("signals", []) if s in TRAITS]
+    out = [
+        f"CASE: {case.get('title')} (we are the buyer; goal: {case['buyer'].get('category_goal')})",
+        f"SUPPLIER: {who}." + (f" From our notes: {'; '.join(traits)}." if traits else ""),
+        f"ITS LAST E-MAIL:\n{(last_body or '')[:1800]}",
+        "WHAT WE CAN SAY:",
+        *[f"- {f}" for f in facts],
+        f"TONE: {tone}",
+        f"QUESTION ALLOWED: {'yes' if question_allowed else 'no'}",
+    ]
+    return "\n".join(out)
 
 
 def keepalive():
