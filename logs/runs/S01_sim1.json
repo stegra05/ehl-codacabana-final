@@ -1,0 +1,110 @@
+{
+ "case": "case:S01",
+ "session": "sim1",
+ "notes": [
+  {
+   "t": 1791656709.2,
+   "supplier": "sup:70270",
+   "what": "setup",
+   "quote": {
+    "unit_price": 17.47
+   },
+   "std": {
+    "payment_days": 14
+   },
+   "profile": {
+    "owner_type": null,
+    "country": null,
+    "category": null,
+    "signals": [],
+    "rate": 0.07,
+    "warm": true
+   },
+   "full_cost": null,
+   "near_cost": false,
+   "terms": {
+    "unit_price": 13.83,
+    "payment_days": 90
+   },
+   "quote_at_terms": 17.73,
+   "anchor": 13.83,
+   "target": null,
+   "budget": 1.0,
+   "claims": [
+    "Your on-time delivery was 84.6% in 2026Q3 (sc:70270@2026Q3)."
+   ]
+  },
+  {
+   "t": 1791656709.2,
+   "supplier": "sup:70270",
+   "what": "send",
+   "state": "open",
+   "theirs": 17.47,
+   "ours": 13.83,
+   "claims": [
+    "scorecard"
+   ]
+  },
+  {
+   "t": 1791656709.2,
+   "supplier": "sup:70270",
+   "what": "send",
+   "state": "open",
+   "theirs": 17.12,
+   "ours": 14.82,
+   "claims": []
+  },
+  {
+   "t": 1791656709.3,
+   "supplier": "sup:70270",
+   "what": "send",
+   "state": "open",
+   "theirs": 16.77,
+   "ours": 15.41,
+   "claims": []
+  },
+  {
+   "t": 1791656709.3,
+   "supplier": "sup:70270",
+   "what": "send",
+   "state": "open",
+   "theirs": 16.42,
+   "ours": 15.71,
+   "claims": []
+  },
+  {
+   "t": 1791656709.3,
+   "supplier": "sup:70270",
+   "what": "send",
+   "state": "open",
+   "theirs": 16.07,
+   "ours": 15.82,
+   "claims": []
+  },
+  {
+   "t": 1791656709.3,
+   "supplier": "sup:70270",
+   "what": "accept",
+   "c": 106629.65,
+   "offer": "offer:70270-5"
+  }
+ ],
+ "result": {
+  "deal": true,
+  "supplier_id": "sup:70270",
+  "terms": {
+   "volume_per_year": 6650,
+   "contract_months": 12,
+   "payment_days": 90,
+   "lead_time_days": 42,
+   "incoterm": "FCA",
+   "index_clause": null,
+   "tooling_eur": 0,
+   "unit_price": 15.82
+  },
+  "c_open": 119491.07,
+  "c_deal": 106629.65,
+  "c_best": 105969.08,
+  "score": 0.9511484626153405
+ }
+}

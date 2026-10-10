@@ -1,0 +1,209 @@
+{
+ "case": "case:D02",
+ "session": "76cecf0435494fa6",
+ "notes": [
+  {
+   "t": 1791652065.8,
+   "supplier": "sup:DEMO-J1",
+   "what": "setup",
+   "quote": {
+    "unit_price": 17.1,
+    "payment_days": 30,
+    "lead_time_days": 28
+   },
+   "std": {
+    "volume_per_year": 6000,
+    "effective_date": "none",
+    "index_clause": null,
+    "incoterm": "EXW",
+    "tooling_eur": 0.0,
+    "ppm_commitment": 1100,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": null,
+    "country": null,
+    "category": null,
+    "signals": [],
+    "rate": 0.07,
+    "warm": true
+   },
+   "full_cost": null,
+   "terms": {
+    "unit_price": 15.14,
+    "payment_days": 60,
+    "lead_time_days": 35,
+    "incoterm": "EXW"
+   },
+   "quote_at_terms": 17.2,
+   "anchor": 15.14,
+   "target": null,
+   "claims": [
+    "Our bottom-up should-cost estimate for this part is on file (cost:part:SH-220).",
+    "We have reviewed your delivery performance in our supplier scorecard (sc:DEMO-J1@2026Q3)."
+   ]
+  },
+  {
+   "t": 1791652065.8,
+   "supplier": "sup:DEMO-C1",
+   "what": "setup",
+   "quote": {
+    "unit_price": 16.0,
+    "payment_days": 45,
+    "incoterm": "EXW"
+   },
+   "std": {
+    "lead_time_days": 45,
+    "volume_per_year": 6000,
+    "effective_date": "none",
+    "index_clause": null,
+    "tooling_eur": 0.0,
+    "ppm_commitment": 2600,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": null,
+    "country": null,
+    "category": null,
+    "signals": [],
+    "rate": 0.07,
+    "warm": true
+   },
+   "full_cost": null,
+   "terms": {
+    "unit_price": 14.12,
+    "payment_days": 60,
+    "lead_time_days": 35,
+    "incoterm": "EXW"
+   },
+   "quote_at_terms": 16.05,
+   "anchor": 14.12,
+   "target": null,
+   "claims": [
+    "Our bottom-up should-cost estimate for this part is on file (cost:part:SH-220).",
+    "We have reviewed your delivery performance in our supplier scorecard (sc:DEMO-C1@2026Q3)."
+   ]
+  },
+  {
+   "t": 1791652065.8,
+   "supplier": "sup:DEMO-J1",
+   "what": "send",
+   "theirs": 17.2,
+   "ours": 15.14,
+   "claims": [
+    "rival",
+    "should_cost",
+    "scorecard"
+   ]
+  },
+  {
+   "t": 1791652065.8,
+   "supplier": "sup:DEMO-C1",
+   "what": "send",
+   "theirs": 16.05,
+   "ours": 14.12,
+   "claims": [
+    "scorecard"
+   ]
+  },
+  {
+   "t": 1791652065.9,
+   "supplier": "sup:DEMO-J1",
+   "what": "adopt_terms",
+   "changed": {
+    "payment_days": 30
+   },
+   "ours": 15.05
+  },
+  {
+   "t": 1791652065.9,
+   "supplier": "sup:DEMO-J1",
+   "what": "send",
+   "theirs": 15.3,
+   "ours": 15.12,
+   "claims": []
+  },
+  {
+   "t": 1791652066.1,
+   "supplier": "sup:DEMO-C1",
+   "what": "send",
+   "theirs": 15.9,
+   "ours": 14.65,
+   "claims": [
+    "rival"
+   ]
+  },
+  {
+   "t": 1791652107.9,
+   "supplier": "sup:DEMO-C1",
+   "what": "send",
+   "theirs": 15.8,
+   "ours": 15.0,
+   "claims": [
+    "rival"
+   ]
+  },
+  {
+   "t": 1791652135.2,
+   "supplier": "sup:DEMO-C1",
+   "what": "send",
+   "theirs": 15.8,
+   "ours": 15.24,
+   "claims": []
+  },
+  {
+   "t": 1791652145.1,
+   "supplier": "sup:DEMO-C1",
+   "what": "send",
+   "theirs": 15.7,
+   "ours": 15.38,
+   "claims": []
+  },
+  {
+   "t": 1791652158.3,
+   "supplier": "sup:DEMO-C1",
+   "what": "send",
+   "theirs": 15.6,
+   "ours": 15.45,
+   "claims": []
+  },
+  {
+   "t": 1791652174.5,
+   "supplier": "sup:DEMO-C1",
+   "what": "send",
+   "theirs": 15.5,
+   "ours": 15.46,
+   "claims": [
+    "rival"
+   ]
+  },
+  {
+   "t": 1791652198.3,
+   "supplier": "sup:DEMO-J1",
+   "what": "accept",
+   "c": 190377.6,
+   "offer": "offer:DEMO-J1-4"
+  }
+ ],
+ "result": {
+  "deal": true,
+  "supplier_id": "sup:DEMO-J1",
+  "terms": {
+   "payment_days": 30,
+   "lead_time_days": 35,
+   "volume_per_year": 6000,
+   "contract_months": 24,
+   "effective_date": null,
+   "index_clause": null,
+   "incoterm": "EXW",
+   "tooling_eur": 0.0,
+   "ppm_commitment": 1100,
+   "chargeback_eur_per_complaint": 0.0,
+   "unit_price": 15.12
+  },
+  "c_open": 214296.0,
+  "c_deal": 190377.6,
+  "c_best": 156738.78,
+  "score": 0.4155586388640729
+ }
+}

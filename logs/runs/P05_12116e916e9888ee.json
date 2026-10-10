@@ -1,0 +1,319 @@
+{
+ "case": "case:P05",
+ "session": "12116e916e9888ee",
+ "notes": [
+  {
+   "t": 1791654300.5,
+   "supplier": "sup:70210",
+   "what": "setup",
+   "quote": {
+    "unit_price": 36.0
+   },
+   "std": {
+    "payment_days": 30,
+    "lead_time_days": 28,
+    "ppm_commitment": 1200,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": "founder",
+    "country": "DE",
+    "category": "machined parts",
+    "signals": [
+     "complains_late_pay",
+     "reference_customer",
+     "spare_capacity",
+     "stale_costing"
+    ],
+    "rate": 0.18,
+    "warm": true
+   },
+   "full_cost": 36.87,
+   "near_cost": false,
+   "terms": {
+    "unit_price": 27.86,
+    "payment_days": 14,
+    "lead_time_days": 35
+   },
+   "quote_at_terms": 35.71,
+   "anchor": 27.86,
+   "target": null,
+   "budget": 1.0,
+   "claims": [
+    "Electricity producer prices changed -3.7% from 2025-08 to 2026-08 (idx:PPI-D351@2025-08, idx:PPI-D351@2026-08).",
+    "Your on-time delivery was 80.8% in 2026Q3 (sc:70210@2026Q3)."
+   ]
+  },
+  {
+   "t": 1791654300.5,
+   "supplier": "sup:70240",
+   "what": "setup",
+   "quote": {
+    "unit_price": 31.5,
+    "lead_time_days": 52
+   },
+   "std": {
+    "payment_days": 45,
+    "ppm_commitment": 1400,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": "founder",
+    "country": "CZ",
+    "category": "machined parts",
+    "signals": [
+     "capacity_full"
+    ],
+    "rate": 0.12,
+    "warm": true
+   },
+   "full_cost": 36.87,
+   "near_cost": false,
+   "terms": {
+    "unit_price": 30.51,
+    "payment_days": 14,
+    "lead_time_days": 42
+   },
+   "quote_at_terms": 32.8,
+   "anchor": 30.51,
+   "target": null,
+   "budget": 0.16,
+   "claims": [
+    "Electricity producer prices changed -3.7% from 2025-08 to 2026-08 (idx:PPI-D351@2025-08, idx:PPI-D351@2026-08).",
+    "Your on-time delivery was 62.5% in 2026Q3 (sc:70240@2026Q3)."
+   ]
+  },
+  {
+   "t": 1791654300.6,
+   "supplier": "sup:70250",
+   "what": "setup",
+   "quote": {
+    "unit_price": 38.5
+   },
+   "std": {
+    "payment_days": 30,
+    "lead_time_days": 28,
+    "ppm_commitment": 600,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": "founder",
+    "country": "DE",
+    "category": "machined parts",
+    "signals": [
+     "cash_need",
+     "complains_late_pay",
+     "reference_customer",
+     "spare_capacity"
+    ],
+    "rate": 0.17,
+    "warm": true
+   },
+   "full_cost": 36.87,
+   "near_cost": false,
+   "terms": {
+    "unit_price": 29.8,
+    "payment_days": 14,
+    "lead_time_days": 35
+   },
+   "quote_at_terms": 38.21,
+   "anchor": 29.8,
+   "target": null,
+   "budget": 1.0,
+   "claims": [
+    "Our bottom-up should-cost estimate for this part is EUR 36.87 per unit (cost:320070).",
+    "Electricity producer prices changed -3.7% from 2025-08 to 2026-08 (idx:PPI-D351@2025-08, idx:PPI-D351@2026-08).",
+    "Your on-time delivery was 88.0% in 2026Q3 (sc:70250@2026Q3)."
+   ]
+  },
+  {
+   "t": 1791654300.6,
+   "supplier": "sup:70210",
+   "what": "send",
+   "state": "open",
+   "theirs": 36.0,
+   "ours": 27.86,
+   "claims": [
+    "index",
+    "scorecard"
+   ]
+  },
+  {
+   "t": 1791654321.7,
+   "supplier": "sup:70240",
+   "what": "send",
+   "state": "open",
+   "theirs": 32.8,
+   "ours": 30.51,
+   "claims": [
+    "scorecard"
+   ]
+  },
+  {
+   "t": 1791654343.8,
+   "supplier": "sup:70250",
+   "what": "send",
+   "state": "open",
+   "theirs": 38.5,
+   "ours": 29.8,
+   "claims": [
+    "should_cost",
+    "scorecard"
+   ]
+  },
+  {
+   "t": 1791654360.5,
+   "supplier": "sup:70210",
+   "what": "send",
+   "state": "open",
+   "theirs": 32.0,
+   "ours": 28.19,
+   "claims": []
+  },
+  {
+   "t": 1791654376.6,
+   "supplier": "sup:70240",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.5,
+   "ours": 31.03,
+   "claims": []
+  },
+  {
+   "t": 1791654394.0,
+   "supplier": "sup:70250",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.5,
+   "ours": 29.94,
+   "claims": []
+  },
+  {
+   "t": 1791654416.7,
+   "supplier": "sup:70210",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.5,
+   "ours": 29.18,
+   "claims": []
+  },
+  {
+   "t": 1791654433.4,
+   "supplier": "sup:70240",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.5,
+   "ours": 31.17,
+   "claims": []
+  },
+  {
+   "t": 1791654455.7,
+   "supplier": "sup:70250",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.5,
+   "ours": 30.41,
+   "claims": []
+  },
+  {
+   "t": 1791654476.7,
+   "supplier": "sup:70210",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.0,
+   "ours": 29.73,
+   "claims": []
+  },
+  {
+   "t": 1791654497.0,
+   "supplier": "sup:70240",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.5,
+   "ours": 31.27,
+   "claims": []
+  },
+  {
+   "t": 1791654520.2,
+   "supplier": "sup:70250",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.0,
+   "ours": 30.59,
+   "claims": []
+  },
+  {
+   "t": 1791654547.5,
+   "supplier": "sup:70210",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.0,
+   "ours": 30.11,
+   "claims": []
+  },
+  {
+   "t": 1791654564.4,
+   "supplier": "sup:70240",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.5,
+   "ours": 31.34,
+   "claims": []
+  },
+  {
+   "t": 1791654594.6,
+   "supplier": "sup:70240",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.5,
+   "ours": 31.4,
+   "claims": []
+  },
+  {
+   "t": 1791654626.0,
+   "supplier": "sup:70240",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.5,
+   "ours": 31.44,
+   "claims": []
+  },
+  {
+   "t": 1791654657.4,
+   "supplier": "sup:70240",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.5,
+   "ours": 31.44,
+   "claims": []
+  },
+  {
+   "t": 1791654691.6,
+   "supplier": "sup:70210",
+   "what": "accept",
+   "c": 259947.89,
+   "offer": "offer:70210-7"
+  }
+ ],
+ "result": {
+  "deal": true,
+  "supplier_id": "sup:70210",
+  "terms": {
+   "payment_days": 14,
+   "lead_time_days": 35,
+   "volume_per_year": 4200,
+   "contract_months": 24,
+   "effective_date": "2027-01-01",
+   "index_clause": null,
+   "incoterm": "DAP",
+   "tooling_eur": 0.0,
+   "ppm_commitment": 1200,
+   "chargeback_eur_per_complaint": 0.0,
+   "unit_price": 30.5
+  },
+  "c_open": 305544.96,
+  "c_deal": 259947.89,
+  "c_best": 223424.17,
+  "score": 0.5552439278774596
+ }
+}

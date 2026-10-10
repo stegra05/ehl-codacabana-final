@@ -1,0 +1,72 @@
+19:44:58 session 921a3576d1590ea5
+19:44:58 session 9bf9c9506d371fa1
+19:44:58 session 4a47fc6335786e4b
+19:44:58 session 12116e916e9888ee
+19:44:58 session 3ac9ee6cf673cf7c
+19:44:58 session f67c5199470848ab
+19:44:58 session ad9645958336cffd
+19:44:59 case:P02 sup:70510 {'t': 1791654299.0, 'supplier': 'sup:70510', 'what': 'setup', 'quote': {'unit_price': 370.96, 'payment_days': 30, 'index_clause': None}, 'full_cost': 374.95, 'near_cost': True, 'terms': {'unit_price': 351.23, 'payment_days': 90, 'index_clause': None}, 'quote_at_terms': 374.06, 'anchor': 351.23, 'target': None, 'budget': 0.14}
+19:44:59 case:P02 sup:70510 {'t': 1791654299.0, 'supplier': 'sup:70510', 'what': 'send', 'state': 'open', 'theirs': 374.06, 'ours': 351.23}
+19:44:59 case:P07 sup:70610 {'t': 1791654299.1, 'supplier': 'sup:70610', 'what': 'setup', 'quote': {'unit_price': 5.74, 'payment_days': 30, 'contract_months': 12}, 'full_cost': None, 'near_cost': False, 'terms': {'unit_price': 4.72, 'payment_days': 45, 'contract_months': 36}, 'quote_at_terms': 5.76, 'anchor': 4.72, 'target': None, 'budget': 1.0}
+19:44:59 case:P07 sup:70610 {'t': 1791654299.1, 'supplier': 'sup:70610', 'what': 'send', 'state': 'open', 'theirs': 5.76, 'ours': 4.72}
+19:44:59 case:P08 sup:70710 {'t': 1791654299.2, 'supplier': 'sup:70710', 'what': 'setup', 'quote': {'unit_price': 6.05, 'payment_days': 30, 'index_clause': None, 'contract_months': 12}, 'full_cost': None, 'near_cost': False, 'terms': {'unit_price': 4.76, 'index_clause': None, 'payment_days': 90, 'contract_months': 36}, 'quote_at_terms': 6.1, 'anchor': 4.76, 'target': None, 'budget': 1.0}
+19:44:59 case:P08 sup:70710 {'t': 1791654299.2, 'supplier': 'sup:70710', 'what': 'send', 'state': 'open', 'theirs': 6.1, 'ours': 4.76}
+19:44:59 case:P11 sup:70140 {'t': 1791654299.4, 'supplier': 'sup:70140', 'what': 'setup', 'quote': {'unit_price': 47.0, 'ppm_commitment': 6400}, 'full_cost': None, 'near_cost': False, 'terms': {'ppm_commitment': 300, 'chargeback_eur_per_complaint': 0, 'unit_price': 41.36}, 'quote_at_terms': 47.0, 'anchor': 41.36, 'target': None, 'budget': 1.0}
+19:44:59 case:P11 sup:70140 {'t': 1791654299.4, 'supplier': 'sup:70140', 'what': 'send', 'state': 'open', 'theirs': 47.0, 'ours': 41.36}
+19:44:59 case:P10 sup:70410 {'t': 1791654299.6, 'supplier': 'sup:70410', 'what': 'setup', 'quote': {'unit_price': 32.2, 'lead_time_days': 54, 'volume_per_year': 19890, 'contract_months': 12}, 'full_cost': 24.31, 'near_cost': False, 'terms': {'unit_price': 29.95, 'volume_per_year': 23400, 'contract_months': 36, 'lead_time_days': 56}, 'quote_at_terms': 32.2, 'anchor': 29.95, 'target': 26.32, 'budget': 0.16}
+19:44:59 case:P10 sup:70410 {'t': 1791654299.6, 'supplier': 'sup:70410', 'what': 'send', 'state': 'open', 'theirs': 32.2, 'ours': 29.95}
+19:44:59 case:P18 sup:70740 {'t': 1791654299.6, 'supplier': 'sup:70740', 'what': 'setup', 'quote': {'unit_price': 6.1, 'payment_days': 30, 'index_clause': None, 'contract_months': 12}, 'full_cost': None, 'near_cost': False, 'terms': {'unit_price': 4.77, 'index_clause': None, 'payment_days': 45, 'contract_months': 36}, 'quote_at_terms': 6.12, 'anchor': 4.77, 'target': None, 'budget': 1.0}
+19:44:59 case:P18 sup:70740 {'t': 1791654299.6, 'supplier': 'sup:70740', 'what': 'send', 'state': 'open', 'theirs': 6.12, 'ours': 4.77}
+19:45:00 case:P05 sup:70210 {'t': 1791654300.5, 'supplier': 'sup:70210', 'what': 'setup', 'quote': {'unit_price': 36.0}, 'full_cost': 36.87, 'near_cost': False, 'terms': {'unit_price': 27.86, 'payment_days': 14, 'lead_time_days': 35}, 'quote_at_terms': 35.71, 'anchor': 27.86, 'target': None, 'budget': 1.0}
+19:45:00 case:P05 sup:70240 {'t': 1791654300.5, 'supplier': 'sup:70240', 'what': 'setup', 'quote': {'unit_price': 31.5, 'lead_time_days': 52}, 'full_cost': 36.87, 'near_cost': False, 'terms': {'unit_price': 30.51, 'payment_days': 14, 'lead_time_days': 42}, 'quote_at_terms': 32.8, 'anchor': 30.51, 'target': None, 'budget': 0.16}
+19:45:00 case:P05 sup:70250 {'t': 1791654300.6, 'supplier': 'sup:70250', 'what': 'setup', 'quote': {'unit_price': 38.5}, 'full_cost': 36.87, 'near_cost': False, 'terms': {'unit_price': 29.8, 'payment_days': 14, 'lead_time_days': 35}, 'quote_at_terms': 38.21, 'anchor': 29.8, 'target': None, 'budget': 1.0}
+19:45:00 case:P05 sup:70210 {'t': 1791654300.6, 'supplier': 'sup:70210', 'what': 'send', 'state': 'open', 'theirs': 36.0, 'ours': 27.86}
+19:45:15 case:P10 sup:70410 {'t': 1791654315.3, 'supplier': 'sup:70410', 'what': 'send', 'state': 'open', 'theirs': 31.7, 'ours': 31.22}
+19:45:18 case:P02 sup:70510 {'t': 1791654318.2, 'supplier': 'sup:70510', 'what': 'send', 'state': 'open', 'theirs': 373.13, 'ours': 367.53}
+19:45:18 case:P07 sup:70610 {'t': 1791654318.9, 'supplier': 'sup:70610', 'what': 'send', 'state': 'open', 'theirs': 5.54, 'ours': 4.97}
+19:45:21 case:P05 sup:70240 {'t': 1791654321.7, 'supplier': 'sup:70240', 'what': 'send', 'state': 'open', 'theirs': 32.8, 'ours': 30.51}
+19:45:27 case:P18 sup:70740 {'t': 1791654327.1, 'supplier': 'sup:70740', 'what': 'switch_terms', 'why': 'clause required', 'terms': {'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 5, 'base_month': '2026-08'}, 'payment_days': 45, 'contract_months': 36}}
+19:45:27 case:P18 sup:70740 {'t': 1791654327.1, 'supplier': 'sup:70740', 'what': 'send', 'state': 'open', 'theirs': 5.6, 'ours': 4.84}
+19:45:33 case:P08 sup:70710 {'t': 1791654333.3, 'supplier': 'sup:70710', 'what': 'switch_terms', 'why': 'clause required', 'terms': {'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 5, 'base_month': '2026-08'}, 'payment_days': 90, 'contract_months': 36}}
+19:45:33 case:P08 sup:70710 {'t': 1791654333.3, 'supplier': 'sup:70710', 'what': 'send', 'state': 'open', 'theirs': 5.43, 'ours': 4.81}
+19:45:34 case:P11 sup:70140 {'t': 1791654334.1, 'supplier': 'sup:70140', 'what': 'send', 'state': 'open', 'theirs': 46.5, 'ours': 42.9}
+19:45:36 case:P07 sup:70610 {'t': 1791654336.0, 'supplier': 'sup:70610', 'what': 'send', 'state': 'open', 'theirs': 5.42, 'ours': 5.1}
+19:45:39 case:P02 sup:70510 {'t': 1791654339.7, 'supplier': 'sup:70510', 'what': 'send', 'state': 'open', 'theirs': 372.86, 'ours': 369.13}
+19:45:43 case:P10 sup:70410 {'t': 1791654343.6, 'supplier': 'sup:70410', 'what': 'accept', 'c': 1527674.4, 'offer': 'offer:70410-2'}
+19:45:43 case:P05 sup:70250 {'t': 1791654343.8, 'supplier': 'sup:70250', 'what': 'send', 'state': 'open', 'theirs': 38.5, 'ours': 29.8}
+19:45:49 case:P18 sup:70740 {'t': 1791654349.7, 'supplier': 'sup:70740', 'what': 'accept', 'c': 274686.16, 'offer': 'offer:70740-2'}
+19:45:50 case:P07 sup:70610 {'t': 1791654350.2, 'supplier': 'sup:70610', 'what': 'accept', 'c': 322700.8, 'offer': 'offer:70610-3'}
+19:45:53 case:P11 sup:70140 {'t': 1791654353.2, 'supplier': 'sup:70140', 'what': 'send', 'state': 'open', 'theirs': 46.0, 'ours': 43.83}
+19:46:00 case:P05 sup:70210 {'t': 1791654360.5, 'supplier': 'sup:70210', 'what': 'send', 'state': 'open', 'theirs': 32.0, 'ours': 28.19}
+19:46:02 case:P08 sup:70710 {'t': 1791654362.5, 'supplier': 'sup:70710', 'what': 'send', 'state': 'open', 'theirs': 5.43, 'ours': 5.0}
+19:46:02 case:P02 sup:70510 {'t': 1791654362.5, 'supplier': 'sup:70510', 'what': 'send', 'state': 'open', 'theirs': 372.58, 'ours': 370.17}
+19:46:10 case:P11 sup:70140 {'t': 1791654371.0, 'supplier': 'sup:70140', 'what': 'send', 'state': 'open', 'theirs': 45.5, 'ours': 44.33}
+19:46:16 case:P05 sup:70240 {'t': 1791654376.6, 'supplier': 'sup:70240', 'what': 'send', 'state': 'open', 'theirs': 31.5, 'ours': 31.03}
+19:46:22 case:P02 sup:70510 {'t': 1791654382.8, 'supplier': 'sup:70510', 'what': 'accept', 'c': 2269325.77, 'offer': 'offer:70510-4'}
+19:46:27 case:P08 sup:70710 {'t': 1791654387.2, 'supplier': 'sup:70710', 'what': 'accept', 'c': 1047133.62, 'offer': 'offer:70710-3'}
+19:46:33 case:P05 sup:70250 {'t': 1791654394.0, 'supplier': 'sup:70250', 'what': 'send', 'state': 'open', 'theirs': 31.5, 'ours': 29.94}
+19:46:37 case:P11 sup:70140 {'t': 1791654397.6, 'supplier': 'sup:70140', 'what': 'send', 'state': 'open', 'theirs': 45.5, 'ours': 44.68}
+19:46:56 case:P05 sup:70210 {'t': 1791654416.7, 'supplier': 'sup:70210', 'what': 'send', 'state': 'open', 'theirs': 31.5, 'ours': 29.18}
+19:47:03 case:P11 sup:70140 {'t': 1791654423.7, 'supplier': 'sup:70140', 'what': 'send', 'state': 'open', 'theirs': 45.5, 'ours': 44.93}
+19:47:13 case:P05 sup:70240 {'t': 1791654433.4, 'supplier': 'sup:70240', 'what': 'send', 'state': 'open', 'theirs': 31.5, 'ours': 31.17}
+19:47:26 case:P11 sup:70140 {'t': 1791654446.9, 'supplier': 'sup:70140', 'what': 'accept', 'c': 750082.5, 'offer': 'offer:70140-6'}
+19:47:35 case:P05 sup:70250 {'t': 1791654455.7, 'supplier': 'sup:70250', 'what': 'send', 'state': 'open', 'theirs': 31.5, 'ours': 30.41}
+19:47:56 case:P05 sup:70210 {'t': 1791654476.7, 'supplier': 'sup:70210', 'what': 'send', 'state': 'open', 'theirs': 31.0, 'ours': 29.73}
+19:48:16 case:P05 sup:70240 {'t': 1791654497.0, 'supplier': 'sup:70240', 'what': 'send', 'state': 'open', 'theirs': 31.5, 'ours': 31.27}
+19:48:40 case:P05 sup:70250 {'t': 1791654520.2, 'supplier': 'sup:70250', 'what': 'send', 'state': 'open', 'theirs': 31.0, 'ours': 30.59}
+19:49:07 case:P05 sup:70210 {'t': 1791654547.5, 'supplier': 'sup:70210', 'what': 'send', 'state': 'open', 'theirs': 31.0, 'ours': 30.11}
+19:49:24 case:P05 sup:70240 {'t': 1791654564.4, 'supplier': 'sup:70240', 'what': 'send', 'state': 'open', 'theirs': 31.5, 'ours': 31.34}
+19:49:54 case:P05 sup:70240 {'t': 1791654594.6, 'supplier': 'sup:70240', 'what': 'send', 'state': 'open', 'theirs': 31.5, 'ours': 31.4}
+19:50:26 case:P05 sup:70240 {'t': 1791654626.0, 'supplier': 'sup:70240', 'what': 'send', 'state': 'open', 'theirs': 31.5, 'ours': 31.44}
+19:50:57 case:P05 sup:70240 {'t': 1791654657.4, 'supplier': 'sup:70240', 'what': 'send', 'state': 'open', 'theirs': 31.5, 'ours': 31.44}
+19:51:31 case:P05 sup:70210 {'t': 1791654691.6, 'supplier': 'sup:70210', 'what': 'accept', 'c': 259947.89, 'offer': 'offer:70210-7'}
+case:P02 {'deal': True, 'supplier_id': 'sup:70510', 'terms': {'payment_days': 90, 'lead_time_days': 35, 'volume_per_year': 6110, 'contract_months': 12, 'effective_date': '2027-01-01', 'index_clause': None, 'incoterm': 'DAP', 'tooling_eur': 0.0, 'ppm_commitment': 250, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 372.31}, 'c_open': 2282867.49, 'c_deal': 2261194.27, 'c_best': 2235514.05, 'score': 0.45769050780682496}
+case:P05 {'deal': True, 'supplier_id': 'sup:70210', 'terms': {'payment_days': 14, 'lead_time_days': 35, 'volume_per_year': 4200, 'contract_months': 24, 'effective_date': '2027-01-01', 'index_clause': None, 'incoterm': 'DAP', 'tooling_eur': 0.0, 'ppm_commitment': 1200, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 30.5}, 'c_open': 305544.96, 'c_deal': 259947.89, 'c_best': 223424.17, 'score': 0.5552439278774596}
+case:P07 {'deal': True, 'supplier_id': 'sup:70610', 'terms': {'payment_days': 45, 'lead_time_days': 5, 'volume_per_year': 30000, 'contract_months': 36, 'effective_date': '2027-01-01', 'index_clause': None, 'incoterm': 'DAP', 'tooling_eur': 0.0, 'ppm_commitment': 80, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 5.36}, 'c_open': 391027.4, 'c_deal': 322700.8, 'c_best': 299241.49, 'score': 0.7444127317580662}
+case:P08 {'deal': True, 'supplier_id': 'sup:70710', 'terms': {'payment_days': 90, 'lead_time_days': 10, 'volume_per_year': 94800, 'contract_months': 36, 'effective_date': '2027-01-01', 'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 5.0, 'base_month': '2026-08'}, 'incoterm': 'DAP', 'tooling_eur': 0.0, 'ppm_commitment': 50, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 5.51}, 'c_open': 1135887.28, 'c_deal': 1047133.62, 'c_best': 960309.33, 'score': 0.5054943402631139}
+case:P10 {'deal': True, 'supplier_id': 'sup:70410', 'terms': {'payment_days': 30, 'lead_time_days': 56, 'volume_per_year': 23400, 'contract_months': 36, 'effective_date': '2027-01-01', 'index_clause': None, 'incoterm': 'DAP', 'tooling_eur': 0.0, 'ppm_commitment': 300, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 31.6}, 'c_open': 1932492.18, 'c_deal': 1527674.4, 'c_best': 1328926.89, 'score': 0.6707108356081908}
+case:P11 {'deal': True, 'supplier_id': 'sup:70140', 'terms': {'payment_days': 60, 'lead_time_days': 56, 'volume_per_year': 15900, 'contract_months': 12, 'effective_date': '2027-01-01', 'index_clause': None, 'incoterm': 'FCA', 'tooling_eur': 0.0, 'ppm_commitment': 300, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 45.5}, 'c_open': 817578.0, 'c_deal': 750082.5, 'c_best': 722500.02, 'score': 0.7098962346486538}
+case:P18 {'deal': True, 'supplier_id': 'sup:70740', 'terms': {'payment_days': 45, 'lead_time_days': 14, 'volume_per_year': 23700, 'contract_months': 36, 'effective_date': '2027-01-01', 'index_clause': {'series': 'AS-14404', 'material_share': 0.45, 'deadband_pct': 0.0, 'base_month': '2026-08'}, 'incoterm': 'DAP', 'tooling_eur': 0.0, 'ppm_commitment': 70, 'chargeback_eur_per_complaint': 0.0, 'unit_price': 5.6}, 'c_open': 295173.23, 'c_deal': 274686.16, 'c_best': 222651.27, 'score': 0.2824947091887755}
+mean score: 56.1 over 7 cases
+7 new sessions in logs/sessions/practice
+practice sessions left today: 411

@@ -1,0 +1,112 @@
+{
+ "case": "case:P07",
+ "session": "d3b46c44f5df3f2a",
+ "notes": [
+  {
+   "t": 1791655517.3,
+   "supplier": "sup:70610",
+   "what": "setup",
+   "quote": {
+    "unit_price": 5.74,
+    "payment_days": 30,
+    "contract_months": 12
+   },
+   "std": {
+    "ppm_commitment": 80,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": "family",
+    "country": "DE",
+    "category": "C-parts",
+    "signals": [
+     "approval_2pct",
+     "spare_capacity"
+    ],
+    "rate": 0.075,
+    "warm": true
+   },
+   "full_cost": null,
+   "near_cost": false,
+   "terms": {
+    "unit_price": 4.72,
+    "payment_days": 45,
+    "contract_months": 36
+   },
+   "quote_at_terms": 5.76,
+   "anchor": 4.72,
+   "target": null,
+   "budget": 1.0,
+   "claims": [
+    "Our forecast for this part is up 6.0% (fc:360010@2026-09).",
+    "Our forecast for this part is up 15.3% (fc:360011@2026-09).",
+    "Our forecast for this part is up 9.0% (fc:360012@2026-09).",
+    "Our forecast for this part is up 8.7% (fc:360030@2026-09).",
+    "Your on-time delivery was 88.6% in 2026Q3 (sc:70610@2026Q3)."
+   ]
+  },
+  {
+   "t": 1791655519.0,
+   "supplier": "sup:70610",
+   "what": "send",
+   "state": "open",
+   "theirs": 5.76,
+   "ours": 4.72,
+   "claims": [
+    "forecast",
+    "forecast",
+    "forecast"
+   ]
+  },
+  {
+   "t": 1791655535.4,
+   "supplier": "sup:70610",
+   "what": "send",
+   "state": "open",
+   "theirs": 5.54,
+   "ours": 4.97,
+   "claims": [
+    "forecast"
+   ]
+  },
+  {
+   "t": 1791655549.4,
+   "supplier": "sup:70610",
+   "what": "send",
+   "state": "open",
+   "theirs": 5.42,
+   "ours": 5.1,
+   "claims": [
+    "scorecard"
+   ]
+  },
+  {
+   "t": 1791655561.7,
+   "supplier": "sup:70610",
+   "what": "accept",
+   "c": 322700.8,
+   "offer": "offer:70610-3"
+  }
+ ],
+ "result": {
+  "deal": true,
+  "supplier_id": "sup:70610",
+  "terms": {
+   "payment_days": 45,
+   "lead_time_days": 5,
+   "volume_per_year": 30000,
+   "contract_months": 36,
+   "effective_date": "2027-01-01",
+   "index_clause": null,
+   "incoterm": "DAP",
+   "tooling_eur": 0.0,
+   "ppm_commitment": 80,
+   "chargeback_eur_per_complaint": 0.0,
+   "unit_price": 5.36
+  },
+  "c_open": 391027.4,
+  "c_deal": 322700.8,
+  "c_best": 299241.49,
+  "score": 0.7444127317580662
+ }
+}

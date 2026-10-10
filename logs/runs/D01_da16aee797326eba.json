@@ -1,0 +1,115 @@
+{
+ "case": "case:D01",
+ "session": "da16aee797326eba",
+ "notes": [
+  {
+   "supplier": "sup:DEMO-F1",
+   "what": "setup",
+   "quote": {
+    "unit_price": 52.9,
+    "payment_days": 30,
+    "contract_months": 12,
+    "effective_date": "2026-12-01"
+   },
+   "std": {
+    "volume_per_year": 4000,
+    "index_clause": null,
+    "tooling_eur": 0.0,
+    "ppm_commitment": 650,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": null,
+    "country": null,
+    "category": null,
+    "signals": [],
+    "rate": 0.07,
+    "warm": true
+   },
+   "full_cost": null,
+   "terms": {
+    "unit_price": 52.9,
+    "payment_days": 30,
+    "contract_months": 12,
+    "effective_date": "2026-12-01"
+   },
+   "quote_at_terms": 52.9,
+   "anchor": 46.55,
+   "target": null,
+   "claims": [
+    "Our bottom-up should-cost estimate for this part is on file (cost:part:PH-100).",
+    "Your letter (doc:D01-LETTER) gives less notice than our agreement provides for (ctr:D01-FRAMEWORK).",
+    "We compared your offer with our recent order prices for this part (po:4500001201, po:4500001288, po:4500001342).",
+    "We have reviewed your delivery performance in our supplier scorecard (sc:DEMO-F1@2026Q3)."
+   ]
+  },
+  {
+   "supplier": "sup:DEMO-F1",
+   "what": "send",
+   "theirs": 52.9,
+   "ours": 46.55,
+   "claims": [
+    "should_cost",
+    "notice",
+    "order_history"
+   ]
+  },
+  {
+   "supplier": "sup:DEMO-F1",
+   "what": "send",
+   "theirs": 50.5,
+   "ours": 47.73,
+   "claims": [
+    "scorecard"
+   ]
+  },
+  {
+   "supplier": "sup:DEMO-F1",
+   "what": "send",
+   "theirs": 49.6,
+   "ours": 48.29,
+   "claims": []
+  },
+  {
+   "supplier": "sup:DEMO-F1",
+   "what": "send",
+   "theirs": 49.2,
+   "ours": 48.56,
+   "claims": []
+  },
+  {
+   "supplier": "sup:DEMO-F1",
+   "what": "send",
+   "theirs": 48.9,
+   "ours": 48.66,
+   "claims": []
+  },
+  {
+   "supplier": "sup:DEMO-F1",
+   "what": "accept",
+   "c": Infinity,
+   "offer": "offer:DEMO-F1-5"
+  }
+ ],
+ "result": {
+  "deal": true,
+  "supplier_id": "sup:DEMO-F1",
+  "terms": {
+   "payment_days": 30,
+   "lead_time_days": 35,
+   "volume_per_year": 4000,
+   "contract_months": 12,
+   "effective_date": "2026-12-01",
+   "index_clause": null,
+   "incoterm": "FCA",
+   "tooling_eur": 0.0,
+   "ppm_commitment": 650,
+   "chargeback_eur_per_complaint": 0.0,
+   "unit_price": 48.8
+  },
+  "c_open": 448810.67,
+  "c_deal": 435436.59,
+  "c_best": 408623.99,
+  "score": 0.33279882787032816
+ }
+}

@@ -1,0 +1,102 @@
+{
+ "case": "case:P10",
+ "session": "4226ca5b020f9f22",
+ "notes": [
+  {
+   "t": 1791655182.5,
+   "supplier": "sup:70410",
+   "what": "setup",
+   "quote": {
+    "unit_price": 32.2,
+    "lead_time_days": 54,
+    "volume_per_year": 19890,
+    "contract_months": 12
+   },
+   "std": {
+    "ppm_commitment": 300,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": "group",
+    "country": "DE",
+    "category": "seals",
+    "signals": [
+     "approval_2pct",
+     "capacity_full"
+    ],
+    "rate": 0.05,
+    "warm": false
+   },
+   "full_cost": 24.31,
+   "near_cost": false,
+   "terms": {
+    "unit_price": 29.95,
+    "volume_per_year": 23400,
+    "contract_months": 36,
+    "lead_time_days": 56
+   },
+   "quote_at_terms": 32.2,
+   "anchor": 29.95,
+   "target": 26.32,
+   "budget": 0.16,
+   "claims": [
+    "Our bottom-up should-cost estimate for this part is EUR 24.31 per unit (cost:340010).",
+    "Our last 3 orders for this part were at EUR 29.89 (po:4500014436-10, po:4500014383-10, po:4500014337-10).",
+    "Our forecast for this part is up 10.1% (fc:340010@2026-09).",
+    "Your on-time delivery was 79.5% in 2026Q3 (sc:70410@2026Q3)."
+   ]
+  },
+  {
+   "t": 1791655187.0,
+   "supplier": "sup:70410",
+   "what": "send",
+   "state": "open",
+   "theirs": 32.2,
+   "ours": 29.95,
+   "claims": [
+    "should_cost",
+    "order_history",
+    "forecast"
+   ]
+  },
+  {
+   "t": 1791655205.0,
+   "supplier": "sup:70410",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.7,
+   "ours": 31.22,
+   "claims": [
+    "scorecard"
+   ]
+  },
+  {
+   "t": 1791655231.7,
+   "supplier": "sup:70410",
+   "what": "accept",
+   "c": 1522963.2,
+   "offer": "offer:70410-2"
+  }
+ ],
+ "result": {
+  "deal": true,
+  "supplier_id": "sup:70410",
+  "terms": {
+   "payment_days": 30,
+   "lead_time_days": 56,
+   "volume_per_year": 23400,
+   "contract_months": 36,
+   "effective_date": "2027-01-01",
+   "index_clause": null,
+   "incoterm": "DAP",
+   "tooling_eur": 0.0,
+   "ppm_commitment": 300,
+   "chargeback_eur_per_complaint": 0.0,
+   "unit_price": 31.5
+  },
+  "c_open": 1932492.18,
+  "c_deal": 1522963.2,
+  "c_best": 1328926.89,
+  "score": 0.6785164534560958
+ }
+}

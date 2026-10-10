@@ -1,0 +1,127 @@
+{
+ "case": "case:P11",
+ "session": "8c3d46ad941a6034",
+ "notes": [
+  {
+   "t": 1791655517.7,
+   "supplier": "sup:70140",
+   "what": "setup",
+   "quote": {
+    "unit_price": 47.0,
+    "ppm_commitment": 6400
+   },
+   "std": {
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": "private",
+    "country": "PL",
+    "category": "castings",
+    "signals": [
+     "cash_need"
+    ],
+    "rate": 0.12,
+    "warm": true
+   },
+   "full_cost": null,
+   "near_cost": false,
+   "terms": {
+    "ppm_commitment": 300,
+    "chargeback_eur_per_complaint": 0,
+    "unit_price": 41.36
+   },
+   "quote_at_terms": 47.0,
+   "anchor": 41.36,
+   "target": null,
+   "budget": 1.0,
+   "claims": [
+    "Your quote of 2026-09-13 for this part was EUR 45.15 per unit (\"Payment within 10 days requested\") (quote:7300011).",
+    "Electricity producer prices changed -3.7% from 2025-08 to 2026-08 (idx:PPI-D351@2025-08, idx:PPI-D351@2026-08).",
+    "Our last 3 orders for this part were at EUR 45.15 (po:4500014429-10, po:4500014373-10, po:4500014306-10).",
+    "Our forecast for this part is up 20.0% (fc:310020@2026-09).",
+    "Your deliveries ran at 2376 ppm in 2026Q3 (sc:70140@2026Q3)."
+   ]
+  },
+  {
+   "t": 1791655519.4,
+   "supplier": "sup:70140",
+   "what": "send",
+   "state": "open",
+   "theirs": 47.0,
+   "ours": 41.36,
+   "claims": [
+    "own_quote",
+    "index",
+    "order_history"
+   ]
+  },
+  {
+   "t": 1791655549.7,
+   "supplier": "sup:70140",
+   "what": "send",
+   "state": "open",
+   "theirs": 47.0,
+   "ours": 43.05,
+   "claims": [
+    "forecast"
+   ]
+  },
+  {
+   "t": 1791655574.8,
+   "supplier": "sup:70140",
+   "what": "send",
+   "state": "open",
+   "theirs": 46.0,
+   "ours": 43.93,
+   "claims": [
+    "scorecard"
+   ]
+  },
+  {
+   "t": 1791655594.7,
+   "supplier": "sup:70140",
+   "what": "send",
+   "state": "open",
+   "theirs": 45.5,
+   "ours": 44.4,
+   "claims": []
+  },
+  {
+   "t": 1791655619.6,
+   "supplier": "sup:70140",
+   "what": "send",
+   "state": "open",
+   "theirs": 45.5,
+   "ours": 44.73,
+   "claims": []
+  },
+  {
+   "t": 1791655638.9,
+   "supplier": "sup:70140",
+   "what": "accept",
+   "c": 750082.5,
+   "offer": "offer:70140-5"
+  }
+ ],
+ "result": {
+  "deal": true,
+  "supplier_id": "sup:70140",
+  "terms": {
+   "payment_days": 60,
+   "lead_time_days": 56,
+   "volume_per_year": 15900,
+   "contract_months": 12,
+   "effective_date": "2027-01-01",
+   "index_clause": null,
+   "incoterm": "FCA",
+   "tooling_eur": 0.0,
+   "ppm_commitment": 300,
+   "chargeback_eur_per_complaint": 0.0,
+   "unit_price": 45.5
+  },
+  "c_open": 817578.0,
+  "c_deal": 750082.5,
+  "c_best": 722500.02,
+  "score": 0.7098962346486538
+ }
+}

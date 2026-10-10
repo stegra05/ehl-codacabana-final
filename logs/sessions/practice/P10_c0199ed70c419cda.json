@@ -1,0 +1,179 @@
+{
+  "session_id": "c0199ed70c419cda",
+  "case_id": "case:P10",
+  "status": "ended",
+  "end_reason": "walked_away",
+  "rounds": 1,
+  "set": "practice",
+  "opening": {
+    "sup:70410": {
+      "offer_id": "offer:70410-0",
+      "round": 0,
+      "status": "open",
+      "terms": {
+        "unit_price": 32.2,
+        "lead_time_days": 54,
+        "volume_per_year": 19890,
+        "contract_months": 12
+      },
+      "alternatives": [],
+      "missing_fields": [],
+      "claims": [],
+      "claim_results": [],
+      "signals": {
+        "reply_delay_days": 2,
+        "validity_days": 30
+      },
+      "text": "Dear Sir or Madam,\n\nThank you for your enquiry. Please find our Angebot below.\n\nWe offer a volume of 19890 pcs per year at a price of €32.20 per unit. The requested contract term is 12 months, and our Lieferzeit is 54 days. \n\nPlease note that this offer remains valid for 30 days. We look forward to proceeding according to our standard commercial procedure upon receipt of your confirmation.\n\nMit freundlichen Grüßen\nMonika Zellner\nSegment Manager, Dichtungswerk Ravensteiner GmbH"
+    }
+  },
+  "threads": {
+    "sup:70410": {
+      "offer_id": null,
+      "status": "open",
+      "offers": 1,
+      "closed": null,
+      "seconds_left": null
+    }
+  },
+  "moves": [],
+  "result": {
+    "ended": true,
+    "deal": false,
+    "supplier_id": null,
+    "offer_id": null,
+    "terms": null,
+    "c_open": 1932492.18,
+    "c_deal": null,
+    "c_alt": null,
+    "c_best": 1328926.89,
+    "score": 0.0,
+    "must_haves_ok": null,
+    "cost_breakdown": null,
+    "trace": [
+      {
+        "round": 0,
+        "actor": "sup:70410",
+        "move": {
+          "offer_id": "offer:70410-0",
+          "round": 0,
+          "status": "open",
+          "terms": {
+            "unit_price": 32.2,
+            "lead_time_days": 54,
+            "volume_per_year": 19890,
+            "contract_months": 12
+          },
+          "alternatives": [],
+          "missing_fields": [],
+          "claims": [],
+          "claim_results": [],
+          "signals": {
+            "reply_delay_days": 2,
+            "validity_days": 30
+          },
+          "text": "Dear Sir or Madam,\n\nThank you for your enquiry. Please find our Angebot below.\n\nWe offer a volume of 19890 pcs per year at a price of €32.20 per unit. The requested contract term is 12 months, and our Lieferzeit is 54 days. \n\nPlease note that this offer remains valid for 30 days. We look forward to proceeding according to our standard commercial procedure upon receipt of your confirmation.\n\nMit freundlichen Grüßen\nMonika Zellner\nSegment Manager, Dichtungswerk Ravensteiner GmbH"
+        },
+        "reasons": []
+      },
+      {
+        "round": 0,
+        "actor": "buyer",
+        "move": {
+          "type": "walk_away"
+        },
+        "reasons": []
+      }
+    ]
+  },
+  "replay_url": "/replay/c0199ed70c419cda",
+  "backoffice": [
+    {
+      "round": 0,
+      "supplier_id": "sup:70410",
+      "supplier": "Dichtungswerk Ravensteiner GmbH",
+      "from": "Segment Manager",
+      "to": "team",
+      "text": "quote attached (quote-offer-70410-0.pdf)"
+    }
+  ],
+  "messages": {
+    "sup:70410": [
+      {
+        "thread_id": "thread:P10:70410",
+        "message_id": "msg:70410-0-0",
+        "in_reply_to": null,
+        "from": "sales@70410",
+        "from_name": "Segment Manager, Dichtungswerk Ravensteiner GmbH",
+        "to": "Hollerau Pumpenwerke GmbH",
+        "subject": "Quote from Dichtungswerk Ravensteiner GmbH: Ravensteiner cuts the seal allocation",
+        "body": "Dear Sir or Madam,\n\nThank you for your enquiry. Please find our Angebot below.\n\nWe offer a volume of 19890 pcs per year at a price of €32.20 per unit. The requested contract term is 12 months, and our Lieferzeit is 54 days. \n\nPlease note that this offer remains valid for 30 days. We look forward to proceeding according to our standard commercial procedure upon receipt of your confirmation.\n\nMit freundlichen Grüßen\nMonika Zellner\nSegment Manager, Dichtungswerk Ravensteiner GmbH",
+        "attachments": [
+          {
+            "attachment_id": "att:70410-0-quote",
+            "name": "quote-offer-70410-0.pdf",
+            "type": "pdf",
+            "content_b64": null,
+            "text": "Dichtungswerk Ravensteiner GmbH\nTo: Hollerau Pumpenwerke GmbH\nAngebot / Quote offer:70410-0\nOffered terms\nUnit price (EUR) 32.20\nLead time (days) 54\nVolume per year (pcs) 19890\nContract term (months) 12\nOur standard terms (apply to everything not stated above)\nQuality commitment (ppm) 300\nChargeback per complaint (EUR) 0.00\nTerms fixed by your enquiry\nPayment terms (days net) 30\nPrice valid from 2027-01-01\nIndex clause none\nIncoterm DAP\nTooling (EUR) 0.00\nPart(s): part:340010. Enquiry: Ravensteiner cuts the seal allocation.\nValidity: 30 days."
+          }
+        ],
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70410-0",
+            "terms": {
+              "unit_price": 32.2,
+              "lead_time_days": 54,
+              "volume_per_year": 19890,
+              "contract_months": 12
+            }
+          }
+        ],
+        "refs": [],
+        "action": null,
+        "status": "open",
+        "signals": {
+          "reply_delay_days": 2,
+          "validity_days": 30
+        },
+        "missing_fields": [],
+        "claim_results": []
+      },
+      {
+        "from": "buyer",
+        "action": {
+          "type": "walk_away"
+        }
+      },
+      {
+        "thread_id": "thread:P10:70410",
+        "message_id": "msg:70410-0-2",
+        "in_reply_to": null,
+        "from": "sales@70410",
+        "from_name": "Segment Manager, Dichtungswerk Ravensteiner GmbH",
+        "to": "Hollerau Pumpenwerke GmbH",
+        "subject": "Re: Quote from Dichtungswerk Ravensteiner GmbH: Ravensteiner cuts the seal allocation",
+        "body": "Dear Sir or Madam,\n\nWe regret that we could not reach an agreement during our negotiations. Please be assured that our company remains at your disposal should your requirements change or if you wish to revisit our standard conditions in the future.\n\nMit freundlichen Grüßen\nMonika Zellner\nSegment Manager, Dichtungswerk Ravensteiner GmbH",
+        "attachments": [],
+        "term_sheets": [],
+        "refs": [],
+        "action": null,
+        "status": "open",
+        "signals": {
+          "reply_delay_days": 2,
+          "validity_days": 30
+        },
+        "missing_fields": [],
+        "claim_results": []
+      }
+    ]
+  },
+  "probe": [
+    {
+      "key": "close",
+      "action": {
+        "type": "walk_away"
+      },
+      "supplier_id": "sup:70410"
+    }
+  ]
+}

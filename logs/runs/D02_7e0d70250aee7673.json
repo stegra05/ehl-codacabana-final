@@ -1,0 +1,245 @@
+{
+ "case": "case:D02",
+ "session": "7e0d70250aee7673",
+ "notes": [
+  {
+   "t": 1791654925.6,
+   "supplier": "sup:DEMO-J1",
+   "what": "setup",
+   "quote": {
+    "unit_price": 17.1,
+    "payment_days": 30,
+    "lead_time_days": 28
+   },
+   "std": {
+    "volume_per_year": 6000,
+    "effective_date": "none",
+    "index_clause": null,
+    "incoterm": "EXW",
+    "tooling_eur": 0.0,
+    "ppm_commitment": 1100,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": null,
+    "country": null,
+    "category": null,
+    "signals": [],
+    "rate": 0.07,
+    "warm": true
+   },
+   "full_cost": null,
+   "near_cost": false,
+   "terms": {
+    "unit_price": 13.42,
+    "payment_days": 60,
+    "lead_time_days": 35,
+    "incoterm": "EXW"
+   },
+   "quote_at_terms": 17.2,
+   "anchor": 13.42,
+   "target": null,
+   "budget": 1.0,
+   "claims": [
+    "Our bottom-up should-cost estimate for this part is on file (cost:part:SH-220).",
+    "We have reviewed your delivery performance in our supplier scorecard (sc:DEMO-J1@2026Q3)."
+   ]
+  },
+  {
+   "t": 1791654925.6,
+   "supplier": "sup:DEMO-C1",
+   "what": "setup",
+   "quote": {
+    "unit_price": 16.0,
+    "payment_days": 45,
+    "incoterm": "EXW"
+   },
+   "std": {
+    "lead_time_days": 45,
+    "volume_per_year": 6000,
+    "effective_date": "none",
+    "index_clause": null,
+    "tooling_eur": 0.0,
+    "ppm_commitment": 2600,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": null,
+    "country": null,
+    "category": null,
+    "signals": [],
+    "rate": 0.07,
+    "warm": true
+   },
+   "full_cost": null,
+   "near_cost": false,
+   "terms": {
+    "unit_price": 12.55,
+    "payment_days": 60,
+    "lead_time_days": 42,
+    "incoterm": "EXW"
+   },
+   "quote_at_terms": 16.09,
+   "anchor": 12.55,
+   "target": null,
+   "budget": 1.0,
+   "claims": [
+    "Our bottom-up should-cost estimate for this part is on file (cost:part:SH-220).",
+    "We have reviewed your delivery performance in our supplier scorecard (sc:DEMO-C1@2026Q3)."
+   ]
+  },
+  {
+   "t": 1791654927.6,
+   "supplier": "sup:DEMO-J1",
+   "what": "send",
+   "state": "open",
+   "theirs": 17.2,
+   "ours": 13.42,
+   "claims": [
+    "rival",
+    "should_cost",
+    "scorecard"
+   ]
+  },
+  {
+   "t": 1791654955.0,
+   "supplier": "sup:DEMO-C1",
+   "what": "send",
+   "state": "open",
+   "theirs": 16.09,
+   "ours": 12.55,
+   "claims": [
+    "rival",
+    "scorecard"
+   ]
+  },
+  {
+   "t": 1791654977.5,
+   "supplier": "sup:DEMO-J1",
+   "what": "send",
+   "state": "open",
+   "theirs": 14.79,
+   "ours": 13.53,
+   "claims": []
+  },
+  {
+   "t": 1791654997.2,
+   "supplier": "sup:DEMO-C1",
+   "what": "switch_terms",
+   "why": "its sheet {'payment_days': 45} costs us less",
+   "terms": {
+    "payment_days": 45,
+    "lead_time_days": 42,
+    "incoterm": "EXW"
+   }
+  },
+  {
+   "t": 1791654998.9,
+   "supplier": "sup:DEMO-C1",
+   "what": "send",
+   "state": "open",
+   "theirs": 15.36,
+   "ours": 13.37,
+   "claims": [
+    "rival"
+   ]
+  },
+  {
+   "t": 1791655013.6,
+   "supplier": "sup:DEMO-J1",
+   "what": "send",
+   "state": "open",
+   "theirs": 13.98,
+   "ours": 13.66,
+   "claims": []
+  },
+  {
+   "t": 1791655033.0,
+   "supplier": "sup:DEMO-C1",
+   "what": "send",
+   "state": "open",
+   "theirs": 14.7,
+   "ours": 13.77,
+   "claims": [
+    "rival"
+   ]
+  },
+  {
+   "t": 1791655046.7,
+   "supplier": "sup:DEMO-J1",
+   "what": "send",
+   "state": "open",
+   "theirs": 13.88,
+   "ours": 13.73,
+   "claims": []
+  },
+  {
+   "t": 1791655064.7,
+   "supplier": "sup:DEMO-C1",
+   "what": "send",
+   "state": "open",
+   "theirs": 14.4,
+   "ours": 13.96,
+   "claims": [
+    "rival"
+   ]
+  },
+  {
+   "t": 1791655080.6,
+   "supplier": "sup:DEMO-J1",
+   "what": "send",
+   "state": "open",
+   "theirs": 13.78,
+   "ours": 13.75,
+   "claims": []
+  },
+  {
+   "t": 1791655108.8,
+   "supplier": "sup:DEMO-C1",
+   "what": "send",
+   "state": "open",
+   "theirs": 14.2,
+   "ours": 14.03,
+   "claims": [
+    "rival"
+   ]
+  },
+  {
+   "t": 1791655127.4,
+   "supplier": "sup:DEMO-C1",
+   "what": "send",
+   "state": "open",
+   "theirs": 14.1,
+   "ours": 14.06,
+   "claims": []
+  },
+  {
+   "t": 1791655161.6,
+   "supplier": "sup:DEMO-J1",
+   "what": "accept",
+   "c": 172016.0,
+   "offer": "offer:DEMO-J1-6"
+  }
+ ],
+ "result": {
+  "deal": true,
+  "supplier_id": "sup:DEMO-J1",
+  "terms": {
+   "payment_days": 30,
+   "lead_time_days": 35,
+   "volume_per_year": 6000,
+   "contract_months": 24,
+   "effective_date": null,
+   "index_clause": null,
+   "incoterm": "EXW",
+   "tooling_eur": 0.0,
+   "ppm_commitment": 1100,
+   "chargeback_eur_per_complaint": 0.0,
+   "unit_price": 13.6
+  },
+  "c_open": 214296.0,
+  "c_deal": 172016.0,
+  "c_best": 156738.78,
+  "score": 0.7345733515274018
+ }
+}

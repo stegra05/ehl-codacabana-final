@@ -1,0 +1,1299 @@
+{
+  "session_id": "7f7dc7e83a9ad486",
+  "case_id": "case:P04",
+  "status": "ended",
+  "end_reason": "accepted",
+  "rounds": 7,
+  "set": "practice",
+  "opening": {
+    "sup:70620": {
+      "offer_id": "offer:70620-0",
+      "round": 0,
+      "status": "open",
+      "terms": {
+        "unit_price": 4.96,
+        "payment_days": 30,
+        "contract_months": 12
+      },
+      "alternatives": [],
+      "missing_fields": [],
+      "claims": [
+        {
+          "type": "index_change",
+          "refs": [
+            "idx:LCI-C@2025-06",
+            "idx:LCI-C@2026-06"
+          ],
+          "asserted": {
+            "change_pct": 2.7
+          }
+        },
+        {
+          "type": "index_change",
+          "refs": [
+            "idx:PPI-C2815@2025-08",
+            "idx:PPI-C2815@2026-08"
+          ],
+          "asserted": {
+            "change_pct": 0.8
+          }
+        }
+      ],
+      "claim_results": [],
+      "signals": {
+        "reply_delay_days": 1,
+        "validity_days": 30
+      },
+      "text": "Dear customer,\n\nThank you for your enquiry. Please find our Angebot below. We are delighted to assist Hollerau Pumpenwerke GmbH and remain eager to serve all your requirements from our extensive product range.\n\nWe are pleased to submit our offer at a price of €4.96 per unit, with a Zahlungsziel 30 days net, and a contract term of 12 months. This offer stays valid for 30 days.\n\nTo give you complete visibility into our underlying costs, please note that LCI-C rose 2.7 % in twelve months and is 10 % of our cost. Furthermore, PPI-C2815 rose 0.8 % in twelve months and is 65 % of our cost. \n\nAs your trusted partner, we pride ourselves on exceptional distributor service and look forward to continuing our successful business relationship.\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH"
+    }
+  },
+  "threads": {
+    "sup:70620": {
+      "offer_id": "offer:70620-6",
+      "status": "agreed",
+      "offers": 7,
+      "closed": null,
+      "seconds_left": null
+    }
+  },
+  "moves": [],
+  "result": {
+    "ended": true,
+    "deal": true,
+    "supplier_id": "sup:70620",
+    "offer_id": "offer:70620-6",
+    "terms": {
+      "payment_days": 30,
+      "lead_time_days": 7,
+      "volume_per_year": 20000,
+      "contract_months": 24,
+      "effective_date": "2027-01-01",
+      "index_clause": null,
+      "incoterm": "DAP",
+      "tooling_eur": 0.0,
+      "ppm_commitment": 150,
+      "chargeback_eur_per_complaint": 0.0,
+      "unit_price": 4.96
+    },
+    "c_open": 198846.33,
+    "c_deal": 200292.67,
+    "c_alt": 203169.0,
+    "c_best": 196529.32,
+    "score": 0.0,
+    "must_haves_ok": true,
+    "cost_breakdown": {
+      "price": 198400.0,
+      "uncovered_need": 0.0,
+      "fallback_risk": 0.0,
+      "payment_terms": 1322.67,
+      "freight": 0.0,
+      "late_delivery": 0.0,
+      "quality": 570.0,
+      "tooling": 0.0,
+      "index_clause": 0.0,
+      "index_risk": 0.0,
+      "relationship": 0.0
+    },
+    "trace": [
+      {
+        "round": 0,
+        "actor": "sup:70620",
+        "move": {
+          "offer_id": "offer:70620-0",
+          "round": 0,
+          "status": "open",
+          "terms": {
+            "unit_price": 4.96,
+            "payment_days": 30,
+            "contract_months": 12
+          },
+          "alternatives": [],
+          "missing_fields": [],
+          "claims": [
+            {
+              "type": "index_change",
+              "refs": [
+                "idx:LCI-C@2025-06",
+                "idx:LCI-C@2026-06"
+              ],
+              "asserted": {
+                "change_pct": 2.7
+              }
+            },
+            {
+              "type": "index_change",
+              "refs": [
+                "idx:PPI-C2815@2025-08",
+                "idx:PPI-C2815@2026-08"
+              ],
+              "asserted": {
+                "change_pct": 0.8
+              }
+            }
+          ],
+          "claim_results": [],
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "text": "Dear customer,\n\nThank you for your enquiry. Please find our Angebot below. We are delighted to assist Hollerau Pumpenwerke GmbH and remain eager to serve all your requirements from our extensive product range.\n\nWe are pleased to submit our offer at a price of €4.96 per unit, with a Zahlungsziel 30 days net, and a contract term of 12 months. This offer stays valid for 30 days.\n\nTo give you complete visibility into our underlying costs, please note that LCI-C rose 2.7 % in twelve months and is 10 % of our cost. Furthermore, PPI-C2815 rose 0.8 % in twelve months and is 65 % of our cost. \n\nAs your trusted partner, we pride ourselves on exceptional distributor service and look forward to continuing our successful business relationship.\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH"
+        },
+        "reasons": [
+          "LCI-C rose … in twelve months and is … of our cost.",
+          "PPI-C2815 rose … in twelve months and is … of our cost."
+        ]
+      },
+      {
+        "round": 1,
+        "actor": "buyer",
+        "move": {
+          "type": "message",
+          "message_id": null,
+          "subject": "Re: Renewal of the ball bearing 6306 agreement",
+          "body": "Dear Sir or Madam,\n\nThank you for your offer. Could you send us a cost breakdown for this part?\nWhat would you need from us to move on price?\n\nBest regards\nHollerau Pumpenwerke, Purchasing",
+          "refs": [],
+          "term_sheets": [
+            {
+              "term_sheet_id": null,
+              "terms": {
+                "unit_price": 4.39,
+                "payment_days": 30,
+                "contract_months": 12
+              }
+            }
+          ],
+          "interpreted": {
+            "claims": []
+          },
+          "supplier_id": "sup:70620"
+        },
+        "reasons": []
+      },
+      {
+        "round": 1,
+        "actor": "sup:70620",
+        "move": {
+          "offer_id": "offer:70620-1",
+          "round": 1,
+          "status": "open",
+          "terms": {
+            "unit_price": 4.96,
+            "payment_days": 30,
+            "contract_months": 12
+          },
+          "alternatives": [],
+          "missing_fields": [],
+          "claims": [],
+          "claim_results": [],
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "text": "Dear customer,\n\nWe have reviewed your offer and can adjust our Angebot as follows. Our current offer stands at a price of €4.96 per unit, Zahlungsziel 30 days net, a contract term of 12 months. This pricing is valid for 30 days.\n\nOur pricing reflects the current market conditions and the increases in our cost base, as outlined in our initial offer. Please understand that material accounts for about 65 % of our cost; more detail we do not share. As a matter of company policy, we do not share detailed internal cost breakdowns.\n\nTo consider any adjustments to the price, we would require a significant increase in order volume or a longer contract commitment. Which volume can you commit to?\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH"
+        },
+        "reasons": [
+          "As a matter of company policy, we do not share detailed internal cost breakdowns.",
+          "Our pricing reflects the current market conditions and the increases in our cost base, as outlined in our initial offer.",
+          "To consider any adjustments to the price, we would require a significant increase in order volume or a longer contract commitment.",
+          "Which volume can you commit to?",
+          "Material accounts for about … of our cost; more detail we do not share."
+        ]
+      },
+      {
+        "round": 2,
+        "actor": "buyer",
+        "move": {
+          "type": "message",
+          "message_id": null,
+          "subject": "Re: Renewal of the ball bearing 6306 agreement",
+          "body": "Dear Sir or Madam,\n\nWe would like to keep your price, with one change in each package below. Which of them can you accept?\n\nBest regards\nHollerau Pumpenwerke, Purchasing",
+          "refs": [],
+          "term_sheets": [
+            {
+              "term_sheet_id": null,
+              "terms": {
+                "unit_price": 4.96,
+                "payment_days": 90,
+                "contract_months": 12
+              }
+            },
+            {
+              "term_sheet_id": null,
+              "terms": {
+                "unit_price": 4.96,
+                "payment_days": 30,
+                "contract_months": 24
+              }
+            }
+          ],
+          "interpreted": {
+            "claims": []
+          },
+          "supplier_id": "sup:70620"
+        },
+        "reasons": []
+      },
+      {
+        "round": 2,
+        "actor": "sup:70620",
+        "move": {
+          "offer_id": "offer:70620-2",
+          "round": 2,
+          "status": "agreed",
+          "terms": {
+            "unit_price": 4.96,
+            "payment_days": 30,
+            "contract_months": 24
+          },
+          "alternatives": [],
+          "missing_fields": [],
+          "claims": [],
+          "claim_results": [],
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "text": "Dear customer,\n\nWe have evaluated your proposed options. We can accept your terms and await your order. \n\nOur offer stands at a price of €4.96 per unit, Zahlungsziel 30 days net, a contract term of 24 months. Our general terms and conditions apply; the quote lists our standard terms. Please note that our standard Zahlungsziel is 30 days net. This proposal remains valid for 30 days.\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH"
+        },
+        "reasons": [
+          "We have evaluated your proposed options.",
+          "Our general terms and conditions apply; the quote lists our standard terms.",
+          "Our standard Zahlungsziel is … days net."
+        ]
+      },
+      {
+        "round": 3,
+        "actor": "buyer",
+        "move": {
+          "type": "message",
+          "message_id": null,
+          "subject": "Re: Renewal of the ball bearing 6306 agreement",
+          "body": "Dear Sir or Madam,\n\nWe would like to keep your price, with one change in each package below. Which of them can you accept?\n\nBest regards\nHollerau Pumpenwerke, Purchasing",
+          "refs": [],
+          "term_sheets": [
+            {
+              "term_sheet_id": null,
+              "terms": {
+                "unit_price": 4.96,
+                "payment_days": 90,
+                "contract_months": 24
+              }
+            }
+          ],
+          "interpreted": {
+            "claims": []
+          },
+          "supplier_id": "sup:70620"
+        },
+        "reasons": []
+      },
+      {
+        "round": 3,
+        "actor": "sup:70620",
+        "move": {
+          "offer_id": "offer:70620-3",
+          "round": 3,
+          "status": "open",
+          "terms": {
+            "unit_price": 5.02,
+            "payment_days": 90,
+            "contract_months": 24
+          },
+          "alternatives": [
+            {
+              "offer_id": "offer:70620-3-a",
+              "terms": {
+                "unit_price": 4.96,
+                "payment_days": 30,
+                "contract_months": 24
+              }
+            }
+          ],
+          "missing_fields": [],
+          "claims": [],
+          "claim_results": [],
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "text": "Dear customer,\n\nThank you for reaching out to us. Your requested terms change our costs; our Angebot for them follows. We are always glad to work with you and keep supporting your operations with our extensive range and dedicated service. \n\nThat change is possible at the price below; our agreed offer stands too. For this adjusted request, our Angebot is a price of €5.02 per unit, Zahlungsziel 90 days net, a contract term of 24 months. \n\nAlternatively, with Zahlungsziel 30 days net: a price of €4.96 per unit, a contract term of 24 months. \n\nPlease note that our general terms and conditions apply; the quote lists our standard terms. This offer remains valid for 30 days. We look forward to continuing our successful partnership.\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH"
+        },
+        "reasons": [
+          "That change is possible at the price below; our agreed offer stands too.",
+          "Alternatively, with Zahlungsziel … days net: €… per unit.",
+          "Our general terms and conditions apply; the quote lists our standard terms."
+        ]
+      },
+      {
+        "round": 4,
+        "actor": "buyer",
+        "move": {
+          "type": "message",
+          "message_id": null,
+          "subject": "Re: Renewal of the ball bearing 6306 agreement",
+          "body": "Dear Sir or Madam,\n\nWe have put together alternative packages. Which of them works best for you, and at what price?\n\nBest regards\nHollerau Pumpenwerke, Purchasing",
+          "refs": [],
+          "term_sheets": [
+            {
+              "term_sheet_id": null,
+              "terms": {
+                "unit_price": 4.71,
+                "payment_days": 90,
+                "contract_months": 36
+              }
+            },
+            {
+              "term_sheet_id": null,
+              "terms": {
+                "unit_price": 4.71,
+                "payment_days": 14,
+                "contract_months": 24
+              }
+            }
+          ],
+          "interpreted": {
+            "claims": []
+          },
+          "supplier_id": "sup:70620"
+        },
+        "reasons": []
+      },
+      {
+        "round": 4,
+        "actor": "sup:70620",
+        "move": {
+          "offer_id": "offer:70620-4",
+          "round": 4,
+          "status": "agreed",
+          "terms": {
+            "unit_price": 4.96,
+            "payment_days": 30,
+            "contract_months": 24
+          },
+          "alternatives": [],
+          "missing_fields": [],
+          "claims": [],
+          "claim_results": [],
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "text": "Dear customer,\n\nWe can accept your terms and await your order. Our agreed offer stands. \n\nOur Angebot provides a price of €4.96 per unit, Zahlungsziel 30 days net, a contract term of 24 months. Please note that our price follows our main cost drivers: PPI-C2815, LCI-C. This offer stays valid for 30 days.\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH"
+        },
+        "reasons": [
+          "Our agreed offer stands.",
+          "Our price follows our main cost drivers: PPI-C2815, LCI-C."
+        ]
+      },
+      {
+        "round": 5,
+        "actor": "buyer",
+        "move": {
+          "type": "message",
+          "message_id": null,
+          "subject": "Re: Renewal of the ball bearing 6306 agreement",
+          "body": "Dear Sir or Madam,\n\nWe have looked at the figures.\nPPI-C2815 changed +0.8 % from 2025-08 to 2026-08 (idx:PPI-C2815@2025-08, idx:PPI-C2815@2026-08).\nLCI-C changed +2.7 % from 2025-06 to 2026-06 (idx:LCI-C@2025-06, idx:LCI-C@2026-06).\nOver the last four scorecards your on-time delivery averaged 85.4 % (sc:70620@2026Q3, sc:70620@2026Q2, sc:70620@2026Q1, sc:70620@2025Q4).\nOur offer is below.\n\nBest regards\nHollerau Pumpenwerke, Purchasing",
+          "refs": [
+            "idx:PPI-C2815@2025-08",
+            "idx:PPI-C2815@2026-08",
+            "idx:LCI-C@2025-06",
+            "idx:LCI-C@2026-06",
+            "sc:70620@2026Q3",
+            "sc:70620@2026Q2",
+            "sc:70620@2026Q1",
+            "sc:70620@2025Q4"
+          ],
+          "term_sheets": [
+            {
+              "term_sheet_id": null,
+              "terms": {
+                "unit_price": 4.79,
+                "payment_days": 30,
+                "contract_months": 24
+              }
+            }
+          ],
+          "interpreted": {
+            "claims": [
+              {
+                "type": "index_change",
+                "refs": [
+                  "idx:PPI-C2815@2025-08",
+                  "idx:PPI-C2815@2026-08"
+                ],
+                "asserted": {
+                  "change_pct": 0.8
+                }
+              },
+              {
+                "type": "index_change",
+                "refs": [
+                  "idx:LCI-C@2025-06",
+                  "idx:LCI-C@2026-06"
+                ],
+                "asserted": {
+                  "change_pct": 2.7
+                }
+              },
+              {
+                "type": "delivery_record",
+                "refs": [
+                  "sc:70620@2026Q3",
+                  "sc:70620@2026Q2",
+                  "sc:70620@2026Q1",
+                  "sc:70620@2025Q4"
+                ],
+                "asserted": {
+                  "otd_pct": 85.4
+                }
+              }
+            ]
+          },
+          "supplier_id": "sup:70620"
+        },
+        "reasons": []
+      },
+      {
+        "round": 5,
+        "actor": "sup:70620",
+        "move": {
+          "offer_id": "offer:70620-5",
+          "round": 5,
+          "status": "agreed",
+          "terms": {
+            "unit_price": 4.96,
+            "payment_days": 30,
+            "contract_months": 24
+          },
+          "alternatives": [],
+          "missing_fields": [],
+          "claims": [],
+          "claim_results": [
+            {
+              "index": 0,
+              "result": "verified"
+            },
+            {
+              "index": 1,
+              "result": "verified"
+            },
+            {
+              "index": 2,
+              "result": "verified"
+            }
+          ],
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "text": "Dear customer,\n\nWe can accept your terms and await your order.\n\nWe received a lot of material; we looked at what bears on this part. Your figures confirm our case: that driver rose. We checked the delivery record data you cited; it holds, but it does not change our calculation. That does not change our position, and our agreed offer stands.\n\nOur offer is a price of €4.96 per unit, Zahlungsziel 30 days net, a contract term of 24 months. Please note that this offer remains valid for 30 days.\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH"
+        },
+        "reasons": [
+          "We received a lot of material; we looked at what bears on this part.",
+          "Your figures confirm our case: that driver rose.",
+          "We checked the delivery record data you cited; it holds, but it does not change our calculation.",
+          "That does not change our position.",
+          "Our agreed offer stands."
+        ]
+      },
+      {
+        "round": 6,
+        "actor": "buyer",
+        "move": {
+          "type": "message",
+          "message_id": null,
+          "subject": "Re: Renewal of the ball bearing 6306 agreement",
+          "body": "Dear Sir or Madam,\n\nThank you. Could you do a little better on price? Our proposal is below.\n\nBest regards\nHollerau Pumpenwerke, Purchasing",
+          "refs": [],
+          "term_sheets": [
+            {
+              "term_sheet_id": null,
+              "terms": {
+                "unit_price": 4.89,
+                "payment_days": 30,
+                "contract_months": 24
+              }
+            }
+          ],
+          "interpreted": {
+            "claims": []
+          },
+          "supplier_id": "sup:70620"
+        },
+        "reasons": []
+      },
+      {
+        "round": 6,
+        "actor": "sup:70620",
+        "move": {
+          "offer_id": "offer:70620-6",
+          "round": 6,
+          "status": "agreed",
+          "terms": {
+            "unit_price": 4.96,
+            "payment_days": 30,
+            "contract_months": 24
+          },
+          "alternatives": [],
+          "missing_fields": [],
+          "claims": [],
+          "claim_results": [],
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "text": "Dear customer,\n\nWe can accept your terms and await your order. Our agreed offer stands. \n\nOur Angebot provides a price of €4.96 per unit, Zahlungsziel 30 days net, a contract term of 24 months. Please note that our price follows our main cost drivers: PPI-C2815, LCI-C. This offer stays valid for 30 days.\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH"
+        },
+        "reasons": [
+          "Our agreed offer stands.",
+          "Our price follows our main cost drivers: PPI-C2815, LCI-C."
+        ]
+      },
+      {
+        "round": 6,
+        "actor": "buyer",
+        "move": {
+          "type": "accept",
+          "offer_id": "offer:70620-6",
+          "supplier_id": "sup:70620"
+        },
+        "reasons": []
+      }
+    ]
+  },
+  "replay_url": "/replay/7f7dc7e83a9ad486",
+  "backoffice": [
+    {
+      "round": 0,
+      "supplier_id": "sup:70620",
+      "supplier": "Wälzlager-Zentrum Süd GmbH",
+      "from": "Inside Sales",
+      "to": "team",
+      "text": "quote attached (quote-offer-70620-0.pdf)"
+    },
+    {
+      "round": 1,
+      "supplier_id": "sup:70620",
+      "supplier": "Wälzlager-Zentrum Süd GmbH",
+      "from": "Inside Sales",
+      "to": "team",
+      "text": "My call: hold."
+    },
+    {
+      "round": 1,
+      "supplier_id": "sup:70620",
+      "supplier": "Wälzlager-Zentrum Süd GmbH",
+      "from": "Inside Sales",
+      "to": "team",
+      "text": "Read the buyer's e-mail: … term sheet; we answer with our offer."
+    },
+    {
+      "round": 2,
+      "supplier_id": "sup:70620",
+      "supplier": "Wälzlager-Zentrum Süd GmbH",
+      "from": "Inside Sales",
+      "to": "team",
+      "text": "My call: counter."
+    },
+    {
+      "round": 2,
+      "supplier_id": "sup:70620",
+      "supplier": "Wälzlager-Zentrum Süd GmbH",
+      "from": "Inside Sales",
+      "to": "team",
+      "text": "Read the buyer's e-mail: … term sheets; we agree."
+    },
+    {
+      "round": 2,
+      "supplier_id": "sup:70620",
+      "supplier": "Wälzlager-Zentrum Süd GmbH",
+      "from": "Inside Sales",
+      "to": "team",
+      "text": "quote attached (quote-offer-70620-2.pdf)"
+    },
+    {
+      "round": 3,
+      "supplier_id": "sup:70620",
+      "supplier": "Wälzlager-Zentrum Süd GmbH",
+      "from": "Inside Sales",
+      "to": "team",
+      "text": "Read the buyer's e-mail: … term sheet; we answer with our offer."
+    },
+    {
+      "round": 4,
+      "supplier_id": "sup:70620",
+      "supplier": "Wälzlager-Zentrum Süd GmbH",
+      "from": "Inside Sales",
+      "to": "team",
+      "text": "Read the buyer's e-mail: … term sheets; we agree."
+    },
+    {
+      "round": 4,
+      "supplier_id": "sup:70620",
+      "supplier": "Wälzlager-Zentrum Süd GmbH",
+      "from": "Inside Sales",
+      "to": "team",
+      "text": "quote attached (quote-offer-70620-4.pdf)"
+    },
+    {
+      "round": 5,
+      "supplier_id": "sup:70620",
+      "supplier": "Wälzlager-Zentrum Süd GmbH",
+      "from": "Inside Sales",
+      "to": "team",
+      "text": "Read the buyer's e-mail: … term sheet and … cited facts to check; we agree."
+    },
+    {
+      "round": 5,
+      "supplier_id": "sup:70620",
+      "supplier": "Wälzlager-Zentrum Süd GmbH",
+      "from": "Inside Sales",
+      "to": "team",
+      "text": "quote attached (quote-offer-70620-5.pdf)"
+    },
+    {
+      "round": 6,
+      "supplier_id": "sup:70620",
+      "supplier": "Wälzlager-Zentrum Süd GmbH",
+      "from": "Inside Sales",
+      "to": "team",
+      "text": "Read the buyer's e-mail: … term sheet; we agree."
+    },
+    {
+      "round": 6,
+      "supplier_id": "sup:70620",
+      "supplier": "Wälzlager-Zentrum Süd GmbH",
+      "from": "Inside Sales",
+      "to": "team",
+      "text": "quote attached (quote-offer-70620-6.pdf)"
+    },
+    {
+      "round": 6,
+      "supplier_id": "sup:70620",
+      "supplier": "Wälzlager-Zentrum Süd GmbH",
+      "from": "Inside Sales",
+      "to": "team",
+      "text": "order confirmation attached (order-confirmation-offer-70620-6.pdf)"
+    }
+  ],
+  "messages": {
+    "sup:70620": [
+      {
+        "thread_id": "thread:P04:70620",
+        "message_id": "msg:70620-0-0",
+        "in_reply_to": null,
+        "from": "sales@70620",
+        "from_name": "Inside Sales, Wälzlager-Zentrum Süd GmbH",
+        "to": "Hollerau Pumpenwerke GmbH",
+        "subject": "Quote from Wälzlager-Zentrum Süd GmbH: Renewal of the ball bearing 6306 agreement",
+        "body": "Dear customer,\n\nThank you for your enquiry. Please find our Angebot below. We are delighted to assist Hollerau Pumpenwerke GmbH and remain eager to serve all your requirements from our extensive product range.\n\nWe are pleased to submit our offer at a price of €4.96 per unit, with a Zahlungsziel 30 days net, and a contract term of 12 months. This offer stays valid for 30 days.\n\nTo give you complete visibility into our underlying costs, please note that LCI-C rose 2.7 % in twelve months and is 10 % of our cost. Furthermore, PPI-C2815 rose 0.8 % in twelve months and is 65 % of our cost. \n\nAs your trusted partner, we pride ourselves on exceptional distributor service and look forward to continuing our successful business relationship.\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH",
+        "attachments": [
+          {
+            "attachment_id": "att:70620-0-quote",
+            "name": "quote-offer-70620-0.pdf",
+            "type": "pdf",
+            "content_b64": null,
+            "text": "Wälzlager-Zentrum Süd GmbH\nTo: Hollerau Pumpenwerke GmbH\nAngebot / Quote offer:70620-0\nOffered terms\nUnit price (EUR) 4.96\nPayment terms (days net) 30\nContract term (months) 12\nOur standard terms (apply to everything not stated above)\nQuality commitment (ppm) 150\nChargeback per complaint (EUR) 0.00\nTerms fixed by your enquiry\nLead time (days) 7\nVolume per year (pcs) 20000\nPrice valid from 2027-01-01\nIndex clause none\nIncoterm DAP\nTooling (EUR) 0.00\nPart(s): part:360020. Enquiry: Renewal of the ball bearing 6306 agreement.\nValidity: 30 days."
+          }
+        ],
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70620-0",
+            "terms": {
+              "unit_price": 4.96,
+              "payment_days": 30,
+              "contract_months": 12
+            }
+          }
+        ],
+        "refs": [],
+        "action": null,
+        "status": "open",
+        "signals": {
+          "reply_delay_days": 1,
+          "validity_days": 30
+        },
+        "missing_fields": [],
+        "claim_results": []
+      },
+      {
+        "from": "buyer",
+        "subject": "Re: Renewal of the ball bearing 6306 agreement",
+        "body": "Dear Sir or Madam,\n\nThank you for your offer. Could you send us a cost breakdown for this part?\nWhat would you need from us to move on price?\n\nBest regards\nHollerau Pumpenwerke, Purchasing",
+        "term_sheets": [
+          {
+            "terms": {
+              "unit_price": 4.39,
+              "payment_days": 30,
+              "contract_months": 12
+            }
+          }
+        ],
+        "refs": []
+      },
+      {
+        "thread_id": "thread:P04:70620",
+        "message_id": "msg:70620-1-2",
+        "in_reply_to": null,
+        "from": "sales@70620",
+        "from_name": "Inside Sales, Wälzlager-Zentrum Süd GmbH",
+        "to": "Hollerau Pumpenwerke GmbH",
+        "subject": "Re: Renewal of the ball bearing 6306 agreement",
+        "body": "Dear customer,\n\nWe have reviewed your offer and can adjust our Angebot as follows. Our current offer stands at a price of €4.96 per unit, Zahlungsziel 30 days net, a contract term of 12 months. This pricing is valid for 30 days.\n\nOur pricing reflects the current market conditions and the increases in our cost base, as outlined in our initial offer. Please understand that material accounts for about 65 % of our cost; more detail we do not share. As a matter of company policy, we do not share detailed internal cost breakdowns.\n\nTo consider any adjustments to the price, we would require a significant increase in order volume or a longer contract commitment. Which volume can you commit to?\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH",
+        "attachments": [],
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70620-1",
+            "terms": {
+              "unit_price": 4.96,
+              "payment_days": 30,
+              "contract_months": 12
+            }
+          }
+        ],
+        "refs": [],
+        "action": null,
+        "status": "open",
+        "signals": {
+          "reply_delay_days": 1,
+          "validity_days": 30
+        },
+        "missing_fields": [],
+        "claim_results": []
+      },
+      {
+        "from": "buyer",
+        "subject": "Re: Renewal of the ball bearing 6306 agreement",
+        "body": "Dear Sir or Madam,\n\nWe would like to keep your price, with one change in each package below. Which of them can you accept?\n\nBest regards\nHollerau Pumpenwerke, Purchasing",
+        "term_sheets": [
+          {
+            "terms": {
+              "unit_price": 4.96,
+              "payment_days": 90,
+              "contract_months": 12
+            }
+          },
+          {
+            "terms": {
+              "unit_price": 4.96,
+              "payment_days": 30,
+              "contract_months": 24
+            }
+          }
+        ],
+        "refs": []
+      },
+      {
+        "thread_id": "thread:P04:70620",
+        "message_id": "msg:70620-2-4",
+        "in_reply_to": null,
+        "from": "sales@70620",
+        "from_name": "Inside Sales, Wälzlager-Zentrum Süd GmbH",
+        "to": "Hollerau Pumpenwerke GmbH",
+        "subject": "Re: Renewal of the ball bearing 6306 agreement",
+        "body": "Dear customer,\n\nWe have evaluated your proposed options. We can accept your terms and await your order. \n\nOur offer stands at a price of €4.96 per unit, Zahlungsziel 30 days net, a contract term of 24 months. Our general terms and conditions apply; the quote lists our standard terms. Please note that our standard Zahlungsziel is 30 days net. This proposal remains valid for 30 days.\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH",
+        "attachments": [
+          {
+            "attachment_id": "att:70620-2-quote",
+            "name": "quote-offer-70620-2.pdf",
+            "type": "pdf",
+            "content_b64": null,
+            "text": "Wälzlager-Zentrum Süd GmbH\nTo: Hollerau Pumpenwerke GmbH\nAngebot / Quote offer:70620-2\nOffered terms\nUnit price (EUR) 4.96\nPayment terms (days net) 30\nContract term (months) 24\nOur standard terms (apply to everything not stated above)\nQuality commitment (ppm) 150\nChargeback per complaint (EUR) 0.00\nTerms fixed by your enquiry\nLead time (days) 7\nVolume per year (pcs) 20000\nPrice valid from 2027-01-01\nIndex clause none\nIncoterm DAP\nTooling (EUR) 0.00\nPart(s): part:360020. Enquiry: Renewal of the ball bearing 6306 agreement.\nValidity: 30 days."
+          }
+        ],
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70620-2",
+            "terms": {
+              "unit_price": 4.96,
+              "payment_days": 30,
+              "contract_months": 24
+            }
+          }
+        ],
+        "refs": [],
+        "action": null,
+        "status": "agreed",
+        "signals": {
+          "reply_delay_days": 1,
+          "validity_days": 30
+        },
+        "missing_fields": [],
+        "claim_results": []
+      },
+      {
+        "from": "buyer",
+        "subject": "Re: Renewal of the ball bearing 6306 agreement",
+        "body": "Dear Sir or Madam,\n\nWe would like to keep your price, with one change in each package below. Which of them can you accept?\n\nBest regards\nHollerau Pumpenwerke, Purchasing",
+        "term_sheets": [
+          {
+            "terms": {
+              "unit_price": 4.96,
+              "payment_days": 90,
+              "contract_months": 24
+            }
+          }
+        ],
+        "refs": []
+      },
+      {
+        "thread_id": "thread:P04:70620",
+        "message_id": "msg:70620-3-6",
+        "in_reply_to": null,
+        "from": "sales@70620",
+        "from_name": "Inside Sales, Wälzlager-Zentrum Süd GmbH",
+        "to": "Hollerau Pumpenwerke GmbH",
+        "subject": "Re: Renewal of the ball bearing 6306 agreement",
+        "body": "Dear customer,\n\nThank you for reaching out to us. Your requested terms change our costs; our Angebot for them follows. We are always glad to work with you and keep supporting your operations with our extensive range and dedicated service. \n\nThat change is possible at the price below; our agreed offer stands too. For this adjusted request, our Angebot is a price of €5.02 per unit, Zahlungsziel 90 days net, a contract term of 24 months. \n\nAlternatively, with Zahlungsziel 30 days net: a price of €4.96 per unit, a contract term of 24 months. \n\nPlease note that our general terms and conditions apply; the quote lists our standard terms. This offer remains valid for 30 days. We look forward to continuing our successful partnership.\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH",
+        "attachments": [],
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70620-3",
+            "terms": {
+              "unit_price": 5.02,
+              "payment_days": 90,
+              "contract_months": 24
+            }
+          },
+          {
+            "term_sheet_id": "offer:70620-3-a",
+            "terms": {
+              "unit_price": 4.96,
+              "payment_days": 30,
+              "contract_months": 24
+            }
+          }
+        ],
+        "refs": [],
+        "action": null,
+        "status": "open",
+        "signals": {
+          "reply_delay_days": 1,
+          "validity_days": 30
+        },
+        "missing_fields": [],
+        "claim_results": []
+      },
+      {
+        "from": "buyer",
+        "subject": "Re: Renewal of the ball bearing 6306 agreement",
+        "body": "Dear Sir or Madam,\n\nWe have put together alternative packages. Which of them works best for you, and at what price?\n\nBest regards\nHollerau Pumpenwerke, Purchasing",
+        "term_sheets": [
+          {
+            "terms": {
+              "unit_price": 4.71,
+              "payment_days": 90,
+              "contract_months": 36
+            }
+          },
+          {
+            "terms": {
+              "unit_price": 4.71,
+              "payment_days": 14,
+              "contract_months": 24
+            }
+          }
+        ],
+        "refs": []
+      },
+      {
+        "thread_id": "thread:P04:70620",
+        "message_id": "msg:70620-4-8",
+        "in_reply_to": null,
+        "from": "sales@70620",
+        "from_name": "Inside Sales, Wälzlager-Zentrum Süd GmbH",
+        "to": "Hollerau Pumpenwerke GmbH",
+        "subject": "Re: Renewal of the ball bearing 6306 agreement",
+        "body": "Dear customer,\n\nWe can accept your terms and await your order. Our agreed offer stands. \n\nOur Angebot provides a price of €4.96 per unit, Zahlungsziel 30 days net, a contract term of 24 months. Please note that our price follows our main cost drivers: PPI-C2815, LCI-C. This offer stays valid for 30 days.\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH",
+        "attachments": [
+          {
+            "attachment_id": "att:70620-4-quote",
+            "name": "quote-offer-70620-4.pdf",
+            "type": "pdf",
+            "content_b64": null,
+            "text": "Wälzlager-Zentrum Süd GmbH\nTo: Hollerau Pumpenwerke GmbH\nAngebot / Quote offer:70620-4\nOffered terms\nUnit price (EUR) 4.96\nPayment terms (days net) 30\nContract term (months) 24\nOur standard terms (apply to everything not stated above)\nQuality commitment (ppm) 150\nChargeback per complaint (EUR) 0.00\nTerms fixed by your enquiry\nLead time (days) 7\nVolume per year (pcs) 20000\nPrice valid from 2027-01-01\nIndex clause none\nIncoterm DAP\nTooling (EUR) 0.00\nPart(s): part:360020. Enquiry: Renewal of the ball bearing 6306 agreement.\nValidity: 30 days."
+          }
+        ],
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70620-4",
+            "terms": {
+              "unit_price": 4.96,
+              "payment_days": 30,
+              "contract_months": 24
+            }
+          }
+        ],
+        "refs": [],
+        "action": null,
+        "status": "agreed",
+        "signals": {
+          "reply_delay_days": 1,
+          "validity_days": 30
+        },
+        "missing_fields": [],
+        "claim_results": []
+      },
+      {
+        "from": "buyer",
+        "subject": "Re: Renewal of the ball bearing 6306 agreement",
+        "body": "Dear Sir or Madam,\n\nWe have looked at the figures.\nPPI-C2815 changed +0.8 % from 2025-08 to 2026-08 (idx:PPI-C2815@2025-08, idx:PPI-C2815@2026-08).\nLCI-C changed +2.7 % from 2025-06 to 2026-06 (idx:LCI-C@2025-06, idx:LCI-C@2026-06).\nOver the last four scorecards your on-time delivery averaged 85.4 % (sc:70620@2026Q3, sc:70620@2026Q2, sc:70620@2026Q1, sc:70620@2025Q4).\nOur offer is below.\n\nBest regards\nHollerau Pumpenwerke, Purchasing",
+        "term_sheets": [
+          {
+            "terms": {
+              "unit_price": 4.79,
+              "payment_days": 30,
+              "contract_months": 24
+            }
+          }
+        ],
+        "refs": [
+          "idx:PPI-C2815@2025-08",
+          "idx:PPI-C2815@2026-08",
+          "idx:LCI-C@2025-06",
+          "idx:LCI-C@2026-06",
+          "sc:70620@2026Q3",
+          "sc:70620@2026Q2",
+          "sc:70620@2026Q1",
+          "sc:70620@2025Q4"
+        ]
+      },
+      {
+        "thread_id": "thread:P04:70620",
+        "message_id": "msg:70620-5-10",
+        "in_reply_to": null,
+        "from": "sales@70620",
+        "from_name": "Inside Sales, Wälzlager-Zentrum Süd GmbH",
+        "to": "Hollerau Pumpenwerke GmbH",
+        "subject": "Re: Renewal of the ball bearing 6306 agreement",
+        "body": "Dear customer,\n\nWe can accept your terms and await your order.\n\nWe received a lot of material; we looked at what bears on this part. Your figures confirm our case: that driver rose. We checked the delivery record data you cited; it holds, but it does not change our calculation. That does not change our position, and our agreed offer stands.\n\nOur offer is a price of €4.96 per unit, Zahlungsziel 30 days net, a contract term of 24 months. Please note that this offer remains valid for 30 days.\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH",
+        "attachments": [
+          {
+            "attachment_id": "att:70620-5-quote",
+            "name": "quote-offer-70620-5.pdf",
+            "type": "pdf",
+            "content_b64": null,
+            "text": "Wälzlager-Zentrum Süd GmbH\nTo: Hollerau Pumpenwerke GmbH\nAngebot / Quote offer:70620-5\nOffered terms\nUnit price (EUR) 4.96\nPayment terms (days net) 30\nContract term (months) 24\nOur standard terms (apply to everything not stated above)\nQuality commitment (ppm) 150\nChargeback per complaint (EUR) 0.00\nTerms fixed by your enquiry\nLead time (days) 7\nVolume per year (pcs) 20000\nPrice valid from 2027-01-01\nIndex clause none\nIncoterm DAP\nTooling (EUR) 0.00\nPart(s): part:360020. Enquiry: Renewal of the ball bearing 6306 agreement.\nValidity: 30 days."
+          }
+        ],
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70620-5",
+            "terms": {
+              "unit_price": 4.96,
+              "payment_days": 30,
+              "contract_months": 24
+            }
+          }
+        ],
+        "refs": [],
+        "action": null,
+        "status": "agreed",
+        "signals": {
+          "reply_delay_days": 1,
+          "validity_days": 30
+        },
+        "missing_fields": [],
+        "claim_results": [
+          {
+            "index": 0,
+            "result": "verified"
+          },
+          {
+            "index": 1,
+            "result": "verified"
+          },
+          {
+            "index": 2,
+            "result": "verified"
+          }
+        ]
+      },
+      {
+        "from": "buyer",
+        "subject": "Re: Renewal of the ball bearing 6306 agreement",
+        "body": "Dear Sir or Madam,\n\nThank you. Could you do a little better on price? Our proposal is below.\n\nBest regards\nHollerau Pumpenwerke, Purchasing",
+        "term_sheets": [
+          {
+            "terms": {
+              "unit_price": 4.89,
+              "payment_days": 30,
+              "contract_months": 24
+            }
+          }
+        ],
+        "refs": []
+      },
+      {
+        "thread_id": "thread:P04:70620",
+        "message_id": "msg:70620-6-12",
+        "in_reply_to": null,
+        "from": "sales@70620",
+        "from_name": "Inside Sales, Wälzlager-Zentrum Süd GmbH",
+        "to": "Hollerau Pumpenwerke GmbH",
+        "subject": "Re: Renewal of the ball bearing 6306 agreement",
+        "body": "Dear customer,\n\nWe can accept your terms and await your order. Our agreed offer stands. \n\nOur Angebot provides a price of €4.96 per unit, Zahlungsziel 30 days net, a contract term of 24 months. Please note that our price follows our main cost drivers: PPI-C2815, LCI-C. This offer stays valid for 30 days.\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH",
+        "attachments": [
+          {
+            "attachment_id": "att:70620-6-quote",
+            "name": "quote-offer-70620-6.pdf",
+            "type": "pdf",
+            "content_b64": null,
+            "text": "Wälzlager-Zentrum Süd GmbH\nTo: Hollerau Pumpenwerke GmbH\nAngebot / Quote offer:70620-6\nOffered terms\nUnit price (EUR) 4.96\nPayment terms (days net) 30\nContract term (months) 24\nOur standard terms (apply to everything not stated above)\nQuality commitment (ppm) 150\nChargeback per complaint (EUR) 0.00\nTerms fixed by your enquiry\nLead time (days) 7\nVolume per year (pcs) 20000\nPrice valid from 2027-01-01\nIndex clause none\nIncoterm DAP\nTooling (EUR) 0.00\nPart(s): part:360020. Enquiry: Renewal of the ball bearing 6306 agreement.\nValidity: 30 days."
+          }
+        ],
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70620-6",
+            "terms": {
+              "unit_price": 4.96,
+              "payment_days": 30,
+              "contract_months": 24
+            }
+          }
+        ],
+        "refs": [],
+        "action": null,
+        "status": "agreed",
+        "signals": {
+          "reply_delay_days": 1,
+          "validity_days": 30
+        },
+        "missing_fields": [],
+        "claim_results": []
+      },
+      {
+        "from": "buyer",
+        "action": {
+          "type": "accept",
+          "term_sheet_id": "offer:70620-6"
+        }
+      },
+      {
+        "thread_id": "thread:P04:70620",
+        "message_id": "msg:70620-6-14",
+        "in_reply_to": null,
+        "from": "sales@70620",
+        "from_name": "Inside Sales, Wälzlager-Zentrum Süd GmbH",
+        "to": "Hollerau Pumpenwerke GmbH",
+        "subject": "Re: Renewal of the ball bearing 6306 agreement",
+        "body": "Dear customer,\n\nThank you for your order. Our order confirmation is attached. We are delighted to serve your needs and deeply value your continued trust in our wide product range and dedicated service. We look forward to supporting your business and remaining your reliable partner for future requirements.\n\nMit freundlichen Grüßen\nFlorian Gruber\nInside Sales, Wälzlager-Zentrum Süd GmbH",
+        "attachments": [
+          {
+            "attachment_id": "att:70620-6-order_confirmation",
+            "name": "order-confirmation-offer-70620-6.pdf",
+            "type": "pdf",
+            "content_b64": null,
+            "text": "Wälzlager-Zentrum Süd GmbH\nTo: Hollerau Pumpenwerke GmbH\nAuftragsbestätigung / Order confirmation offer:70620-6\nAgreed terms\nPayment terms (days net) 30\nLead time (days) 7\nVolume per year (pcs) 20000\nContract term (months) 24\nPrice valid from 2027-01-01\nIndex clause none\nIncoterm DAP\nTooling (EUR) 0.00\nQuality commitment (ppm) 150\nChargeback per complaint (EUR) 0.00\nUnit price (EUR) 4.96\nPart(s): part:360020. We confirm your order on the terms above."
+          }
+        ],
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70620-6",
+            "terms": {
+              "unit_price": 4.96,
+              "payment_days": 30,
+              "contract_months": 24
+            }
+          }
+        ],
+        "refs": [],
+        "action": null,
+        "status": "agreed",
+        "signals": {
+          "reply_delay_days": 1,
+          "validity_days": 30
+        },
+        "missing_fields": [],
+        "claim_results": []
+      }
+    ]
+  },
+  "probe": [
+    {
+      "supplier_id": "sup:70620",
+      "round": 1,
+      "key": "open",
+      "note": "anchor 4.39",
+      "sent": [
+        {
+          "unit_price": 4.39,
+          "payment_days": 30,
+          "contract_months": 12
+        }
+      ],
+      "c_sent": [
+        187370.33
+      ],
+      "status": "open",
+      "reply": {
+        "unit_price": 4.96,
+        "payment_days": 30,
+        "contract_months": 12
+      },
+      "claims_checked": [],
+      "attachments": []
+    },
+    {
+      "supplier_id": "sup:70620",
+      "round": 2,
+      "key": "ours",
+      "note": "at 4.96: payment_days=90, contract_months=24",
+      "sent": [
+        {
+          "unit_price": 4.96,
+          "payment_days": 90,
+          "contract_months": 12
+        },
+        {
+          "unit_price": 4.96,
+          "payment_days": 30,
+          "contract_months": 24
+        }
+      ],
+      "c_sent": [
+        197523.67,
+        200292.67
+      ],
+      "status": "agreed",
+      "reply": {
+        "unit_price": 4.96,
+        "payment_days": 30,
+        "contract_months": 24
+      },
+      "claims_checked": [],
+      "attachments": [
+        "quote-offer-70620-2.pdf"
+      ]
+    },
+    {
+      "supplier_id": "sup:70620",
+      "round": 3,
+      "key": "ours",
+      "note": "at 4.96: payment_days=90",
+      "sent": [
+        {
+          "unit_price": 4.96,
+          "payment_days": 90,
+          "contract_months": 24
+        }
+      ],
+      "c_sent": [
+        197647.33
+      ],
+      "status": "open",
+      "reply": {
+        "unit_price": 5.02,
+        "payment_days": 90,
+        "contract_months": 24
+      },
+      "claims_checked": [],
+      "attachments": []
+    },
+    {
+      "supplier_id": "sup:70620",
+      "round": 4,
+      "key": "theirs",
+      "note": "at 4.71: contract_months=36, payment_days=14",
+      "sent": [
+        {
+          "unit_price": 4.71,
+          "payment_days": 90,
+          "contract_months": 36
+        },
+        {
+          "unit_price": 4.71,
+          "payment_days": 14,
+          "contract_months": 24
+        }
+      ],
+      "c_sent": [
+        187714.0,
+        190895.87
+      ],
+      "status": "agreed",
+      "reply": {
+        "unit_price": 4.96,
+        "payment_days": 30,
+        "contract_months": 24
+      },
+      "claims_checked": [],
+      "attachments": [
+        "quote-offer-70620-4.pdf"
+      ]
+    },
+    {
+      "supplier_id": "sup:70620",
+      "round": 5,
+      "key": "claims",
+      "note": "idx PPI-C2815 +0.8%; idx LCI-C +2.7%; scorecard 70620",
+      "sent": [
+        {
+          "unit_price": 4.79,
+          "payment_days": 30,
+          "contract_months": 24
+        }
+      ],
+      "c_sent": [
+        193447.33
+      ],
+      "status": "agreed",
+      "reply": {
+        "unit_price": 4.96,
+        "payment_days": 30,
+        "contract_months": 24
+      },
+      "claims_checked": [
+        {
+          "index": 0,
+          "result": "verified"
+        },
+        {
+          "index": 1,
+          "result": "verified"
+        },
+        {
+          "index": 2,
+          "result": "verified"
+        }
+      ],
+      "attachments": [
+        "quote-offer-70620-5.pdf"
+      ]
+    },
+    {
+      "supplier_id": "sup:70620",
+      "round": 6,
+      "key": "push",
+      "note": "agreed 4.96, ask 4.89",
+      "sent": [
+        {
+          "unit_price": 4.89,
+          "payment_days": 30,
+          "contract_months": 24
+        }
+      ],
+      "c_sent": [
+        197474.0
+      ],
+      "status": "agreed",
+      "reply": {
+        "unit_price": 4.96,
+        "payment_days": 30,
+        "contract_months": 24
+      },
+      "claims_checked": [],
+      "attachments": [
+        "quote-offer-70620-6.pdf"
+      ]
+    },
+    {
+      "key": "close",
+      "action": {
+        "type": "accept",
+        "term_sheet_id": "offer:70620-6"
+      },
+      "supplier_id": "sup:70620"
+    }
+  ]
+}

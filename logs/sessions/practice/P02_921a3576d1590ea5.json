@@ -1,0 +1,592 @@
+{
+  "session_id": "921a3576d1590ea5",
+  "case_id": "case:P02",
+  "status": "ended",
+  "end_reason": "accepted",
+  "rounds": 5,
+  "set": "practice",
+  "opening": {
+    "sup:70510": {
+      "offer_id": "offer:70510-0",
+      "round": 0,
+      "status": "open",
+      "terms": {
+        "unit_price": 370.96,
+        "payment_days": 30,
+        "index_clause": null
+      },
+      "alternatives": [],
+      "missing_fields": [],
+      "claims": [
+        {
+          "type": "index_change",
+          "refs": [
+            "idx:CU-NOTATION@2025-09",
+            "idx:CU-NOTATION@2026-09"
+          ],
+          "asserted": {
+            "change_pct": 47.7
+          }
+        },
+        {
+          "type": "index_change",
+          "refs": [
+            "idx:LCI-C@2025-06",
+            "idx:LCI-C@2026-06"
+          ],
+          "asserted": {
+            "change_pct": 2.7
+          }
+        },
+        {
+          "type": "index_change",
+          "refs": [
+            "idx:PPI-C241@2025-08",
+            "idx:PPI-C241@2026-08"
+          ],
+          "asserted": {
+            "change_pct": 6.5
+          }
+        }
+      ],
+      "claim_results": [],
+      "signals": {
+        "reply_delay_days": 1,
+        "validity_days": 30
+      },
+      "text": "Dear Sir or Madam,\n\nThank you for your enquiry. Please find our Angebot below.\n\nWe offer a price of €370.96 per unit, Zahlungsziel 30 days net, no Preisgleitklausel. \n\nRegarding our cost structure, CU-NOTATION rose 47.7 % in twelve months and is 20 % of our cost. LCI-C rose 2.7 % in twelve months and is 20 % of our cost. PPI-C241 rose 6.5 % in twelve months and is 14 % of our cost.\n\nPlease note that this offer remains valid for 30 days.\n\nMit freundlichen Grüßen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG"
+    }
+  },
+  "threads": {
+    "sup:70510": {
+      "offer_id": "offer:70510-4",
+      "status": "agreed",
+      "offers": 5,
+      "closed": null,
+      "seconds_left": null
+    }
+  },
+  "moves": [],
+  "result": {
+    "ended": true,
+    "deal": true,
+    "supplier_id": "sup:70510",
+    "offer_id": "offer:70510-4",
+    "terms": {
+      "payment_days": 90,
+      "lead_time_days": 35,
+      "volume_per_year": 6110,
+      "contract_months": 12,
+      "effective_date": "2027-01-01",
+      "index_clause": null,
+      "incoterm": "DAP",
+      "tooling_eur": 0.0,
+      "ppm_commitment": 250,
+      "chargeback_eur_per_complaint": 0.0,
+      "unit_price": 372.31
+    },
+    "c_open": 2282867.49,
+    "c_deal": 2261194.27,
+    "c_alt": 2604227.78,
+    "c_best": 2235514.05,
+    "score": 0.45769050780682496,
+    "must_haves_ok": true,
+    "cost_breakdown": {
+      "price": 2274814.1,
+      "uncovered_need": 0.0,
+      "fallback_risk": 0.0,
+      "payment_terms": -15165.43,
+      "freight": 0.0,
+      "late_delivery": 0.0,
+      "quality": 1191.45,
+      "tooling": 0.0,
+      "index_clause": 0.0,
+      "index_risk": 0.0,
+      "relationship": 354.15
+    },
+    "trace": [
+      {
+        "round": 0,
+        "actor": "sup:70510",
+        "move": {
+          "offer_id": "offer:70510-0",
+          "round": 0,
+          "status": "open",
+          "terms": {
+            "unit_price": 370.96,
+            "payment_days": 30,
+            "index_clause": null
+          },
+          "alternatives": [],
+          "missing_fields": [],
+          "claims": [
+            {
+              "type": "index_change",
+              "refs": [
+                "idx:CU-NOTATION@2025-09",
+                "idx:CU-NOTATION@2026-09"
+              ],
+              "asserted": {
+                "change_pct": 47.7
+              }
+            },
+            {
+              "type": "index_change",
+              "refs": [
+                "idx:LCI-C@2025-06",
+                "idx:LCI-C@2026-06"
+              ],
+              "asserted": {
+                "change_pct": 2.7
+              }
+            },
+            {
+              "type": "index_change",
+              "refs": [
+                "idx:PPI-C241@2025-08",
+                "idx:PPI-C241@2026-08"
+              ],
+              "asserted": {
+                "change_pct": 6.5
+              }
+            }
+          ],
+          "claim_results": [],
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "text": "Dear Sir or Madam,\nThank you for your enquiry. Please find our Angebot below.\nOur terms: a price of €370.96 per unit, Zahlungsziel 30 days net, no Preisgleitklausel.\nPlease note:\nCU-NOTATION rose 47.7 % in twelve months and is 20 % of our cost.\nLCI-C rose 2.7 % in twelve months and is 20 % of our cost.\nPPI-C241 rose 6.5 % in twelve months and is 14 % of our cost.\nThis offer is subject to our general terms of sale.\nMit freundlichen Grüßen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG"
+        },
+        "reasons": [
+          "CU-NOTATION rose … in twelve months and is … of our cost.",
+          "LCI-C rose … in twelve months and is … of our cost.",
+          "PPI-C241 rose … in twelve months and is … of our cost."
+        ]
+      },
+      {
+        "round": 1,
+        "actor": "buyer",
+        "move": {
+          "type": "message",
+          "message_id": null,
+          "subject": "Re: Quote from Antriebstechnik Nordmark AG: Nordmark passes on copper for the 7.5 kW motor",
+          "body": "Dear Sir or Madam,\n\nThank you for your offer and for the time your team has put into it.\nWe want an agreement that works for both sides.\n\nOur last 3 orders for this part were at EUR 348.32 (po:4500014474-10, po:4500014413-10, po:4500014350-20).\nOur forecast for this part is up 11.9% (fc:350011@2026-09).\n\nOn this basis we propose: EUR 351.23 per unit, payment 90 days net, fixed price.\n\nWhat would you need from us to move further on the price? We are open to discussing any term that helps you.\nCould you share your cost breakdown for this part, so we understand the drivers together?\n\nKind regards,\nHollerau Pumpenwerke, Purchasing",
+          "refs": [
+            "fc:350011@2026-09",
+            "po:4500014350-20",
+            "po:4500014413-10",
+            "po:4500014474-10"
+          ],
+          "term_sheets": [
+            {
+              "term_sheet_id": null,
+              "terms": {
+                "unit_price": 351.23,
+                "payment_days": 90,
+                "index_clause": null
+              }
+            }
+          ],
+          "interpreted": {
+            "claims": [
+              {
+                "type": "price_history",
+                "refs": [
+                  "po:4500014350-20",
+                  "po:4500014413-10",
+                  "po:4500014474-10"
+                ],
+                "asserted": {
+                  "prices": [
+                    348.32,
+                    348.32,
+                    348.32
+                  ]
+                }
+              },
+              {
+                "type": "volume_change",
+                "refs": [
+                  "fc:350011@2026-09"
+                ],
+                "asserted": {
+                  "change_pct": 11.9
+                }
+              }
+            ]
+          },
+          "supplier_id": "sup:70510"
+        },
+        "reasons": []
+      },
+      {
+        "round": 1,
+        "actor": "sup:70510",
+        "move": {
+          "offer_id": "offer:70510-1",
+          "round": 1,
+          "status": "open",
+          "terms": {
+            "unit_price": 373.13,
+            "payment_days": 90,
+            "index_clause": null
+          },
+          "alternatives": [
+            {
+              "offer_id": "offer:70510-1-a",
+              "terms": {
+                "unit_price": 369.02,
+                "payment_days": 30,
+                "index_clause": null
+              }
+            }
+          ],
+          "missing_fields": [],
+          "claims": [],
+          "claim_results": [
+            {
+              "index": 0,
+              "result": "verified"
+            },
+            {
+              "index": 1,
+              "result": "verified"
+            }
+          ],
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "text": "Dear Sir or Madam,\nThank you for your e-mail, which we have reviewed internally.\nWe have reviewed your offer and can adjust our Angebot as follows.\nOur terms: a price of €373.13 per unit, Zahlungsziel 90 days net, no Preisgleitklausel.\nPlease note:\nWe checked the price history data you cited; it holds, but it does not change our calculation.\nWe checked the volume change data you cited; it holds and we took it into account.\nWe acknowledge the positive volume forecast, which enables us to reduce our offer to EUR 369.02 per unit.\nTo support this price, we must maintain our standard payment terms of 30 days net, as an extension to 90 days would necessitate a price increase.\nRegarding your request, corporate policy prohibits sharing detailed cost breakdowns, but our adjustments strictly reflect the documented index increases.\nAlternatively, with Zahlungsziel 30 days net: €369.02 per unit.\nOur price reflects our costs; our calculation stays internal.\nOur calculation is our property; we do not share a breakdown.\nShould you require further information, please let us know.\nMit freundlichen Grüßen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG"
+        },
+        "reasons": [
+          "We checked the price history data you cited; it holds, but it does not change our calculation.",
+          "We checked the volume change data you cited; it holds and we took it into account.",
+          "We acknowledge the positive volume forecast, which enables us to reduce our offer to EUR … per unit.",
+          "To support this price, we must maintain our standard payment terms of … days net, as an extension to … days would necessitate a price increase.",
+          "Regarding your request, corporate policy prohibits sharing detailed cost breakdowns, but our adjustments strictly reflect the documented index increases.",
+          "Alternatively, with Zahlungsziel … days net: €… per unit.",
+          "Our price reflects our costs; our calculation stays internal.",
+          "Our calculation is our property; we do not share a breakdown."
+        ]
+      },
+      {
+        "round": 2,
+        "actor": "buyer",
+        "move": {
+          "type": "message",
+          "message_id": null,
+          "subject": "Re: Quote from Antriebstechnik Nordmark AG: Nordmark passes on copper for the 7.5 kW motor",
+          "body": "Dear Sir or Madam,\n\nThank you for your reply and for the step you have taken; we appreciate it.\nWe want an agreement that works for both sides.\n\nOn this basis we propose: EUR 367.53 per unit, payment 90 days net, fixed price.\n\nWhat would you need from us to move further on the price? We are open to discussing any term that helps you.\n\nKind regards,\nHollerau Pumpenwerke, Purchasing",
+          "refs": [],
+          "term_sheets": [
+            {
+              "term_sheet_id": null,
+              "terms": {
+                "unit_price": 367.53,
+                "payment_days": 90,
+                "index_clause": null
+              }
+            }
+          ],
+          "interpreted": {
+            "claims": []
+          },
+          "supplier_id": "sup:70510"
+        },
+        "reasons": []
+      },
+      {
+        "round": 2,
+        "actor": "sup:70510",
+        "move": {
+          "offer_id": "offer:70510-2",
+          "round": 2,
+          "status": "open",
+          "terms": {
+            "unit_price": 372.86,
+            "payment_days": 90,
+            "index_clause": null
+          },
+          "alternatives": [
+            {
+              "offer_id": "offer:70510-2-a",
+              "terms": {
+                "unit_price": 368.75,
+                "payment_days": 30,
+                "index_clause": null
+              }
+            }
+          ],
+          "missing_fields": [],
+          "claims": [],
+          "claim_results": [],
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "text": "Dear Sir or Madam,\nThank you for your e-mail, which we have reviewed internally.\nWe have reviewed your offer and can adjust our Angebot as follows.\nOur terms: a price of €372.86 per unit, Zahlungsziel 90 days net, no Preisgleitklausel.\nPlease note:\nWe appreciate your openness to discussing terms that facilitate a price reduction.\nTo move further on the price, we require our standard payment terms of 30 days net, which allows us to offer EUR 368.75 per unit.\nExtended payment terms such as 90 days incur additional costs that limit our flexibility on the unit price.\nOur price reflects our costs; our calculation stays internal.\nThis offer is subject to our general terms of sale.\nMit freundlichen Grüßen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG"
+        },
+        "reasons": [
+          "We appreciate your openness to discussing terms that facilitate a price reduction.",
+          "To move further on the price, we require our standard payment terms of … days net, which allows us to offer EUR … per unit.",
+          "Extended payment terms such as … days incur additional costs that limit our flexibility on the unit price.",
+          "Our price reflects our costs; our calculation stays internal."
+        ]
+      },
+      {
+        "round": 3,
+        "actor": "buyer",
+        "move": {
+          "type": "message",
+          "message_id": null,
+          "subject": "Re: Quote from Antriebstechnik Nordmark AG: Nordmark passes on copper for the 7.5 kW motor",
+          "body": "Dear Sir or Madam,\n\nThank you for your reply and for the step you have taken; we appreciate it.\nWe want an agreement that works for both sides.\n\nOn this basis we propose: EUR 369.13 per unit, payment 90 days net, fixed price.\n\nWhat would you need from us to move further on the price? We are open to discussing any term that helps you.\n\nKind regards,\nHollerau Pumpenwerke, Purchasing",
+          "refs": [],
+          "term_sheets": [
+            {
+              "term_sheet_id": null,
+              "terms": {
+                "unit_price": 369.13,
+                "payment_days": 90,
+                "index_clause": null
+              }
+            }
+          ],
+          "interpreted": {
+            "claims": []
+          },
+          "supplier_id": "sup:70510"
+        },
+        "reasons": []
+      },
+      {
+        "round": 3,
+        "actor": "sup:70510",
+        "move": {
+          "offer_id": "offer:70510-3",
+          "round": 3,
+          "status": "open",
+          "terms": {
+            "unit_price": 372.58,
+            "payment_days": 90,
+            "index_clause": null
+          },
+          "alternatives": [
+            {
+              "offer_id": "offer:70510-3-a",
+              "terms": {
+                "unit_price": 368.48,
+                "payment_days": 30,
+                "index_clause": null
+              }
+            }
+          ],
+          "missing_fields": [],
+          "claims": [],
+          "claim_results": [],
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "text": "Dear Sir or Madam,\nThank you for your message.\nWe have reviewed your offer and can adjust our Angebot as follows.\nOur terms: a price of €372.58 per unit, Zahlungsziel 90 days net, no Preisgleitklausel.\nPlease note:\nWe appreciate your readiness to discuss terms that enable further price movement.\nBy reverting to our standard payment terms of 30 days net, we can offer a reduced price of EUR 368.48 per unit.\nMaintaining a 90-day payment term incurs financing costs that strictly limit our ability to lower the price.\nOur price reflects our costs; our calculation stays internal.\nThis offer is subject to our general terms of sale.\nMit freundlichen Grüßen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG"
+        },
+        "reasons": [
+          "We appreciate your readiness to discuss terms that enable further price movement.",
+          "By reverting to our standard payment terms of … days net, we can offer a reduced price of EUR … per unit.",
+          "Maintaining a 90-day payment term incurs financing costs that strictly limit our ability to lower the price.",
+          "Our price reflects our costs; our calculation stays internal."
+        ]
+      },
+      {
+        "round": 4,
+        "actor": "buyer",
+        "move": {
+          "type": "message",
+          "message_id": null,
+          "subject": "Re: Quote from Antriebstechnik Nordmark AG: Nordmark passes on copper for the 7.5 kW motor",
+          "body": "Dear Sir or Madam,\n\nThank you for your reply and for the step you have taken; we appreciate it.\nWe want an agreement that works for both sides.\n\nOn this basis we propose: EUR 370.17 per unit, payment 90 days net, fixed price.\n\nWhat would you need from us to move further on the price? We are open to discussing any term that helps you.\n\nKind regards,\nHollerau Pumpenwerke, Purchasing",
+          "refs": [],
+          "term_sheets": [
+            {
+              "term_sheet_id": null,
+              "terms": {
+                "unit_price": 370.17,
+                "payment_days": 90,
+                "index_clause": null
+              }
+            }
+          ],
+          "interpreted": {
+            "claims": []
+          },
+          "supplier_id": "sup:70510"
+        },
+        "reasons": []
+      },
+      {
+        "round": 4,
+        "actor": "sup:70510",
+        "move": {
+          "offer_id": "offer:70510-4",
+          "round": 4,
+          "status": "final_offer",
+          "terms": {
+            "unit_price": 372.31,
+            "payment_days": 90,
+            "index_clause": null
+          },
+          "alternatives": [
+            {
+              "offer_id": "offer:70510-4-a",
+              "terms": {
+                "unit_price": 368.21,
+                "payment_days": 30,
+                "index_clause": null
+              }
+            }
+          ],
+          "missing_fields": [],
+          "claims": [],
+          "claim_results": [],
+          "signals": {
+            "reply_delay_days": 2,
+            "validity_days": 7
+          },
+          "text": "Dear Sir or Madam,\nThank you for your e-mail, which we have reviewed internally.\nThis is our final offer (letztes Angebot). Please decide.\nOur terms: a price of €372.31 per unit, Zahlungsziel 90 days net, no Preisgleitklausel.\nFor your information:\nWe appreciate your openness to adjusting terms to facilitate further price movement.\nBy changing the payment terms to our standard 30 days net, we avoid financing costs and can offer a reduced price of EUR 368.21 per unit.\nOur price reflects our costs; our calculation stays internal.\nOur pricing follows our approval process.\nThis offer is subject to our general terms of sale.\nMit freundlichen Grüßen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG"
+        },
+        "reasons": [
+          "We appreciate your openness to adjusting terms to facilitate further price movement.",
+          "By changing the payment terms to our standard … days net, we avoid financing costs and can offer a reduced price of EUR … per unit.",
+          "Our price reflects our costs; our calculation stays internal."
+        ]
+      },
+      {
+        "round": 4,
+        "actor": "buyer",
+        "move": {
+          "type": "accept",
+          "offer_id": "offer:70510-4",
+          "supplier_id": "sup:70510"
+        },
+        "reasons": []
+      }
+    ]
+  },
+  "replay_url": "/replay/921a3576d1590ea5",
+  "backoffice": [
+    {
+      "round": 0,
+      "supplier_id": "sup:70510",
+      "supplier": "Antriebstechnik Nordmark AG",
+      "from": "Key Account Manager",
+      "to": "team",
+      "text": "quote attached (quote-offer-70510-0.pdf)"
+    },
+    {
+      "round": 1,
+      "supplier_id": "sup:70510",
+      "supplier": "Antriebstechnik Nordmark AG",
+      "from": "Key Account Manager",
+      "to": "team",
+      "text": "My call: counter."
+    },
+    {
+      "round": 1,
+      "supplier_id": "sup:70510",
+      "supplier": "Antriebstechnik Nordmark AG",
+      "from": "Key Account Manager",
+      "to": "team",
+      "text": "Read the buyer's e-mail: … term sheet and … cited facts to check; we answer with our offer."
+    },
+    {
+      "round": 2,
+      "supplier_id": "sup:70510",
+      "supplier": "Antriebstechnik Nordmark AG",
+      "from": "Key Account Manager",
+      "to": "team",
+      "text": "My call: counter."
+    },
+    {
+      "round": 2,
+      "supplier_id": "sup:70510",
+      "supplier": "Antriebstechnik Nordmark AG",
+      "from": "Key Account Manager",
+      "to": "team",
+      "text": "Read the buyer's e-mail: … term sheet; we answer with our offer."
+    },
+    {
+      "round": 3,
+      "supplier_id": "sup:70510",
+      "supplier": "Antriebstechnik Nordmark AG",
+      "from": "Key Account Manager",
+      "to": "team",
+      "text": "My call: counter."
+    },
+    {
+      "round": 3,
+      "supplier_id": "sup:70510",
+      "supplier": "Antriebstechnik Nordmark AG",
+      "from": "Key Account Manager",
+      "to": "team",
+      "text": "Read the buyer's e-mail: … term sheet; we answer with our offer."
+    },
+    {
+      "round": 3,
+      "supplier_id": "sup:70510",
+      "supplier": "Antriebstechnik Nordmark AG",
+      "from": "Key Account Manager",
+      "to": "Credit Control",
+      "text": "The buyer asks something for Credit Control; please answer."
+    },
+    {
+      "round": 4,
+      "supplier_id": "sup:70510",
+      "supplier": "Antriebstechnik Nordmark AG",
+      "from": "Key Account Manager",
+      "to": "team",
+      "text": "My call: counter."
+    },
+    {
+      "round": 4,
+      "supplier_id": "sup:70510",
+      "supplier": "Antriebstechnik Nordmark AG",
+      "from": "Key Account Manager",
+      "to": "team",
+      "text": "Read the buyer's e-mail: … term sheet; we answer with our final offer."
+    },
+    {
+      "round": 4,
+      "supplier_id": "sup:70510",
+      "supplier": "Antriebstechnik Nordmark AG",
+      "from": "Key Account Manager",
+      "to": "Credit Control",
+      "text": "The buyer asks something for Credit Control; please answer."
+    },
+    {
+      "round": 4,
+      "supplier_id": "sup:70510",
+      "supplier": "Antriebstechnik Nordmark AG",
+      "from": "Key Account Manager",
+      "to": "team",
+      "text": "quote attached (quote-offer-70510-4.pdf)"
+    },
+    {
+      "round": 4,
+      "supplier_id": "sup:70510",
+      "supplier": "Antriebstechnik Nordmark AG",
+      "from": "Key Account Manager",
+      "to": "Credit Control",
+      "text": "The buyer asks something for Credit Control; please answer."
+    },
+    {
+      "round": 4,
+      "supplier_id": "sup:70510",
+      "supplier": "Antriebstechnik Nordmark AG",
+      "from": "Key Account Manager",
+      "to": "team",
+      "text": "order confirmation attached (order-confirmation-offer-70510-4.pdf)"
+    }
+  ]
+}
