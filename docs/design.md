@@ -2,6 +2,8 @@
 
 The target architecture of our buyer, merged from the team's planning notes (PRs #7 to #10,
 10 Oct). What we learned in play is in `learnings.md`; this file says what we build.
+The [agentic approach](agentic-approach.md) is a separate proposal for a model-selected tactic
+inside the current code and clock boundaries. It is not implemented.
 
 **Status.** `main` plays a code-only policy with a model-written paragraph (`buyer/policy.py`,
 run by `buyer/runner.py`): practice mean of best scores 0.776 (from 0.32, table in

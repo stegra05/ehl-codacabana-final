@@ -1,157 +1,79 @@
-# Architecture review: the running buyer
+# Buyer architecture: the running system
 
-Snapshot: `julian/second-branch` at `3c02621` on 10 October 2026. This describes the code that runs today. [Agent design](design.md) records the intended build, and [learnings](learnings.md) records observed supplier behaviour. The [claims team's architecture](https://github.com/stegra05/ehl-claimscabana/blob/main/docs/architecture.md) inspired the live path, module inventory and learning-loop layout.
+Checked against `main` at `185ad65` on 10 October 2026. This page explains the implemented buyer. [Design](design.md) describes planned work; [learnings](learnings.md) records what practice showed; [system review](system-review.md) lists risks to investigate.
 
-The objective is the lowest total buyer cost over the case horizon, with the published score based on savings from opening cost toward best cost. Cost includes price, uncovered need, payment, freight, delivery, quality, tooling, index risk and sometimes a relationship charge. A broken must-have scores zero. The arena's message and wave clocks are part of the system design.
+The buyer tries to minimize total cost over the case horizon. Unit price is only one part of that cost: uncovered demand, payment, freight, delivery, quality, tooling, index clauses and sometimes supplier relationship cost also matter. The final action is one accepted term sheet or a walk-away.
 
-## 1. System map
+## System map
 
-Read the live loop left to right. The runner keeps the clocks, the negotiator decides what to offer, and the optional model helps phrase the email. After closing, a person uses the trace to decide what to test next.
+The live loop follows the supplied diagram. Solid arrows are runtime data or actions. Dashed arrows are optional wording or later human changes.
 
 ```mermaid
 flowchart LR
-    ARENA[("Arena<br/>case and supplier emails")] --> RUN["Runner<br/>chooses whose clock needs a reply"]
-    RUN --> BUYER["Negotiator<br/>one buyer policy per case"]
-    BUYER --> OFFER["Reply<br/>code sets terms, prices and claims"]
-    OFFER --> ARENA
-    BUYER --> CLOSE{"Close gate<br/>best valid cost?"}
-    CLOSE -->|"accept or walk away"| ARENA
+    DATA["Data package<br/>supplier facts and documents"] --> NEG["Negotiator<br/>one per case"]
+    COST["Cost engine<br/>score legal term options"] <--> NEG
+    NEG <--> SIDE["Side<br/>memory for each supplier"]
 
-    DATA[("Data package<br/>facts and Sunday release")] --> BUYER
-    COST["Cost engine<br/>prices every term"] --> BUYER
-    BUYER <--> MEMORY["Supplier memory<br/>one Side per thread"]
-    MODEL["Optional model<br/>wording only"] -.-> OFFER
+    ARENA["Arena<br/>case, quotes, supplier replies"] --> RUN["Runner<br/>sessions, waves, 60 s clocks"]
+    RUN --> NEG
+    NEG --> WRITER["Writer<br/>terms, figures, claims"]
+    MODEL["Optional model<br/>email paragraph"] -.-> WRITER
+    WRITER --> ARENA
+    NEG --> CLOSE{"Close gate<br/>best valid standing offer?"}
+    CLOSE --> ARENA
 
-    RUN --> NOTES[("Run notes")]
-    ARENA --> TRACE[("Trace and back office<br/>via buyer pull")]
-    NOTES --> REVIEW["Human review<br/>why did cost miss best?"]
+    RUN --> NOTES["Run notes"]
+    ARENA --> TRACE["Trace and back office"]
+    NOTES --> REVIEW["Human review and next experiment"]
     TRACE --> REVIEW
-    REVIEW --> TEST["Test a change<br/>simulator or sandbox first"]
-    TEST -.-> BUYER
+    REVIEW -.-> NEG
 ```
 
-The production path has one buyer policy, not a swarm of model agents. `Negotiator` owns a `Side` for each supplier thread. The model writes an optional paragraph; code chooses every term sheet, claim, accept and walk-away action. `--agent naive` selects the kit's separate baseline through the CLI. `arena_kit` handles the API, quote parsing and exact cost function under these boxes.
+### What each box does
 
-## 2. Entry points and lifecycle
-
-| Entry point | When it runs | Main path |
+| Box | Plain-language role | Where it lives |
 |---|---|---|
-| `buyer play case:D01` | One sandbox or practice case | `cli.main` → `runner.play_case` → `RemoteTable` |
-| `buyer run --set practice` | Parallel hosted practice cases | `cli.main` → `runner.play_all` → one `play_case` per case |
-| `buyer run --set final` | Five live waves | `cli.main` → `runner.play_waves` → one `play_case` per open case |
-| `buyer pull` | After sessions end | `cli.pull` reads session, trace and back office into `logs/sessions/` |
-| `analysis/explore.py` | Offline | Queries the package and produces `analysis/out/` |
-| Tests | Offline, no hosted quota | `arena-sim` and fake tables exercise the runner and policy |
+| **Arena** | Supplies the case, opening quotes, supplier replies and final result. The kit handles API calls, session state and quote attachments. | `arena_kit.client`, `arena_kit.play`, [API brief](api.md) |
+| **Runner** | Opens cases, chooses which supplier needs a reply, sends one message at a time within a case, watches clocks and runs final waves in parallel. | [`buyer/runner.py`](../buyer/runner.py), [`buyer/cli.py`](../buyer/cli.py) |
+| **Data package** | Read-only supplier records, citable facts and documents. The Sunday release joins ID lookup; the package's SQL database stays separate. | `arena_kit.data.DataPackage`, [`buyer/claims.py`](../buyer/claims.py), [`buyer/personas.py`](../buyer/personas.py) |
+| **Negotiator** | Owns one case's policy: sets up suppliers, reads replies, plans offers, selects claims and chooses the close action. | `Negotiator` in [`buyer/policy.py`](../buyer/policy.py) |
+| **Side** | Remembers one supplier's quote, standard terms, profile, planned terms, offers, counters, asks and pending message. | `Side` in [`buyer/policy.py`](../buyer/policy.py) |
+| **Cost engine** | Uses the kit's published cost function, estimates supplier value, searches allowed term combinations and rejects unacceptable deals. | [`buyer/economics.py`](../buyer/economics.py), `arena_kit.cost` |
+| **Optional model** | Writes one middle paragraph in the email. It does not choose prices, terms, claims or accept actions. | [`buyer/llm.py`](../buyer/llm.py) |
+| **Writer** | Assembles the code-chosen proposal, figures and cited claims into an email; prepares the model brief and template fallback. | [`buyer/writer.py`](../buyer/writer.py), `Negotiator.send` |
+| **Close gate** | Finds the cheapest acceptable *standing* supplier sheet or walks away. It checks must-haves and estimated cost against the alternative. | `Negotiator.best_offer`, `Negotiator.close`, `economics.deal_cost` |
+| **Trace and back office** | Hold the arena's full conversation, result and official cost breakdown after a session. | `buyer pull` in [`buyer/cli.py`](../buyer/cli.py) |
+| **Human review** | Compares decisions with the result, records a finding, changes code and tests again. This is outside the live agent. | [`learnings.md`](learnings.md), [`analysis/explore.py`](../analysis/explore.py) |
 
-`cli.main` loads `.env`, constructs one `ArenaClient`, opens one `DataPackage` and builds its ID index before cases run in parallel. The optional model client is built once. Each case gets its own `RemoteTable` and `Negotiator`; the package and client are shared.
+## One case, from opening to close
 
-The final loop polls the case list, records each wave's cap from `seconds_left`, and submits open cases to a thread pool. A failed poll is retried. A case exception causes one restart using the kit's session resume path. The loop ends after the requested number of waves have closed and all started cases have finished.
+1. **Enter.** `buyer play` runs one case; `buyer run` runs a set. `cli.main` loads `.env`, one `ArenaClient`, one shared `DataPackage` ID index and an optional model client. `--agent naive` selects the kit baseline instead of this buyer.
+2. **Open.** `runner.play_case` opens a `RemoteTable` session and fetches opening quote attachments. Each case gets one `Negotiator`; each supplier thread gets one `Side`.
+3. **Plan.** `Negotiator.setup` reads the standing quote and standard terms, supplier signals and available cost evidence. `economics.plan_terms` tries the allowed non-price combinations, prices them at equal estimated supplier value, keeps must-haves, and chooses the lowest buyer cost. The policy sets an opening anchor and builds a ranked claim bank.
+4. **Pick a thread.** The runner serves the supplier whose reply has waited longest; opening quote price breaks a first-round tie. Calls within a session are serial. A finished bidder can receive a keepalive while other bidders continue. The optional model gets at most 15 seconds and can be skipped when another thread's 60 second clock is tight.
+5. **Read and decide.** `Negotiator.move` reads structured supplier sheets, detects volume, proof, payment and price questions by fixed patterns, and updates persona signals. It may adopt a complete, valid supplier package when it beats the current plan at equivalent supplier value. Otherwise `next_price` starts at the anchor and usually moves 30% of the gap toward the counter, with special patience and relationship-cost rules.
+6. **Write and send.** The policy selects up to three data-backed claims on the first move, then up to one per later move. Code writes all figures, claim IDs and term sheets. The model may add a paragraph; a late, empty, long or filtered paragraph falls back to a template. `RemoteTable.send` delivers the message and waits for the supplier's reply.
+7. **Recover or finish.** On a send 409, the policy rolls back its pending state and reads the arena's current reply. A terminal send result ends the case. Before a final wave's cap, the runner stops negotiating with 90 seconds left, refetches recent quote attachments and calls the close gate. A close 409 triggers another read and guarded choice, up to three tries. The final wave loop gives a crashed case one resume attempt.
+8. **Review later.** `runner.save` writes decision notes and the result under `logs/runs/`. `buyer pull` stores the full trace and back office under `logs/sessions/`. A teammate uses those records for the next experiment.
 
-## 3. One case on the clock
+### What is binding
 
-```mermaid
-sequenceDiagram
-    participant A as Arena
-    participant R as runner.play_case
-    participant N as Negotiator
-    participant K as arena_kit.cost
-    participant M as Optional model
-    A->>R: Case and supplier opening emails
-    R->>R: Fetch quote attachments
-    loop Each supplier
-        R->>N: setup(sid, events)
-        N->>K: Complete and score candidate terms
-        N-->>R: Side with anchor, terms, claims
-    end
-    loop Until threads finish or wave close margin
-        R->>N: move(sid, threads, writer budget)
-        N->>K: Compare sheets and plan next price
-        N->>M: One paragraph with hard wall-clock limit
-        M-->>N: Paragraph or template fallback
-        N-->>R: Full message, terms and refs
-        R->>A: Send to one supplier
-        A-->>R: Reply, timeout, or terminal result
-        R->>N: commit or rollback pending state
-    end
-    R->>N: close(threads)
-    N->>K: Must-haves, total cost, alternative
-    N-->>R: Accept standing sheet or walk away
-    R->>A: Closing action
-    R->>R: Save decision notes and result
-```
+The kit's `complete_offer` fills normal planned sheets to the case's negotiable fields. When mirroring a supplier alternative, `economics.quoted_offer` preserves its exact effective package instead of snapping its values. At close, `economics.deal_cost` requires a price, `must_haves_ok` and cost below the buyer's alternative. Its cost uses `arena_kit.total_cost` with this buyer's supplier estimate, so an unknown full cost can make the relationship charge uncertain.
 
-The arena serializes calls within a session. `runner.play_case` therefore chooses the live thread with the oldest supplier reply, with quote price as the first-round tie-breaker. A finished bidder may receive a keepalive question while another is still negotiating. `writer_budget` caps model time at 15 seconds and reserves time for other live thread clocks. `deadline_near` starts closing 90 seconds before a wave cap.
+Only the first supplier sheet in its latest reply is a standing sheet that can be accepted. A better alternative sheet must first be sent back so the supplier makes it standing. The model's paragraph is nonbinding, but its wording still matters; [system review](system-review.md) covers the missing central outbound check.
 
-A 409 on a send causes `rollback` and a fresh arena read through `RemoteTable.missed`. A 409 on close causes a fresh read and a new guarded close decision, up to three tries. A terminal result returned by a send ends the case without another close request.
+## Every Python file in `buyer/`
 
-## 4. Module and function inventory
+| File | Responsibility and main interfaces |
+|---|---|
+| [`__init__.py`](../buyer/__init__.py) | Marks `buyer` as the package. It contains only a package docstring and makes no decisions. |
+| [`cli.py`](../buyer/cli.py) | Command entry point. `main` parses `play`, `run` and `pull`; `load_package` builds the shared ID index; `pull` saves completed sessions, traces and back office. It also selects the kit's naive baseline when requested. |
+| [`runner.py`](../buyer/runner.py) | Live orchestration. `play_case` schedules supplier turns and sends messages; `writer_budget` protects clocks; `close` retries a refused close; `play_all` runs practice cases; `play_waves` polls and runs final waves; `save` writes run notes. |
+| [`policy.py`](../buyer/policy.py) | The negotiation state machine. `Side` stores one supplier's state; `Negotiator.setup` builds its plan, `move` responds to a reply, `next_price` paces concessions, `pick` chooses claims, `send` assembles a move, `commit` and `rollback` track delivery, and `best_offer` and `close` choose the final action. `asks` reads fixed-form email requests. |
+| [`economics.py`](../buyer/economics.py) | All cost and term math. `cost` wraps the kit's total cost; `estimate` models supplier economics; `plan_terms` scores allowed packages; `value` and `price_for_value` compare packages at equal supplier value; `quoted_offer` validates an exact supplier package; `relationship_optimum` handles cases where a lower price raises relationship cost; `deal_cost` is the accept gate. |
+| [`claims.py`](../buyer/claims.py) | The citable argument bank. `ClaimBank` looks up facts and IDs, builds sentences about should-cost, orders, indexes, forecasts, notice, supplier notes, scorecards and rival quotes, then ranks them through `for_supplier`. `rival_offer` cites another bidder's current standing sheet. |
+| [`personas.py`](../buyer/personas.py) | Supplier reading. `supplier_texts` gathers notes, letters, news and quote remarks; `signals_in` detects traits such as cash need or full capacity; `profile` derives owner, country, signals, cost of money and email tone. Unknown suppliers get a neutral profile. |
+| [`writer.py`](../buyer/writer.py) | Email composition. `describe` names the code-chosen terms; `statements` writes binding volume or fixed-payment answers; `facts` and `brief` constrain what the model may say; `email` combines paragraph, claims and proposal; `keepalive_message` handles a waiting bidder. |
+| [`llm.py`](../buyer/llm.py) | Optional model connection. `complete_from_env` builds the chat-completions caller; `paragraph` enforces a 15 second wall-clock ceiling and drops output with digits, IDs or leak phrases. The template works when no model is configured or the call fails. |
 
-| Module | Main functions or methods | Responsibility |
-|---|---|---|
-| [`buyer/cli.py`](../buyer/cli.py) | `main`, `pull` | Parse commands, choose buyer or naive agent, save completed session data. |
-| [`buyer/agent.py`](../buyer/agent.py) | `load_package`, `naive_factory` | Build the shared read-only package index; expose the kit baseline. |
-| [`buyer/runner.py`](../buyer/runner.py) | `writer_budget`, `play_case`, `close`, `save`, `play_all`, `play_waves` | Schedule cases and supplier messages, enforce clock margins, contain failures and write run notes. |
-| [`buyer/policy.py`](../buyer/policy.py) | `Side`; `Negotiator.setup`, `restore`, `trade_clause`, `adopt`, `move`, `next_price`, `finish`, `pick`, `send`, `fallback_move`, `commit`, `rollback`, `best_offer`, `close` | Keep per-supplier state; choose prices, terms, claims and closing action. |
-| [`buyer/economics.py`](../buyer/economics.py) | `cost`, `c_alt`, `deal_cost`, `estimate`, `clause_trade`, `value`, `price_for_value`, `options`, `plan_terms`, `relationship_optimum` | Wrap the kit's cost and supplier-value functions, search allowed terms and enforce the accept gate. |
-| [`buyer/claims.py`](../buyer/claims.py) | `ClaimBank.fact`, `ids`, `query`, `for_supplier`, claim builders; `rival_offer` | Build ranked, data-backed sentences and their citable IDs. |
-| [`buyer/personas.py`](../buyer/personas.py) | `signals_in`, `supplier_texts`, `profile` | Read owner and cash signals from package text, quotes and supplier emails. |
-| [`buyer/reader.py`](../buyer/reader.py) | `asks` | Extract volume, proof, payment and price-target questions by regex. |
-| [`buyer/writer.py`](../buyer/writer.py) | `describe`, `email`, `brief`, `keepalive` | Render computed terms and claims into supplier emails and prepare the model brief. |
-| [`buyer/llm.py`](../buyer/llm.py) | `complete_from_env`, `paragraph` | Call the optional model with a 15 second ceiling; reject digits, IDs and leak phrases. |
-| [`analysis/explore.py`](../analysis/explore.py) | `supplier_profiles`, `price_fairness`, `triggers`, `negotiation_events`, `main` | Offline data exploration, outside live negotiation. |
-
-The kit supplies `ArenaClient`, `RemoteTable`, document parsing, `standing`, `moves_left`, `complete_offer`, `closing_terms`, `supplier_value`, `total_cost` and `must_haves_ok`. This repo wraps those functions; it does not patch the kit. The dependency is pinned in [`pyproject.toml`](../pyproject.toml).
-
-## 5. Decision path inside `Negotiator`
-
-1. **Setup.** Read each supplier's standing quote and standard terms from its attachments. Build a persona, estimate its cost of money and, when supported, full cost and defect rate. Pick an anchor by category goal and observed signals. `plan_terms` evaluates allowed non-price combinations at equal estimated supplier value, then chooses the lowest buyer cost.
-2. **Read.** On each new reply, inspect structured term sheets, extract fixed-form asks and merge new persona signals. `adopt` may take terms the supplier proposed when the whole sheet improves buyer cost and keeps must-haves.
-3. **Price.** `next_price` starts at the anchor, then moves a share of the gap toward the supplier's counter. A deep first concession can hold the price low. A smaller patience budget limits gaps for near-cost, full-capacity and relationship cases.
-4. **Argue.** `ClaimBank` ranks should-cost, orders, index movements, notice, forecast, scorecard and rival quotes. `pick` sends at most three claims first, then one per later round, and does not reuse a spent ID in the case.
-5. **Write.** Code creates the sheet, binding volume statement and cited claim sentences. The optional model sees the last email, supplier traits and approved plain-language facts. `llm.paragraph` drops a late, empty, long or forbidden output; `writer.email` uses a template instead.
-6. **Finish.** A final offer, agreement or round limit ends price moves. A cheaper alternative sheet can be mirrored to make it standing. `close` considers only standing sheets, checks must-haves and compares estimated total cost with the alternative. Otherwise it walks away.
-
-For an index clause, `trade_clause` can offer one up front if the estimated supplier benefit exceeds buyer cost. `adopt` can later take the supplier's required clause when its new sheet costs less than its previous one. For relationship goals, `relationship_optimum` stops pushing below the price where estimated total cost is lowest.
-
-## 6. Data and contracts
-
-| Boundary | Shape and source | Used by |
-|---|---|---|
-| Case | Arena case object: buyer need, horizon, alternative, fixed terms, negotiable fields, options, must-haves, refs and facts | `Negotiator`, `economics`, `ClaimBank` |
-| Supplier thread | Ordered messages with `from`, `status`, `body`, attachments and up to three term sheets | `runner`, `reader`, `standing` |
-| Standing sheet | First supplier sheet in its latest reply, with `term_sheet_id` | `best_offer`, accept action |
-| Outgoing move | `subject`, `body`, `term_sheets: [{"terms": ...}]`, `refs`, optional attachments | `RemoteTable.send` |
-| Closing action | `accept` with a standing sheet ID, or `walk_away` | `RemoteTable.close` |
-| Package | SQLite, `facts.json`, citable ID index and documents; optional Sunday release merged by `DataPackage` | Personas, claims, cost estimate |
-| Run log | Per-move notes and final result in `logs/runs/` | Human review |
-| Session pull | Full trace and back office in `logs/sessions/` | Learning and offline analysis |
-
-Every outgoing sheet is completed to the case's `negotiable` fields by the kit's `complete_offer`. Unstated closing fields are priced using the supplier's standard terms from its quote. The accept gate is `deal_cost`: a positive price, `must_haves_ok`, and cost below the alternative. The cost uses the kit's exact published `total_cost` formula with this agent's supplier estimate for the relationship charge.
-
-`DataPackage` includes Sunday's `facts.json` and release CSV rows in ID lookup. Its SQL connection remains the Saturday package database. That split matters for the review below.
-
-## 7. Failure containment and observability
-
-- The model is optional. A missing key, timeout, exception or rejected paragraph leaves a template email and the numeric move intact.
-- `Negotiator.safe` isolates several missing-data calculations during setup; `runner.play_case` catches supplier setup and move failures so another bidder can continue. A failed move resends the last sheet or asks a short question.
-- Per-case exceptions do not stop the other cases in `play_all` or `play_waves`; final cases get one resume attempt.
-- `runner.save` records setup, term changes, claims selected, prices, asks, rollbacks, accept decisions and the result. `buyer pull` collects the fuller arena trace and back office after a session.
-- Tests cover the accept gate, relationship charge, index adoption, 409 close recovery, terminal sends, model wall-clock limit, wave polling and every available case structure in the local simulator. The simulator's scripted supplier checks integration, not negotiation quality.
-
-## 8. Learning loop and document boundaries
-
-```mermaid
-flowchart LR
-    RUN["buyer run / play"] --> NOTES[("logs/runs")]
-    RUN --> SESS["buyer pull"]
-    SESS --> TRACE[("logs/sessions")]
-    TRACE --> EXP["exports and analysis/explore.py"]
-    NOTES --> REVIEW["Human review<br/>C_deal versus C_best"]
-    EXP --> REVIEW
-    REVIEW --> LEARN["docs/learnings.md"]
-    LEARN --> CHANGE["Policy, claims, economics or wording change"]
-    CHANGE --> SIM["arena-sim or free sandbox"]
-    SIM --> RUN
-```
-
-The runtime does not retrain itself or call a second planning model. The planned stance call, model reader and supplier fact-check stage in [`design.md`](design.md) are not implemented in this snapshot. [`system-review.md`](system-review.md) records the current strengths, limits and proposed review order.
+The buyer wraps `arena_kit`; it does not patch it. [`design.md`](design.md) separates planned agent components from this implemented path. [`system-review.md`](system-review.md) records the failure paths and improvement order. [A more agentic buyer](agentic-approach.md) proposes one bounded next step.
