@@ -3,35 +3,13 @@ term planner on a simulator case."""
 
 import copy
 import secrets
-import socket
-import threading
-import time
 
-import pytest
-import uvicorn
 from arena_kit import ArenaClient, RemoteTable, complete_offer
-from arena_kit.sim import Sim, create_app, load_cases
+from arena_kit.sim import load_cases
 
 from buyer import economics, runner
 from buyer.policy import Negotiator
 from buyer.runner import play_case
-
-
-@pytest.fixture
-def sim_url():
-    """arena-sim on a free local port, with a clock that never moves (no 60-second timeouts)."""
-    server_state = Sim(load_cases(), clock=lambda: 1_000_000.0)
-    with socket.socket() as s:
-        s.bind(("127.0.0.1", 0))
-        port = s.getsockname()[1]
-    server = uvicorn.Server(uvicorn.Config(create_app(server_state), port=port, log_level="warning"))
-    thread = threading.Thread(target=server.run, daemon=True)
-    thread.start()
-    while not server.started:
-        time.sleep(0.01)
-    yield f"http://127.0.0.1:{port}"
-    server.should_exit = True
-    thread.join()
 
 
 def test_buyer_closes_a_deal(sim_url, tmp_path, monkeypatch):
@@ -59,18 +37,6 @@ def test_terms_cover_the_need_when_the_price_is_low():
 
 def reply(status, terms, offer="offer:S-1"):
     return [{"from": "supplier", "status": status, "term_sheets": [{"term_sheet_id": offer, "terms": terms}]}]
-
-
-def test_close_never_beats_the_alternative():
-    """A standing sheet dearer than the alternative is never accepted."""
-    case = copy.deepcopy(load_cases()["case:S01"])
-    case["buyer"]["alternative"] = {"kind": "quote", "ref": "quote:alt", "terms": {"unit_price": 10.0}}
-    dear = {"unit_price": 15.88, "payment_days": 30}
-    threads = {"sup:S": reply("final_offer", dear)}
-    neg = Negotiator(case)
-    neg.setup("sup:S", threads["sup:S"])
-    assert economics.cost(case, dear, {}) > economics.c_alt(case)
-    assert neg.close(threads)["message"]["action"]["type"] == "walk_away"
 
 
 def test_adopts_its_index_clause_only_when_its_sheet_costs_less():

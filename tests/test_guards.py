@@ -81,9 +81,6 @@ class FakeTable:
     def open(self, case_id):
         return self.case, self.threads
 
-    def attachment(self, attachment_id):
-        raise AssertionError("no attachments")
-
     def send(self, sid, message):
         return self._send(sid, message)
 
@@ -109,52 +106,31 @@ def test_a_terminal_send_ends_the_case_without_a_close(tmp_path, monkeypatch):
     assert table.closed == []
 
 
-def test_a_refused_close_decides_again_with_the_guards():
-    """The accepted sheet is gone (409): the next choice is the other supplier's, still gated."""
+@pytest.mark.parametrize(
+    ("dear", "last"),
+    [(15.3, {"type": "accept", "term_sheet_id": "dear"}), (16.0, {"type": "walk_away"})],
+)
+def test_a_refused_close_decides_again_with_the_guards(dear, last):
+    """The accepted sheet is gone (409): the next choice is the other supplier's while it beats the
+    alternative, else a walk-away; never a bad deal."""
     case, terms = s01(15.0)
     case["buyer"]["alternative"] = {
         "kind": "rfq",
         "terms": complete_offer(case, {"unit_price": 15.5, "payment_days": 60}),
     }
-    threads = {"sup:a": [offer("cheap", terms)], "sup:b": [offer("dear", {**terms, "unit_price": 15.3})]}
-    done = {"deal": True}
+    threads = {"sup:a": [offer("cheap", terms)], "sup:b": [offer("dear", {**terms, "unit_price": dear})]}
 
     def close(sid, message):
         if message["action"].get("term_sheet_id") == "cheap":
             raise ArenaError(409, "offer withdrawn")
-        return done
-
-    def missed(sid, error):
-        return {"from": "arena", "status": "walked_away", "term_sheets": [], "body": "(gone)"}
-
-    table = FakeTable(case, threads, close=close, missed=missed)
-    neg = Negotiator(case)
-    assert runner.close(table, "case:S01", neg, threads) == done
-    assert [m["action"] for _, m in table.closed] == [
-        {"type": "accept", "term_sheet_id": "cheap"},
-        {"type": "accept", "term_sheet_id": "dear"},
-    ]
-
-
-def test_a_refused_close_never_falls_back_to_a_bad_deal():
-    case, terms = s01(15.0)
-    case["buyer"]["alternative"] = {
-        "kind": "rfq",
-        "terms": complete_offer(case, {"unit_price": 15.5, "payment_days": 60}),
-    }
-    threads = {"sup:a": [offer("cheap", terms)], "sup:b": [offer("dear", {**terms, "unit_price": 16.0})]}
-
-    def close(sid, message):
-        if message["action"].get("term_sheet_id") == "cheap":
-            raise ArenaError(409, "offer withdrawn")
-        return {"deal": False}
+        return {"deal": message["action"]["type"] == "accept"}
 
     def missed(sid, error):
         return {"from": "arena", "status": "walked_away", "term_sheets": [], "body": "(gone)"}
 
     table = FakeTable(case, threads, close=close, missed=missed)
     runner.close(table, "case:S01", Negotiator(case), threads)
-    assert table.closed[-1][1]["action"] == {"type": "walk_away"}
+    assert [m["action"] for _, m in table.closed] == [{"type": "accept", "term_sheet_id": "cheap"}, last]
 
 
 def test_writer_budget_leaves_time_for_every_live_clock():

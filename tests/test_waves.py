@@ -3,15 +3,9 @@ every case of a wave plays within its cap, a poll error is polled again, and the
 the last wave has closed. No network, no model."""
 
 import secrets
-import socket
-import threading
-import time
 
-import pytest
-import uvicorn
 from arena_kit import ArenaClient
 from arena_kit.client import ArenaError
-from arena_kit.sim import Sim, create_app, load_cases
 
 from buyer import runner
 
@@ -41,22 +35,6 @@ class FinalClient(ArenaClient):
             for cid in ids:
                 out.append({"case_id": cid, "wave": w, "open": open_, "seconds_left": 480 if open_ else 0})
         return out
-
-
-@pytest.fixture
-def sim_url():
-    sim = Sim(load_cases(), clock=lambda: 1_000_000.0)
-    with socket.socket() as s:
-        s.bind(("127.0.0.1", 0))
-        port = s.getsockname()[1]
-    server = uvicorn.Server(uvicorn.Config(create_app(sim), port=port, log_level="warning"))
-    thread = threading.Thread(target=server.run, daemon=True)
-    thread.start()
-    while not server.started:
-        time.sleep(0.01)
-    yield f"http://127.0.0.1:{port}"
-    server.should_exit = True
-    thread.join()
 
 
 def test_play_waves_plays_every_wave(sim_url, tmp_path, monkeypatch):
