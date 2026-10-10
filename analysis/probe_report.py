@@ -1,0 +1,161 @@
+"""Probe results: every saved practice session as one table, matched against the data package.
+
+Run: uv run python analysis/probe_report.py   (writes notes/probe-results.md)
+
+Per case: score, C open/deal/best, the deal, and the price C_best implies for the deal's terms.
+Per supplier: persona signals from the notes, should-cost, opening price and claimed cost drivers,
+standard terms, the price path with statuses, which of our levers it accepted and which of its own
+it picked, how the data claims checked out, documents sent, its stock questions and back-office calls.
+"""
+
+import csv
+import json
+import re
+import sys
+from collections import Counter
+from pathlib import Path
+
+from arena_kit.cost import total_cost
+from arena_kit.docs import quote_terms
+
+ROOT = Path(__file__).resolve().parents[1]
+SESSIONS = ROOT / "logs" / "sessions" / sys.argv[1] if len(sys.argv) > 1 else ROOT / "logs" / "sessions" / "practice"
+OUT = ROOT / "notes" / "probe-results.md"
+
+
+def load_profiles():
+    path = ROOT / "analysis" / "out" / "profiles.csv"
+    return {r["id"]: r for r in csv.DictReader(path.open())} if path.is_file() else {}
+
+
+def load_cases():
+    cases = {}
+    for f in (ROOT / "logs" / "cases").glob("*.json"):
+        cases |= {c["case_id"]: c for c in json.loads(f.read_text())}
+    return cases
+
+
+def should_cost(part_ids, supplier):
+    import sqlite3
+
+    db = sqlite3.connect(ROOT / "data" / "package" / "world.sqlite")
+    total = 0.0
+    for part in part_ids:
+        rows = db.execute("SELECT supplier_id, unit_cost FROM should_cost WHERE part_id = ?", (part,)).fetchall()
+        if not rows:
+            return None
+        total += next((c for s, c in rows if s == supplier), rows[0][1])
+    return round(total, 2)
+
+
+def implied_price(case, terms, c_best, std):
+    """The unit price at which the deal's other terms would cost exactly C_best."""
+    lo, hi = 0.0, 10 * (terms.get("unit_price") or 1)
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if total_cost(case, {**terms, "unit_price": mid}, std) < c_best else (lo, mid)
+    return round(lo, 2)
+
+
+def standard(messages):
+    for m in messages:
+        for a in m.get("attachments") or []:
+            if a.get("name", "").startswith("quote") and a.get("text"):
+                return quote_terms(a["text"]).get("standard", {})
+    return {}
+
+
+def thread_report(sid, s, case, profiles):
+    r = s["result"]
+    trace = [t for t in r["trace"] if t["actor"] == sid or t["move"].get("supplier_id") == sid]
+    msgs = (s.get("messages") or {}).get(sid, [])
+    std = standard(msgs)
+    probe = [p for p in (s.get("probe") or []) if isinstance(p, dict) and p.get("supplier_id") == sid]
+    prof = profiles.get(sid, {})
+    sc = should_cost(case["parts"], sid)
+    opening = next((t for t in trace if t["actor"] == sid and t["round"] == 0), None)
+    open_price = ((opening or {}).get("move", {}).get("terms") or {}).get("unit_price")
+    lines = [
+        f"### {sid} {prof.get('name', '')}",
+        f"- data: {prof.get('country', '')}, {prof.get('owner_type', '')}, credit {prof.get('credit_index', '')}, "
+        f"scorecard {prof.get('colour', '')}, signals {prof.get('signals', '')}",
+        f"- should-cost {sc}; opening {open_price}"
+        + (f" ({(open_price / sc - 1) * 100:+.1f} % vs should-cost)" if sc and open_price else ""),
+        f"- standard terms (quote PDF): {json.dumps(std)}",
+    ]
+    claims0 = (opening or {}).get("reasons") or []
+    if claims0:
+        lines.append(f"- opening argues: {' | '.join(claims0)}")
+    lines.append("- path (round, our move: what we sent -> its status and price):")
+    for p in probe:
+        sent = "; ".join(json.dumps({k: v for k, v in t.items()}) for t in p.get("sent") or []) or "-"
+        checked = Counter(c["result"] for c in p.get("claims_checked") or [])
+        lines.append(
+            f"  - r{p.get('round')} **{p['key']}** ({p.get('note', '')}): {sent} -> "
+            f"{p.get('status')} {json.dumps(p.get('reply'))}"
+            + (f" claims {dict(checked)}" if checked else "")
+            + (f" docs {p['attachments']}" if p.get("attachments") else "")
+        )
+    questions = Counter(q for t in trace if t["actor"] == sid for q in t.get("reasons") or [] if q.endswith("?"))
+    if questions:
+        lines.append(f"- its questions: {' | '.join(f'{q} (x{n})' for q, n in questions.most_common(4))}")
+    calls = Counter(
+        b["text"]
+        for b in s.get("backoffice") or []
+        if b.get("supplier_id") == sid and re.match(r"(My call|.*approv)", b["text"])
+    )
+    if calls:
+        lines.append(f"- back office: {', '.join(f'{k} x{n}' for k, n in calls.items())}")
+    reasons = [x for t in trace if t["actor"] == sid and t["round"] > 0 for x in t.get("reasons") or []]
+    lines.append("- reasons: " + " | ".join(dict.fromkeys(reasons)))
+    return lines, std
+
+
+def main():
+    profiles, cases = load_profiles(), load_cases()
+    out = [
+        "# Probe results",
+        "",
+        "Generated by `analysis/probe_report.py` from `logs/sessions/`. "
+        "Implied price: the unit price at which the deal's other terms cost exactly C_best.",
+        "",
+        "| case | type / goal | score | C open | C deal | C best | deal | implied price at deal terms |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    detail = []
+    for path in sorted(SESSIONS.glob("*.json")):
+        s = json.loads(path.read_text())
+        case, r = cases.get(s["case_id"]), s.get("result") or {}
+        if not case or not r.get("trace"):
+            continue
+        b = case["buyer"]
+        std_deal = {}
+        sections = []
+        for sid in case["suppliers"]:
+            lines, std = thread_report(sid, s, case, profiles)
+            sections += lines + [""]
+            if sid == r.get("supplier_id"):
+                std_deal = std
+        terms = r.get("terms") or {}
+        implied = implied_price(case, terms, r["c_best"], std_deal) if r.get("deal") else None
+        deal = f"{r.get('supplier_id')} {terms.get('unit_price')}" if r.get("deal") else "no deal"
+        out.append(
+            f"| {s['case_id']} | {case['type']} / {b['category_goal']} | {r.get('score', 0):.2f} | "
+            f"{r['c_open']:,.0f} | {(r.get('c_deal') or 0):,.0f} | {r['c_best']:,.0f} | {deal} | "
+            f"{implied if implied is not None else '-'} |"
+        )
+        detail += [
+            f"## {s['case_id']} {case['title']} ({path.stem})",
+            "",
+            f"score {r.get('score', 0):.3f}; deal terms {json.dumps(terms)}; "
+            f"cost breakdown {json.dumps({k: v for k, v in (r.get('cost_breakdown') or {}).items() if v})}",
+            "",
+            *sections,
+        ]
+    OUT.parent.mkdir(exist_ok=True)
+    OUT.write_text("\n".join(out + ["", *detail]))
+    print(f"wrote {OUT}")
+
+
+if __name__ == "__main__":
+    main()
