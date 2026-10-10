@@ -15,6 +15,7 @@ from arena_kit.cli import load_env, summary
 from arena_kit.data import DataPackage
 from arena_kit.play import hosted, play_waves
 
+from . import campaign
 from .agent import AGENTS, agent_factory
 from .console import AUTO_AFTER_S, Console
 from .harvest import pull, save
@@ -46,6 +47,10 @@ def main(argv=None):
     pr.add_argument("--data", **data)
     pr.add_argument("--auto", type=float, default=AUTO_AFTER_S, help="seconds until the default move goes out")
     pr.add_argument("--no-ai", action="store_true", help="code options only, no model suggestions")
+    cp = sub.add_parser("campaign", help="the team's practice runs one after another; you pick every move")
+    cp.add_argument("--budget", type=int, default=15, help="practice sessions the team may use in total")
+    cp.add_argument("--data", **data)
+    cp.add_argument("--no-ai", action="store_true", help="code options only, no model suggestions")
     v = sub.add_parser("view", help="pull the team's sessions and open them in the browser")
     v.add_argument("--offline", action="store_true", help="only what is saved already")
     s = sub.add_parser("pull", help="save finished sessions with trace and back office to logs/sessions/")
@@ -69,6 +74,9 @@ def main(argv=None):
         return open_page(page)
     if args.cmd == "probe":
         return probe(client, args)
+    if args.cmd == "campaign":
+        package = DataPackage(args.data) if args.data else None
+        return campaign.run(client, package, args.budget, suggester(args, package))
     new_agent = agent_factory(args.agent, args.data)
     if args.cmd == "play":
         table = RemoteTable(client)
@@ -97,6 +105,17 @@ def main(argv=None):
         print(f"practice sessions left today: {client.practice_remaining}")
 
 
+def suggester(args, package):
+    """The model's suggestions for the console, or None (--no-ai, or no model configured)."""
+    if args.no_ai:
+        return None
+    try:
+        return Suggester(llm_from_env(), package)
+    except KeyError as e:
+        print(f"AI suggestions off: {e} is not set")
+        return None
+
+
 def probe(client, args):
     """A practice case costs one session of the team's quota: say so and ask first."""
     if not any(c["case_id"] == args.case_id for c in client.cases("sandbox")):
@@ -104,13 +123,7 @@ def probe(client, args):
         if input(f"{args.case_id} costs 1 practice session ({left} left today). Go? [y/N] ").strip().lower() != "y":
             return
     package = DataPackage(args.data) if args.data else None
-    suggester = None
-    if not args.no_ai:
-        try:
-            suggester = Suggester(llm_from_env(), package)
-        except KeyError as e:
-            print(f"AI suggestions off: {e} is not set")
-    console = Console(client, args.case_id, package, auto_after=args.auto, suggester=suggester)
+    console = Console(client, args.case_id, package, auto_after=args.auto, suggester=suggester(args, package))
     result = console.run()
     keep = ("deal", "score", "c_open", "c_deal", "c_alt", "c_best", "terms", "cost_breakdown")
     print(json.dumps({k: result.get(k) for k in keep}, indent=2))

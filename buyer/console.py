@@ -71,7 +71,7 @@ class Console:
             except queue.Empty:
                 continue
             self._decide(p)
-        for w in workers:
+        for w in workers:  # a worker still waiting for a supplier's reply finishes it first
             w.join(timeout=200)
         return self.result or self.table.result()
 
@@ -87,7 +87,11 @@ class Console:
                     p.ai_state = "thinking"
                     threading.Thread(target=self._suggest, args=(p,), daemon=True).start()
                 self.decisions.put(p)
-                p.done.wait(max(0.0, self.auto_after - (time.monotonic() - p.born)))
+                while not p.done.wait(0.25) and time.monotonic() - p.born < self.auto_after:
+                    if self.over.is_set():
+                        return
+                if self.over.is_set():
+                    return
                 with p.lock:
                     if p.choice is None:
                         p.choice, p.auto, p.picked_at = p.options[0], True, time.monotonic()

@@ -12,6 +12,7 @@ from arena_kit import ArenaClient, RemoteTable, play
 from arena_kit.sim import Sim, create_app, load_cases
 
 from buyer.agent import agent_factory
+from buyer.campaign import queue
 from buyer.console import Console
 from buyer.harvest import save
 from buyer.moves import Prober
@@ -87,3 +88,14 @@ def test_suggestions_pass_the_guard(sim_url):
     sent = options[0].message
     assert set(sent["term_sheets"][0]["terms"]) == set(case["negotiable"])
     assert "idx:NOPE" not in sent["body"]  # an unknown ID would cost trust
+
+
+def test_campaign_queue_spreads_types_then_replays_the_weakest():
+    cases = [
+        {"case_id": f"case:P{i}", "type": t, "hosted": True}
+        for i, t in [(1, "a"), (2, "a"), (3, "b"), (4, "c"), (5, "b")]
+    ] + [{"case_id": "case:P9", "type": "a", "hosted": False}]
+    assert queue(cases, [], {}, 15) == ["case:P1", "case:P3", "case:P4", "case:P2", "case:P5"]
+    played = [{"case_id": c, "status": "ended"} for c in ("case:P1", "case:P2", "case:P3", "case:P4", "case:P5")]
+    best = {"case:P1": 0.9, "case:P2": 0.1, "case:P3": 0.5, "case:P4": 0.0, "case:P5": 0.7}
+    assert queue(cases, played, best, 7) == ["case:P4", "case:P2"]
