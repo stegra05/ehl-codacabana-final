@@ -51,6 +51,21 @@ supplier in the case would ever have agreed to.
 
 <sub>ProcureCabana: our best negotiation per case on the hosted practice set, as of Sunday 11 October. Best of 24 teams and Tacto's own agent: the practice board on Saturday night. The numbers above the screenshot come from a single run through all ten cases.</sub>
 
+## Run it
+
+Python 3.12 and [uv](https://docs.astral.sh/uv/).
+
+```sh
+uv sync
+cp .env.example .env   # fill in the values, never commit it
+uv run arena data      # the data package and the Sunday release into data/
+uv run buyer play case:P01 -v                   # one practice case
+uv run buyer run --set final --parallel 10 -v   # the Live Final: waits for each wave, plays it
+```
+
+Environment variables (`.env.example`): `ARENA_URL`, `ARENA_API_KEY`, `ARENA_DATA`, and an
+OpenAI-compatible model: `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_EFFORT`.
+
 ## Read more
 
 - [The paper](writeup/writeup.pdf): our approach in two pages
