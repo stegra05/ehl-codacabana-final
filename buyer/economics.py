@@ -38,7 +38,7 @@ def deal_cost(case, terms, std, est=None):
 
 def break_even(case, terms, std, est=None):
     """The highest price at `terms` still cheaper than the alternative (C below C_alt by a cent of
-    price), or None when the case has no alternative or no price beats it. No sheet of ours goes
+    price), or None when the case has no alternative; 0.0 when no positive price beats it. No sheet of ours goes
     above it: a deal there would be refused at the close, and an agreement freezes the supplier's
     price. C is convex in the price: the relationship charge falls as it rises (P01 at 0.0 cost
     more than its alternative, and the cap sent a 0.0 sheet), so the search starts at C's minimum."""
@@ -56,12 +56,12 @@ def break_even(case, terms, std, est=None):
         a, b = (a, m2) if c(m1) <= c(m2) else (m1, b)
     lo = (a + b) / 2
     if not c(lo) < ceiling:
-        return None
+        return 0.0
     for _ in range(60):  # above the minimum, C rises with the price
         mid = (lo + hi) / 2
         lo, hi = (mid, hi) if c(mid) < ceiling else (lo, mid)
     cap = round(math.floor(lo * 100) / 100 - 0.01, 2)
-    return cap if cap > 0 else None
+    return max(0.0, cap)
 
 
 def quoted_offer(case, terms, std=None):

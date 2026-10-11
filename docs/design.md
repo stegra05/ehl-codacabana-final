@@ -55,3 +55,40 @@ read at runtime through the ID index.
 
 [agentic-approach.md](agentic-approach.md) is a proposal for a model-chosen tactic inside these
 boundaries; not implemented.
+
+### Delivered session evidence
+
+The analyst and writer receive a session evidence block in their existing calls. It is rebuilt
+from delivered thread messages on every move, including after a restart: exact sheets, cited
+references, raw claim feedback, message indexes and text excerpts (up to 800 characters, with an
+explicit truncation flag). It also carries the current supplier sheets and case constraints.
+Buyer proposals are distinct from supplier offers. Supplier statements and team interpretations
+remain unverified; contradictory statements are retained rather than resolved by a negation
+heuristic. Pending drafts are not delivered history. The existing economic policy, historical
+lesson retrieval and model call count are unchanged. This is a context experiment, not a claim
+of improved scores or reliable natural-language contradiction resolution. On the arena a
+supplier's e-mail carries `from: "<role>@<supplier>"` (`sales@70110`), and the snapshot keeps
+only `buyer` and `supplier`: it delivers our own messages and the supplier's standing sheets, not
+its e-mails.
+
+The alternative-price ceiling must start from a feasible positive price. Relationship charges
+make total cost nonmonotone below its minimum, and a zero-price evaluation can divide by zero.
+The ceiling search starts near the relationship-cost minimum when an estimate is available,
+then locates the upper feasible boundary. When no price at our terms beats the alternative on
+our estimate, there is no ceiling: the thread negotiates on, the supplier's counters bound the
+full-cost estimate, and the close gate refuses any deal above the alternative. A proposal never
+carries a zero price; a positive ceiling below our last proposal ends concessions.
+
+### Progress and waiting offers
+
+Three consecutive supplier replies with identical complete sets of terms form a stalled
+sequence. Any new alternative, changed non-price term, missing sheet or Arena timeout breaks
+that sequence. When there is no unused claim and no new feasible requested trade, a valid
+standing package goes to the existing finish/accept checks rather than another price-only
+concession. This is a stopping heuristic, not proof of the supplier's floor. It reads replies
+with `from: "supplier"`, so on the arena (`sales@70110`) it does not fire.
+
+A waiting offer is refreshed when it is older than the next active thread and the next model
+plus measured supplier-response latency could consume its remaining deadline, even before the
+usual 35-second trigger. A freshly refreshed thread cannot repeatedly preempt an older active
+thread. The 60-second clock and final economic acceptance checks remain authoritative.

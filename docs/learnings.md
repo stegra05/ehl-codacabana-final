@@ -31,6 +31,23 @@ suppliers vary 1 to 2 % between runs with the same sheets. Sessions: `exports/` 
 `exports/README.md`), `logs/sessions/`, `logs/runs/`. Tags: `arena` seen in a session, `data` from
 the package, `rules` from `docs/api.md` or the kit.
 
+## Hidden-case readiness (Sunday 09:15 to 10:00)
+
+- Stress (`rules`, arena-sim, no model): every practice, sandbox and sim case file plus 613
+  variants (other goals, an RFQ with release suppliers, a new or unknown supplier, an added
+  negotiable field, six fields at once, no or a current-contract alternative, a must-have, a
+  case-only letter fact, round limit 6) with the data package and the Sunday release: no
+  exception left a case, no sheet the sim refused, no deal breaking a must-have or above the
+  alternative. A quote line the kit's parser cannot read (`int("none")`) raised in
+  `standard_terms` and dropped the supplier at the close: P10 and P11 with six fields walked
+  (0.0); with a reader that skips the line they closed (0.814, 0.499).
+- An estimate on which no price beats the alternative ended the thread before our first sheet
+  (P01, P02, P17 with a current-contract alternative 5 % above today's price: 0 messages).
+- Writer: 9 of 15 dropped paragraphs in the logs carried the year 2022, which the persona trait
+  text itself handed the model (09:00 pre-flight: 5 of 8 paragraphs on P01).
+- Supplier e-mails carry `from: "sales@70110"` (`GET .../threads/sup:70110`, session
+  `0a7cec486b95c091`), not `supplier`.
+
 ## Where we stand (Saturday night)
 
 Mean of best scores 0.776, rank 3 of 24 on the practice board (first 0.838); the last ten-case
@@ -303,3 +320,26 @@ plumbing and timing, not tactics.
 - `c_best` in a final case's close response, if the rules allow using it between waves.
 - Hedged, stale-costing and approval-ladder suppliers; the floor of those that sold below cost.
 - With four or more bidders, which threads to keep alive.
+
+### Progress guards on current main and Sunday data, 11 October
+
+Candidate abcc51c on main 0fef4ee ran exactly ten new hosted practice sessions with gpt-6-luna
+and the freshly downloaded Sunday release. All ten agreements satisfy must-haves. Mean
+0.794930 versus the preceding tracked batch 0.780795: five scores improved, three fell, two tied.
+IDs and full comparison are in `analysis/progress-practice-evaluation.json`.
+
+No `supplier_stalled` decision fired. P05 had two buyer timeout events, versus one previously,
+although its accepted unit price improved from 27.92 to 27.86. P11 improved from 45.50 to 45.00
+with two more rounds; P08 improved from 5.25 to 5.19. P18 lost the 5% index deadband: its lower
+unit price of 5.00 cost 534.04 more overall than the previous 5.10 protected package. That
+protected package was not present in the final current offer.
+
+The score gain does not establish the value of either new guard: upstream code, data and
+model variation also changed. Keep the candidate in draft pending separate evaluation;
+no extra hosted runs or merge were performed. Local validation: 86 tests, Ruff lint/format,
+and twelve supplier openings with real data, all positive prices and satisfied must-haves.
+
+### Final-day safety, 11 October
+
+- The arena serialises calls within a session (sandbox D02, 2 tests: alone 24 and 29 s, sent together 15 and 38 s), so with three bidders each thread waits for the others' replies. After an agreed or final sheet, bidders that cannot beat it now get no rounds and no keepalives: P05 closed 1 s after Dralveck agreed (`ea15b6e17847ec89`, 0.822, 87 s, no timeout) against 47 s of keepalives without the keepalive rule (`6a5c6e47de5c554b`) and a 204 s median before; same deals (0.828, 0.822, 0.822 in 3 runs). All 21 case files unchanged on the sim.
+- The close before a wave's cap now leaves room for the slowest round so far (the kit's rule, `max(90 s, slowest + 15 s)`); with slow replies the fixed 90 s closed after the cap in a scaled test (`tests/test_deadline.py`).

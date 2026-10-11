@@ -4,6 +4,8 @@ factual. Never mentions urgency, a budget, our alternative's absence or our targ
 from arena_kit.cost import closing_terms
 from arena_kit.play import latest
 
+from . import context
+
 FIELDS = {
     "payment_days": lambda v: f"payment {v} days net",
     "contract_months": lambda v: f"{v} months" if v else "a single order",
@@ -90,7 +92,7 @@ TRAITS = {
     "hedged": "it bought its material forward at fixed prices",
     "open_book": "its owner once offered to walk us through its calculation",
     "stale_costing": "its costing has not followed the actual material prices",
-    "partnership_2022": "it kept supplying at the old price during the 2022 crisis",
+    "partnership_2022": "it kept supplying at the old price for a quarter in the last crisis",
     "reference_customer": "it values having our company as a reference customer",
     "complains_late_pay": "it complained that our invoices were paid late",
 }
@@ -102,7 +104,7 @@ OWNERS = {
 }
 
 
-def brief(case, prof, last_body, facts, tone, question_allowed, insight=()):
+def brief(case, prof, last_body, facts, tone, question_allowed, insight=(), evidence=None):
     """What the model needs for the paragraph: who the supplier is, what it wrote, what we may say.
     `insight`: the research team's and the live analyst's notes on this supplier."""
     who = OWNERS.get(prof.get("owner_type"), "a supplier")
@@ -119,6 +121,8 @@ def brief(case, prof, last_body, facts, tone, question_allowed, insight=()):
         f"TONE: {tone}",
         f"QUESTION ALLOWED: {'yes' if question_allowed else 'no'}",
     ]
+    if evidence is not None:
+        out.append(context.prompt(evidence))
     return "\n".join(out)
 
 

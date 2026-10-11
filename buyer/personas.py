@@ -10,7 +10,8 @@ import re
 SIGNALS = {
     "cash_need": r"pay earlier|bank is watching|cash and the banks|within 10 days|under pressure"
     r"|restructur\w*|short-time work|lower\w* (its |their )?rating|cash is tight|we like fast payers"
-    r"|negotiat\w+ with (its|their) banks|lowers our margin|loss-making|liquidity|waiting for cash",
+    r"|negotiat\w+ with (its|their) banks|lowers our margin|loss-making|liquidity|waiting for cash"
+    r"|insolven\w*|prepayment|credit insurer",
     "spare_capacity": r"second shift has been on hold|take additional parts|looks for new customers"
     r"|free (machine )?capacity|keep (the|our) machines (busy|running)",
     "capacity_full": r"order intake is very strong|binding 12-month commitment"

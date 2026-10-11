@@ -6,7 +6,7 @@ Everything it returns comes from a fixed list; the policy decides what each valu
 that move anchors or rates stay with the patterns in `personas.py`: a model's guess there costs too
 much."""
 
-from . import llm
+from . import context, llm
 
 TIMEOUT_S = 6.0
 MOODS = ("warm", "neutral", "irritated", "pressured")
@@ -27,7 +27,7 @@ Return JSON only:
   about right now and how to answer them. No figures, no dates.}"""
 
 
-def read(complete, case, body, ours, theirs, arguments=(), timeout=TIMEOUT_S):
+def read(complete, case, body, ours, theirs, arguments=(), timeout=TIMEOUT_S, evidence=None):
     """{mood, tactic, argument, asks, notes} for a supplier e-mail, every value from its list; None
     when the model is off, late or wrong. `ours`, `theirs`: the price paths so far; `arguments`:
     what the demo bidding expected this supplier to say (`argument` indexes them from 1)."""
@@ -37,6 +37,8 @@ def read(complete, case, body, ours, theirs, arguments=(), timeout=TIMEOUT_S):
         f"OUR PRICES SO FAR: {ours}\nITS PRICES SO FAR: {theirs}\nEXPECTED ARGUMENTS:\n{expected}\n"
         f"ITS E-MAIL:\n{(body or '')[:2500]}"
     )
+    if evidence is not None:
+        user += context.prompt(evidence)
     raw = llm.ask_json(complete, SYSTEM, user, min(timeout, TIMEOUT_S))
     if raw is None:
         return None

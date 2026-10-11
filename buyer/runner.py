@@ -13,7 +13,16 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from arena_kit.client import ArenaError
-from arena_kit.play import ENDED, RemoteTable, fetch_documents, latest, moves_left, quota_used_up
+from arena_kit.play import (
+    CLOSE_BEFORE_CAP_S,
+    ENDED,
+    ROUND_MARGIN_S,
+    RemoteTable,
+    fetch_documents,
+    latest,
+    moves_left,
+    quota_used_up,
+)
 
 from . import llm, memory, research
 from .policy import Negotiator, Side
@@ -29,6 +38,12 @@ CLOSE_TRIES = 3  # a 409 on the close: read what stands now and decide again
 RETRY_S = 5  # a crashed final case is resumed after this long ...
 RETRY_MARGIN_S = 120  # ... while its cap leaves at least this much to resume and close
 RETRY_MAX = 40  # and never more often than this (a wave without a known cap)
+
+
+def keepalive_due(age, send_s, writer_s):
+    """Refresh a waiting offer before another model+send cycle can exhaust its supplier clock."""
+    projected = age + max(0, writer_s) + send_s
+    return age > KEEPALIVE_AFTER_S or projected >= CLOCK_S - MARGIN_S
 
 
 def writer_budget(sid, replied, live, send_s, now):
@@ -52,7 +67,7 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True,
         return table.done
     for events in threads.values():
         for m in events:
-            fetch_documents(table, m)
+            fetch(table, case_id, m)
     neg = Negotiator(case, pkg, complete, briefs)
     for sid, events in threads.items():
         try:
@@ -76,15 +91,21 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True,
     def live(sid):
         return latest(threads[sid]).get("status") not in ENDED
 
-    while not deadline_near(deadline):
+    slowest = 0.0  # the longest round so far, our move and the supplier's reply: a wave's cap must
+    # leave room for one more of them, or a round started in time ends after the cap without a deal
+    while not deadline_near(deadline, max(CLOSE_BEFORE_CAP_S, slowest + ROUND_MARGIN_S)):
+        round_t0 = time.monotonic()
+        neg.prune(threads)
         todo = sorted(open_threads(), key=lambda s: (replied[s], rank[s]))
         waiting = [
             s
             for s in threads
             if neg.sides[s].state == "done"
+            and not neg.sides[s].dominated
             and live(s)
             and todo
-            and time.monotonic() - replied[s] > KEEPALIVE_AFTER_S
+            and replied[s] < replied[todo[0]]
+            and keepalive_due(time.monotonic() - replied[s], send_s, llm.TIMEOUT_S)
             and moves_left(case, threads[s]) - neg.sides[s].late > 0
         ]
         if not todo:
@@ -111,9 +132,11 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True,
         try:
             reply = table.send(sid, message)
             send_s = max(send_s, time.monotonic() - t0)
+            slowest = max(slowest, time.monotonic() - round_t0)
         except ArenaError as e:
             if e.status != 409:
                 raise
+            slowest = max(slowest, time.monotonic() - round_t0)
             log.info("%s %s: %s", case_id, sid, e.detail)
             neg.rollback(sid)  # it never got this message: our last offer stands for it
             reply = table.missed(sid, e)
@@ -132,10 +155,7 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True,
     if result is None:
         for events in threads.values():  # the latest quote PDFs: standard terms for the close
             for m in events[-2:]:
-                try:
-                    fetch_documents(table, m)
-                except ArenaError as e:
-                    log.warning("%s: document not fetched: %s", case_id, e)
+                fetch(table, case_id, m)
         result = close(table, case_id, neg, threads)
     save(table.session_id, case_id, neg, result)
     if learn and briefs is not None:
@@ -144,6 +164,16 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True,
         except Exception:  # the case is closed: a failed debrief costs nothing
             log.exception("%s: debrief failed", case_id)
     return result
+
+
+def fetch(table, case_id, message):
+    """A supplier message's attachments as text. One the arena does not deliver or the reader cannot
+    parse is skipped: its terms then come from the e-mail and the case file, and the case goes on
+    (unguarded, a broken quote PDF would crash every resumption of the case)."""
+    try:
+        fetch_documents(table, message)
+    except Exception as e:  # noqa: BLE001 - a document must never cost the case
+        log.warning("%s: document not read: %r", case_id, e)
 
 
 def safe_briefs(case, pkg, complete):
