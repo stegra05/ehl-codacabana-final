@@ -322,5 +322,13 @@
     "paired_simulator_runs": 84,
     "identical_to_baseline": 84,
     "baseline_reproduction": "The new valid-alternative regression fails before the follow-up; invalid alternatives remain discardable."
+  },
+  "current_main_integration": {
+    "main_commit": "9f0b083",
+    "tests_passed": 109,
+    "skipped": 2,
+    "lint": "passed",
+    "format": "passed",
+    "pitch_integration": "passed"
   }
 }
