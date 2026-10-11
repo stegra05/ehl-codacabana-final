@@ -347,3 +347,13 @@ The next evaluation is precommitted to exactly ten hosted practice sessions usin
 gpt-6-luna, compared with the preceding batch on score, deals and deadline misses.
 These practice cases are reused, not a held-out performance evaluation; combined
 changes and model variation prevent attributing a score delta to any single repair.
+
+Completed batch `20261011-072942`, candidate `8623034`: exactly ten unique
+sessions, ten valid deals, mean 0.792738 versus 0.794930 previously (-0.002193).
+Two scores rose, three fell, five tied. There were zero negotiation timeouts
+versus two previously; the complete-package plateau guard fired once, in P03.
+P11 retained its later concession and final score. These observations do not
+prove causal improvement. The paragraph guard rejected 19 of 31 attempts,
+including benign acknowledgements, so its conservatism is a material limitation.
+No further sessions were opened and this candidate was not merged into main.
+Full session IDs, paired scores, costs and metrics: `analysis/mechanism-practice-evaluation.json`.
