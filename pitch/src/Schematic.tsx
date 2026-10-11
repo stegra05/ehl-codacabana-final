@@ -1,368 +1,532 @@
-// The team as an instrument diagram (ISA-5.1 shapes): circles are model agents, the hexagon is
-// code. Lines are information; only e-mails cross the team's boundary.
-import { AnimatePresence, motion } from "motion/react";
-import { AGENTS, leadBreach, MAX_LEAD, money, price, replay, type Snapshot, type Thread } from "./replay";
-import type { Focus } from "./steps";
+import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { agents, lanes } from "./steps";
+import { events, type Stage } from "./replay";
 
-const P = {
-  research: { x: 840, y: 108 },
-  rehearsal: { x: 540, y: 284 },
-  negotiator: { x: 840, y: 284 },
-  analyst: { x: 1150, y: 190 },
-  writer: { x: 1150, y: 380 },
-  debrief: { x: 700, y: 440 },
-};
-const HEX = 70;
-const ROWS = [130, 280, 430]; // the suppliers' tracks, where the manifold meets them
-
-export const NODE_X: Record<Focus, number> = {
-  team: 855,
-  records: 158,
-  research: P.research.x,
-  rehearsal: P.rehearsal.x,
-  negotiator: P.negotiator.x,
-  analyst: P.analyst.x,
-  writer: P.writer.x,
-  debrief: P.debrief.x,
-  suppliers: 1662,
-};
-
-type Anchor = "start" | "middle" | "end";
-const EDGES: { id: string; d: string; label: [string, number, number, Anchor?, number?]; memory?: boolean }[] = [
-  { id: "records-research", d: "M 268 108 H 798", label: ["orders · contracts · letters · indices", 560, 94] },
-  { id: "research-negotiator", d: "M 840 150 V 221", label: ["strategy", 852, 212, "start"] },
-  { id: "research-rehearsal", d: "M 840 186 H 540 V 242", label: ["findings", 690, 174] },
-  { id: "rehearsal-negotiator", d: "M 582 284 H 766", label: ["opening · pace", 674, 272] },
-  { id: "suppliers-analyst", d: "M 1420 190 H 1192", label: ["replies", 1306, 178] },
-  { id: "analyst-negotiator", d: "M 1150 232 V 284 H 914", label: ["mood · asks", 1032, 272] },
-  { id: "negotiator-writer", d: "M 868 345 V 380 H 1108", label: ["price · terms · facts", 990, 368] },
-  { id: "writer-suppliers", d: "M 1192 380 H 1420", label: ["e-mails", 1306, 368] },
-  { id: "negotiator-debrief", d: "M 812 345 V 368 H 700 V 398", label: ["outcome", 756, 358] },
-  { id: "debrief-research", d: "M 658 440 H 400 V 108", label: ["lessons · next case", 384, 300, "middle", -90], memory: true },
-];
-
-type State = "idle" | "done" | "focus";
-
-export function hexPoints(cx: number, cy: number, r: number) {
-  return Array.from({ length: 6 }, (_, i) => {
-    const a = (Math.PI / 3) * i;
-    return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
-  }).join(" ");
-}
-
-function Agent(props: {
-  at: { x: number; y: number };
-  count: string;
-  state: State;
-  name: string;
-  role: string;
-  status: string;
-  label: { x: number; y: number; anchor: Anchor };
-  onSelect: () => void;
-}) {
-  const { at, label } = props;
+export function Icon({ name, size = 20 }: { name: string; size?: number }) {
+  const paths: Record<string, React.ReactNode> = {
+    research: (
+      <>
+        <circle cx="10" cy="10" r="6" />
+        <path d="m15 15 5 5M7 10h6M10 7v6" />
+      </>
+    ),
+    rehearsal: (
+      <>
+        <path d="M4 4h12v9H9l-4 3v-3H4zM10 17h5l4 3v-3h2V9h-2" />
+      </>
+    ),
+    analyst: (
+      <>
+        <path d="M4 17V7m5 13V4m5 12V8m5 10V6" />
+      </>
+    ),
+    negotiator: (
+      <>
+        <path d="m12 2 9 5v10l-9 5-9-5V7zM8 9l-3 3 3 3m8-6 3 3-3 3m-3-7-2 8" />
+      </>
+    ),
+    writer: (
+      <>
+        <path d="M3 6h18v13H3zM3 6l9 7 9-7" />
+      </>
+    ),
+    close: (
+      <>
+        <path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6zM8 12l3 3 5-6" />
+      </>
+    ),
+    debrief: (
+      <>
+        <path d="M5 5h14v15H5zM9 3h6v4H9zM8 11h8m-8 4h5" />
+      </>
+    ),
+    play: <path d="m8 4 12 8-12 8z" />,
+    pause: (
+      <>
+        <path d="M8 4v16M16 4v16" />
+      </>
+    ),
+    reset: (
+      <>
+        <path d="M4 10a8 8 0 1 1 1 8M4 4v6h6" />
+      </>
+    ),
+    next: (
+      <>
+        <path d="m8 5 7 7-7 7M19 5v14" />
+      </>
+    ),
+    back: <path d="m15 5-7 7 7 7" />,
+    arrow: <path d="M4 12h16m-6-6 6 6-6 6" />,
+    check: <path d="m5 12 4 4L19 6" />,
+    x: <path d="m6 6 12 12M6 18 18 6" />,
+    data: (
+      <>
+        <ellipse cx="12" cy="5" rx="8" ry="3" />
+        <path d="M4 5v12c0 4 16 4 16 0V5M4 11c0 4 16 4 16 0" />
+      </>
+    ),
+    expand: (
+      <>
+        <path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" />
+      </>
+    ),
+    info: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 11v6m0-10v1" />
+      </>
+    ),
+  };
   return (
-    <g
-      className={`node ${props.state}`}
-      onClick={props.onSelect}
-      role="button"
-      tabIndex={0}
-      aria-label={props.name}
-      onKeyDown={(e) => e.key === "Enter" && props.onSelect()}
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
     >
-      <circle className="halo" cx={at.x} cy={at.y} r={58} />
-      <circle className="disc" cx={at.x} cy={at.y} r={40} />
-      <text className="count" x={at.x} y={at.y} dy="0.36em" textAnchor="middle">
-        {props.count}
-      </text>
-      <text className="node-name" x={label.x} y={label.y} textAnchor={label.anchor}>
-        {props.name}
-      </text>
-      <text className="node-role" x={label.x} y={label.y + 23} textAnchor={label.anchor}>
-        {props.role}
-      </text>
-      <text className="node-status" x={label.x} y={label.y + 44} textAnchor={label.anchor}>
-        {props.status}
-      </text>
-    </g>
-  );
-}
-
-export function Schematic({
-  snap,
-  focus,
-  edges,
-  onSelect,
-}: {
-  snap: Snapshot;
-  focus: Focus;
-  edges: string[];
-  onSelect: (f: Focus) => void;
-}) {
-  const { cut } = snap;
-  const state = (key: Focus, done: boolean): State => (focus === key ? "focus" : done ? "done" : "idle");
-  const research = replay.events.find((e) => e.kind === "research");
-  const seconds = research && research.kind === "research" ? research.until : 0;
-  const tuned = Object.values(replay.research).filter((r) => r.rehearsal && r.rehearsal.anchor !== r.rehearsal.default).length;
-  const demos = Object.values(replay.research).reduce((n, r) => n + (r.rehearsal?.runs.length ?? 0), 0);
-  const reads = snap.events.flatMap((e) => (e.kind === "analyst" ? [e.seconds] : []));
-  const avg = reads.length ? reads.reduce((a, b) => a + b, 0) / reads.length : 0;
-  const team = focus === "team";
-
-  return (
-    <div className="map">
-      <svg viewBox="0 0 1920 520" width={1920} height={520}>
-        <defs>
-          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--line)" />
-          </marker>
-          <marker id="arrow-on" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--signal)" />
-          </marker>
-        </defs>
-
-        <rect className={`boundary ${team ? "focus" : ""}`} x={330} y={30} width={1050} height={470} rx={30} />
-        <rect x={350} y={20} width={450} height={20} fill="var(--canvas)" />
-        <text className={`boundary-label ${team ? "focus" : ""}`} x={362} y={35}>
-          {`PURCHASING TEAM · ${AGENTS} AGENTS · 1 NEGOTIATOR IN CODE`}
-        </text>
-
-        {EDGES.map((e) => {
-          const on = edges.includes(e.id);
-          const [text, lx, ly, anchor = "middle", rotate] = e.label;
-          return (
-            <g key={e.id}>
-              <path className={`edge ${e.memory ? "memory" : ""}`} d={e.d} markerEnd={e.memory ? undefined : "url(#arrow)"} />
-              <AnimatePresence>
-                {on && (
-                  <motion.path
-                    className="edge-on"
-                    d={e.d}
-                    markerEnd={e.memory ? undefined : "url(#arrow-on)"}
-                    strokeDasharray={e.memory ? "2 7" : undefined}
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ pathLength: { duration: 0.55, ease: [0.2, 0.7, 0.2, 1] }, opacity: { duration: 0.2 } }}
-                  />
-                )}
-              </AnimatePresence>
-              <text
-                className={`flow ${on ? "on" : ""}`}
-                x={lx}
-                y={ly}
-                textAnchor={anchor}
-                transform={rotate ? `rotate(${rotate} ${lx} ${ly})` : undefined}
-              >
-                {text.toUpperCase()}
-              </text>
-            </g>
-          );
-        })}
-        <circle className="joint" cx={840} cy={186} r={4} />
-        <circle className="joint" cx={400} cy={108} r={4} />
-
-        {/* the manifold to the suppliers */}
-        <line x1={1420} y1={ROWS[0]} x2={1420} y2={ROWS[2]} stroke="var(--line)" strokeWidth={2} />
-        {ROWS.map((y) => (
-          <line key={y} x1={1420} y1={y} x2={1446} y2={y} stroke="var(--line)" strokeWidth={2} />
-        ))}
-
-        <g className={`records ${cut >= 0 ? "done" : ""}`} onClick={() => onSelect("records")} style={{ cursor: "pointer" }}>
-          <rect x={48} y={60} width={220} height={96} rx={14} />
-          <text className="node-name" x={68} y={96} style={{ fill: "var(--ink)" }}>
-            Our records
-          </text>
-          <text className="node-role" x={68} y={120}>
-            orders, contracts, letters,
-          </text>
-          <text className="node-role" x={68} y={141}>
-            indices, scorecards
-          </text>
-        </g>
-
-        <Agent
-          at={P.research}
-          count={String(replay.calls.research)}
-          state={state("research", cut >= 0)}
-          name="Research team"
-          role="reads our records"
-          status={cut >= 0 ? `${replay.calls.research} agents · ${seconds.toFixed(1)} s` : "waiting"}
-          label={{ x: 898, y: 94, anchor: "start" }}
-          onSelect={() => onSelect("research")}
-        />
-        <Agent
-          at={P.rehearsal}
-          count={String(replay.calls.roleplay)}
-          state={state("rehearsal", cut >= 1.5)}
-          name="Rehearsal"
-          role="role-play, then demo bids"
-          status={cut >= 1.5 ? `${demos} demo bids · ${tuned} opening moved` : "waiting"}
-          label={{ x: 540, y: 350, anchor: "middle" }}
-          onSelect={() => onSelect("rehearsal")}
-        />
-        <Agent
-          at={P.analyst}
-          count="1"
-          state={state("analyst", snap.reads > 0)}
-          name="Live analyst"
-          role="reads every reply"
-          status={snap.reads ? `${snap.reads} reads · ${avg.toFixed(1)} s` : "waiting"}
-          label={{ x: 1094, y: 176, anchor: "end" }}
-          onSelect={() => onSelect("analyst")}
-        />
-        <Agent
-          at={P.writer}
-          count="1"
-          state={state("writer", snap.sent > 0)}
-          name="Writer"
-          role="model words, code figures"
-          status={snap.sent ? `${snap.sent} e-mails · ${snap.modelParagraphs} by model` : "waiting"}
-          label={{ x: 1150, y: 446, anchor: "middle" }}
-          onSelect={() => onSelect("writer")}
-        />
-        <Agent
-          at={P.debrief}
-          count="1"
-          state={state("debrief", snap.debriefed)}
-          name="Debrief"
-          role="writes the lesson"
-          status={snap.debriefed ? "1 lesson stored" : "waiting"}
-          label={{ x: 756, y: 428, anchor: "start" }}
-          onSelect={() => onSelect("debrief")}
-        />
-
-        <g
-          className={`node ${state("negotiator", snap.sent > 0)}`}
-          onClick={() => onSelect("negotiator")}
-          role="button"
-          tabIndex={0}
-          aria-label="Negotiator"
-          onKeyDown={(e) => e.key === "Enter" && onSelect("negotiator")}
-        >
-          <polygon className="halo" points={hexPoints(P.negotiator.x, P.negotiator.y, HEX + 18)} />
-          <polygon className="disc" points={hexPoints(P.negotiator.x, P.negotiator.y, HEX)} />
-          <text className="hex-name" x={840} y={278} textAnchor="middle">
-            Negotiator
-          </text>
-          <text className="hex-role" x={840} y={300} textAnchor="middle">
-            sets every price
-          </text>
-          <text className="count small hex-status" x={840} y={322} textAnchor="middle">
-            {snap.accepted ? "ACCEPTED" : snap.round ? `ROUND ${snap.round}` : "CODE"}
-          </text>
-        </g>
-
-        <g transform="translate(48 420)">
-          <circle className="legend-mark" cx={9} cy={0} r={8} />
-          <text className="legend" x={28} y={5}>
-            MODEL AGENT
-          </text>
-          <polygon className="legend-mark" points={hexPoints(9, 30, 9)} />
-          <text className="legend" x={28} y={35}>
-            CODE
-          </text>
-          <line x1={0} y1={60} x2={18} y2={60} stroke="var(--ink-2)" strokeWidth={2} strokeDasharray="2 5" strokeLinecap="round" />
-          <text className="legend" x={28} y={65}>
-            NEXT CASE
-          </text>
-        </g>
-      </svg>
-      <Threads snap={snap} focus={focus === "suppliers"} onSelect={() => onSelect("suppliers")} />
-    </div>
-  );
-}
-
-// ------------------------------------------------------------------ the suppliers' threads
-
-const LOW = 26;
-const HIGH = 40;
-const W = 420;
-const xOf = (p: number) => ((p - LOW) / (HIGH - LOW)) * W;
-
-const STATUS: Record<Thread["status"], string> = {
-  waiting: "waiting",
-  quoted: "quote",
-  countered: "counter",
-  agreed: "agreed",
-  accepted: "deal",
-};
-
-function Track({ th }: { th: Thread }) {
-  const ours = th.ours.at(-1);
-  const theirs = th.theirs.at(-1);
-  const met = ours !== undefined && theirs !== undefined && Math.abs(ours - theirs) < 0.005;
-  const spring = { type: "spring", stiffness: 170, damping: 26 } as const;
-  return (
-    <svg className="track" width={W} height={66} viewBox={`0 0 ${W} 66`}>
-      {[28, 30, 32, 34, 36, 38].map((p) => (
-        <line key={p} className="tick" x1={xOf(p)} x2={xOf(p)} y1={27} y2={41} />
-      ))}
-      <line className="axis" x1={0} x2={W} y1={34} y2={34} />
-      {ours !== undefined && theirs !== undefined && !met && (
-        <motion.rect
-          className="gap"
-          y={29}
-          height={10}
-          rx={5}
-          initial={false}
-          animate={{ x: xOf(ours), width: Math.max(0, xOf(theirs) - xOf(ours)) }}
-          transition={spring}
-        />
-      )}
-      {[...th.theirs.slice(0, -1), ...th.ours.slice(0, -1)].map((p, i) => (
-        <line key={i} className="trail" x1={xOf(p)} x2={xOf(p)} y1={28} y2={40} />
-      ))}
-      {theirs !== undefined && !met && (
-        <>
-          <motion.circle className="theirs" cy={34} r={7} initial={false} animate={{ cx: xOf(theirs) }} transition={spring} />
-          <motion.text y={17} textAnchor="middle" initial={false} animate={{ x: xOf(theirs) }} transition={spring}>
-            {price(theirs)}
-          </motion.text>
-        </>
-      )}
-      {ours !== undefined && (
-        <>
-          <motion.circle className="ours" cy={34} r={met ? 8 : 7} initial={false} animate={{ cx: xOf(ours) }} transition={spring} />
-          <motion.text y={62} textAnchor="middle" initial={false} animate={{ x: xOf(ours) }} transition={spring}>
-            {price(ours)}
-          </motion.text>
-        </>
-      )}
+      {paths[name] ?? paths.info}
     </svg>
   );
 }
 
-function Threads({ snap, focus, onSelect }: { snap: Snapshot; focus: boolean; onSelect: () => void }) {
+type NodeBox = {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+  x: number;
+  y: number;
+};
+type Layout = {
+  width: number;
+  height: number;
+  nodes: Record<string, NodeBox>;
+  narrow: boolean;
+};
+
+// Measure rendered cards, so the edges stay attached across wrapping, fonts and breakpoints.
+function useConnections() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [layout, setLayout] = useState<Layout | null>(null);
+  useLayoutEffect(() => {
+    const container = ref.current;
+    if (!container) return;
+    const measure = () => {
+      const root = container.getBoundingClientRect();
+      const nodes: Record<string, NodeBox> = {};
+      container.querySelectorAll<HTMLElement>("[data-node]").forEach((node) => {
+        const r = node.getBoundingClientRect();
+        nodes[node.dataset.node!] = {
+          left: r.left - root.left,
+          right: r.right - root.left,
+          top: r.top - root.top,
+          bottom: r.bottom - root.top,
+          x: r.left - root.left + r.width / 2,
+          y: r.top - root.top + r.height / 2,
+        };
+      });
+      setLayout({
+        width: root.width,
+        height: root.height,
+        nodes,
+        narrow: window.innerWidth <= 620,
+      });
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(container);
+    container
+      .querySelectorAll("[data-node]")
+      .forEach((node) => observer.observe(node));
+    measure();
+    return () => observer.disconnect();
+  }, []);
+  return { ref, layout };
+}
+
+function Connections({
+  layout,
+  current,
+}: {
+  layout: Layout | null;
+  current?: Stage;
+}) {
+  if (!layout || layout.narrow) return null;
+  const n = layout.nodes;
+  if (
+    !n.records ||
+    !n.research ||
+    !n.rehearsal ||
+    !n.analyst ||
+    !n.negotiator ||
+    !n.writer ||
+    !n.suppliers ||
+    !n.close ||
+    !n.debrief ||
+    !n.memory
+  )
+    return null;
+  const down = (a: NodeBox, b: NodeBox) =>
+    `M ${a.x} ${a.bottom} V ${b.top - 5}`;
+  const across = (a: NodeBox, b: NodeBox, offset = 0) => {
+    const mid = (a.right + b.left) / 2 + offset;
+    return `M ${a.right} ${a.y} H ${mid} V ${b.y} H ${b.left - 5}`;
+  };
+  const feed = `M ${n.rehearsal.right} ${n.rehearsal.y} H ${n.negotiator.left - 16} V ${n.negotiator.bottom - 18} H ${n.negotiator.left - 5}`;
+  const loopX = n.writer.right + 20;
+  const reply = `M ${n.suppliers.right} ${n.suppliers.y} H ${loopX} V ${n.analyst.y} H ${n.analyst.right + 5}`;
+  const memoryY = layout.height - 24;
+  const memory = `M ${n.memory.x} ${n.memory.bottom} V ${memoryY} H ${n.research.left - 13} V ${n.research.y} H ${n.research.left - 5}`;
+  const links = [
+    {
+      id: "records",
+      path: down(n.records, n.research),
+      stage: "research",
+      kind: "handoff",
+    },
+    {
+      id: "findings",
+      path: down(n.research, n.rehearsal),
+      stage: "rehearsal",
+      kind: "handoff",
+    },
+    {
+      id: "strategy",
+      path: across(
+        n.research,
+        { ...n.negotiator, y: n.negotiator.top + 29 },
+        -8,
+      ),
+      stage: "negotiator",
+      kind: "handoff",
+    },
+    { id: "playbook", path: feed, stage: "negotiator", kind: "handoff" },
+    {
+      id: "tactic",
+      path: down(n.analyst, n.negotiator),
+      stage: "negotiator",
+      kind: "handoff",
+    },
+    {
+      id: "proposal",
+      path: down(n.negotiator, n.writer),
+      stage: "writer",
+      kind: "handoff",
+    },
+    {
+      id: "email",
+      path: down(n.writer, n.suppliers),
+      stage: "writer",
+      kind: "handoff",
+    },
+    { id: "reply", path: reply, stage: "analyst", kind: "reply" },
+    {
+      id: "close",
+      path: across(n.negotiator, n.close, 12),
+      stage: "close",
+      kind: "handoff",
+    },
+    {
+      id: "outcome",
+      path: down(n.close, n.debrief),
+      stage: "debrief",
+      kind: "handoff",
+    },
+    {
+      id: "save",
+      path: down(n.debrief, n.memory),
+      stage: "debrief",
+      kind: "handoff",
+    },
+    { id: "recall", path: memory, stage: "research", kind: "memory" },
+  ];
+  const labels = [
+    {
+      text: "strategy",
+      x: (n.research.right + n.negotiator.left) / 2,
+      y: n.research.y - 10,
+    },
+    {
+      text: "playbook",
+      x: (n.rehearsal.right + n.negotiator.left) / 2,
+      y: n.rehearsal.y + 17,
+    },
+    {
+      text: "terms",
+      x: (n.negotiator.right + n.close.left) / 2,
+      y: n.negotiator.y - 10,
+    },
+    { text: "replies", x: loopX, y: n.writer.bottom + 13, kind: "reply" },
+    {
+      text: "outcome",
+      x: n.close.x,
+      y: (n.close.bottom + n.debrief.top) / 2,
+      kind: "handoff",
+    },
+    {
+      text: "memory → next similar case",
+      x: (n.research.x + n.memory.x) / 2,
+      y: memoryY,
+      kind: "memory",
+    },
+  ];
   return (
-    <div className={`threads ${focus ? "focus" : ""}`}>
-      <div className="threads-head">
-        <span className="eyebrow">Suppliers</span>
-        <span className="eyebrow legend-inline">
-          <svg width={14} height={14} aria-hidden>
-            <circle cx={7} cy={7} r={5.5} fill="var(--ink)" />
-          </svg>
-          ours
-          <svg width={14} height={14} aria-hidden>
-            <circle cx={7} cy={7} r={5} fill="var(--canvas)" stroke="var(--ink)" strokeWidth={2} />
-          </svg>
-          theirs
+    <svg
+      className="connections"
+      viewBox={`0 0 ${layout.width} ${layout.height}`}
+      aria-hidden="true"
+    >
+      <defs>
+        {["handoff", "reply", "memory", "active"].map((kind) => (
+          <marker
+            id={`arrow-${kind}`}
+            key={kind}
+            viewBox="0 0 10 10"
+            refX="7"
+            refY="5"
+            markerWidth="5"
+            markerHeight="5"
+            orient="auto-start-reverse"
+          >
+            <path
+              d="M 1 1 L 8 5 L 1 9"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              className={`arrow-${kind}`}
+            />
+          </marker>
+        ))}
+      </defs>
+      {links.map((link) => (
+        <g key={link.id}>
+          <path className="edge-casing" d={link.path} />
+          <path
+            className={`edge edge-${link.kind} ${link.stage === current ? "edge-active" : ""}`}
+            d={link.path}
+            markerEnd={`url(#arrow-${link.stage === current ? "active" : link.kind})`}
+          />
+        </g>
+      ))}
+      {labels.map((label) => (
+        <g
+          key={label.text}
+          className={`edge-label label-${label.kind ?? "handoff"}`}
+          transform={`translate(${label.x} ${label.y})`}
+        >
+          <rect
+            x={-label.text.length * 2.7 - 4}
+            y={-7}
+            width={label.text.length * 5.4 + 8}
+            height={14}
+            rx={3}
+          />
+          <text textAnchor="middle" dominantBaseline="central">
+            {label.text}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+export function Schematic({
+  index,
+  playing,
+  onSelect,
+}: {
+  index: number;
+  playing: boolean;
+  onSelect: (id: Stage) => void;
+}) {
+  const current = events[index - 1]?.stage;
+  const visited = new Set(events.slice(0, index).map((e) => e.stage));
+  const complete = index === events.length;
+  const { ref, layout } = useConnections();
+  return (
+    <div className="architecture connected-architecture">
+      <div className="orchestrator">
+        <span className="orchestrator-title">
+          <span className="status-dot" /> Runner{" "}
+          <span className="code-tag">CODE</span>
+        </span>
+        <span>
+          Orchestrates the case <span className="separator">/</span> oldest
+          reply first <span className="separator">/</span> 60s reply clock
         </span>
       </div>
-      {snap.threads.map((th) => (
-        <div key={th.supplier.id} className={`thread ${th.status}`} onClick={onSelect}>
-          <div className="thread-head">
-            <span className="thread-name">{th.supplier.short}</span>
-            {leadBreach(th.lead) && <span className="chip breach">{`lead ${th.lead} d · max ${MAX_LEAD}`}</span>}
-            <span className={`chip ${th.status}`}>{STATUS[th.status]}</span>
-          </div>
-          <Track th={th} />
-          <div className="thread-foot">
-            <span>{th.quote !== null ? `quote ${price(th.quote)}` : "no quote yet"}</span>
-            <span>{th.standing !== null ? `total cost ${money(th.standing)}` : th.quote !== null ? "breaks a must-have" : ""}</span>
-          </div>
+      <div className="flow-canvas" ref={ref}>
+        <Connections layout={layout} current={complete ? undefined : current} />
+        <div className="lanes">
+          {lanes.map((lane, laneIndex) => (
+            <section
+              className={`lane lane-${laneIndex}`}
+              key={lane.name}
+              aria-label={lane.name}
+            >
+              <header className="lane-heading">
+                <span className="lane-number">0{laneIndex + 1}</span>
+                <div>
+                  <h3>{lane.name}</h3>
+                  <p>{lane.label}</p>
+                </div>
+              </header>
+              {laneIndex === 0 && (
+                <div className="data-source" data-node="records">
+                  <Icon name="data" size={17} />
+                  <span>Records, facts & prior outcomes</span>
+                </div>
+              )}
+              <div className="lane-nodes">
+                {lane.ids.map((id, i) => {
+                  const agent = agents[id];
+                  const active = !complete && current === id;
+                  const done = visited.has(id) && !active;
+                  return (
+                    <div className="node-wrap" key={id}>
+                      {i > 0 && (
+                        <div className="connector" aria-hidden="true">
+                          <span />
+                        </div>
+                      )}
+                      <button
+                        data-node={id}
+                        className={`agent-card agent-${agent.kind.toLowerCase()} ${id === "negotiator" ? "engine" : ""} ${active ? "active" : ""} ${done ? "done" : ""} ${active && playing ? "running" : ""}`}
+                        onClick={() => onSelect(id)}
+                        aria-label={`Inspect ${agent.name}`}
+                        aria-current={active ? "step" : undefined}
+                      >
+                        <div className="agent-top">
+                          <span className="agent-icon">
+                            <Icon name={id} size={21} />
+                          </span>
+                          <span
+                            className={`kind kind-${agent.kind.toLowerCase()}`}
+                          >
+                            {agent.kind === "Code" ? "◇" : "○"} {agent.kind}
+                          </span>
+                          <span className="agent-state">
+                            {active ? (
+                              <span className="status-dot" />
+                            ) : done ? (
+                              <Icon name="check" size={15} />
+                            ) : (
+                              <span className="inspect-plus">+</span>
+                            )}
+                          </span>
+                        </div>
+                        <h4>{agent.name}</h4>
+                        <p>{agent.description}</p>
+                        {id === "research" && (
+                          <div className="research-roles">
+                            <div>
+                              <span>Economics</span>
+                              <span>Persona</span>
+                              <span>History</span>
+                              <span>Leverage</span>
+                            </div>
+                            <strong>↓ Lead researcher</strong>
+                          </div>
+                        )}
+                        {id === "rehearsal" && (
+                          <div className="role-exchange">
+                            <span>Supplier role</span>
+                            <Icon name="arrow" size={12} />
+                            <span>Buyer role</span>
+                          </div>
+                        )}
+                        {id === "negotiator" && (
+                          <div className="engine-checks">
+                            <span>total_cost</span>
+                            <span>must_haves_ok</span>
+                          </div>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              {laneIndex === 0 && (
+                <div className="handoff-caption">
+                  <Icon name="arrow" size={14} />
+                  <span>Strategy + playbook → decision engine</span>
+                </div>
+              )}
+              {laneIndex === 1 && (
+                <>
+                  <div className="connector" aria-hidden="true">
+                    <span />
+                  </div>
+                  <div className="supplier-endpoint" data-node="suppliers">
+                    <Icon name="writer" size={16} />
+                    <div>
+                      <strong>Supplier threads</strong>
+                      <span>Emails out · replies back to analyst</span>
+                    </div>
+                  </div>
+                </>
+              )}
+              {laneIndex === 2 && (
+                <>
+                  <div className="connector" aria-hidden="true">
+                    <span />
+                  </div>
+                  <div className="memory-endpoint" data-node="memory">
+                    <Icon name="data" size={16} />
+                    <div>
+                      <strong>Saved outcomes</strong>
+                      <span>Recalled for the next similar case</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </section>
+          ))}
         </div>
-      ))}
+        <div className="mobile-memory">
+          ↶ Saved outcomes return to research for the next similar case
+        </div>
+      </div>
+      <div className="architecture-footer">
+        <span>
+          <i className="legend-model" /> Model reasoning
+        </span>
+        <span>
+          <i className="legend-code" /> Code & data
+        </span>
+        <span className="legend-flow">→ Handoff</span>
+        <span className="legend-reply">↺ Supplier replies</span>
+        <span className="inspect-hint">
+          Select a component <Icon name="info" size={14} />
+        </span>
+      </div>
+      <p className="sr-only">
+        Records feed research. Specialist findings feed the lead researcher and
+        rehearsal. The lead's strategy and the rehearsal playbook feed the
+        decision engine. Supplier replies feed the live analyst, which advises
+        the decision engine. The decision engine sends approved terms to the
+        writer, which emails the suppliers. The decision engine also feeds the
+        close gate. The close gate passes the outcome to debrief, which saves
+        results for the next similar case's research.
+      </p>
+    </div>
+  );
+}
+
+export function Progress({ index }: { index: number }) {
+  return (
+    <div
+      className="progress-track"
+      style={
+        { "--progress": `${(index / events.length) * 100}%` } as CSSProperties
+      }
+    >
+      <div />
     </div>
   );
 }

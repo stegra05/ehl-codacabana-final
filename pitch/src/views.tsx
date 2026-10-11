@@ -1,659 +1,828 @@
-// What the inspector shows for each view, at the current point of the replay.
-import { motion } from "motion/react";
-import type { ReactNode } from "react";
-import { byId, leadBreach, money, pct, price, replay, type Run, type Sid, type Snapshot, suppliers } from "./replay";
-import type { View } from "./steps";
+import { useEffect, useRef, useState } from "react";
+import { agents } from "./steps";
+import {
+  events,
+  money,
+  price,
+  replay,
+  supplierName,
+  type Stage,
+  threadEntries,
+  type ThreadEntry,
+  playbackSeconds,
+  dealOutcome,
+} from "./replay";
+import { Icon } from "./Schematic";
+import { LiveThreadLine, supplierLabel, useAutoFollow } from "./LiveThread";
 
-const GROUPS: [string, string][] = [
-  ["economics", "Economics"],
-  ["persona", "Persona"],
-  ["history", "History"],
-  ["leverage", "Leverage"],
-];
-const KINDS: Record<string, string> = {
-  should_cost: "should-cost",
-  order_history: "order history",
-  index: "cost indices",
-  notice: "notice period",
-  rival: "rival offers",
-  forecast: "forecast",
-  scorecard: "scorecard",
-  hedged: "hedging",
-};
-const winner = byId[replay.close.supplier];
-
-export function eyebrow(view: View, snap: Snapshot): string {
-  const c = replay.calls;
-  switch (view) {
-    case "case":
-      return `Case ${replay.case.id} · ${replay.case.type.toUpperCase()} · goal ${replay.case.goal}`;
-    case "research":
-      return `Research team · ${c.research - suppliers.length} specialists, ${suppliers.length} leads · before the first e-mail`;
-    case "quotes":
-    case "replies":
-      return `Live analyst · reads every supplier e-mail · ${snap.reads} reads`;
-    case "rehearsal":
-      return `Rehearsal · ${c.roleplay} role-played suppliers · demo bids in code`;
-    case "emails":
-      return `Writer · a model writes the words, code writes every figure`;
-    case "decisions":
-      return "Negotiator · code · sets every price";
-    case "agreed":
-      return "Suppliers · their words";
-    case "close":
-      return "Negotiator · close gate · code";
-    case "debrief":
-      return "Debrief · one agent · after the case";
-    case "final":
-      return "Live Final · five waves · eight minutes each · up to 10 cases at once";
-  }
-}
-
-// which views have a supplier to choose
-export const TABBED: View[] = ["research", "rehearsal", "emails"];
-
-export function Body({ view, snap, sid }: { view: View; snap: Snapshot; sid: Sid }): ReactNode {
-  switch (view) {
-    case "case":
-      return <CaseView />;
-    case "research":
-      return <ResearchView sid={sid} />;
-    case "quotes":
-      return <QuotesView snap={snap} />;
-    case "rehearsal":
-      return <RehearsalView sid={sid} />;
-    case "emails":
-      return <EmailView snap={snap} sid={sid} />;
-    case "replies":
-      return <RepliesView snap={snap} />;
-    case "decisions":
-      return <DecisionsView snap={snap} />;
-    case "agreed":
-      return <AgreedView snap={snap} />;
-    case "close":
-      return <CloseView />;
-    case "debrief":
-      return <DebriefView />;
-    case "final":
-      return <FinalView />;
-  }
-}
-
-// ------------------------------------------------------------------ prepare
-
-function CaseView() {
-  const k = replay.case;
-  const must = k.must_haves.map((m) => `${m.field.replaceAll("_", " ").replace(" days", "")} ${m.op.replace("<=", "≤").replace(">=", "≥")} ${m.value} days`);
-  const roster: [string, "model" | "code", string, string][] = [
-    ["Research team", "model", `${replay.calls.research}`, "four specialists and a lead per supplier"],
-    ["Rehearsal", "model", `${replay.calls.roleplay}`, "role-play each supplier; code plays demo bids"],
-    ["Live analyst", "model", "1", "reads every supplier e-mail"],
-    ["Writer", "model", "1", "writes the words around code's figures"],
-    ["Debrief", "model", "1", "turns the outcome into a lesson"],
-    ["Negotiator", "code", "", "sets every price, term and accept"],
-  ];
+export function DealSummary({ index }: { index: number }) {
+  const outcome = dealOutcome(index);
+  if (!outcome) return null;
   return (
-    <div className="view">
-      <div className="col">
-        <dl className="kv">
-          <dt>Buy</dt>
-          <dd>{`${k.need_per_year.toLocaleString("en-US")} pump shafts a year, ${k.horizon_years * 12} months`}</dd>
-          <dt>Today</dt>
-          <dd>{`${price(k.current_price)} a unit`}</dd>
-          <dt>Must-have</dt>
-          <dd>{must.join(", ")}</dd>
-          <dt>Suppliers</dt>
-          <dd>{suppliers.map((s) => s.short).join(", ")}</dd>
-          <dt>Score</dt>
-          <dd>total cost over the term, not the price alone</dd>
-        </dl>
+    <section
+      className="deal-summary"
+      aria-label="Final negotiation outcome"
+      aria-live="polite"
+    >
+      <div className="deal-summary-supplier">
+        <span className="eyebrow">
+          <Icon name="check" size={14} /> Deal agreed
+        </span>
+        <strong>{outcome.supplier}</strong>
+        <span>{outcome.months}-month contract</span>
       </div>
-      <div className="col">
-        <div className="rows">
-          {roster.map(([name, kind, n, what]) => (
-            <div key={name} className="row" style={{ gridTemplateColumns: "34px 210px 70px 1fr", padding: "6px 0" }}>
-              <Shape kind={kind} />
-              <span className="who">{name}</span>
-              <span className="mono" style={{ fontSize: 18 }}>
-                {kind === "model" ? `×${n}` : "code"}
-              </span>
-              <span className="quiet">{what}</span>
-            </div>
-          ))}
-        </div>
+      <div className="deal-summary-price">
+        <span>Agreed unit price</span>
+        <strong>
+          {price(outcome.unitPrice)} <small>/ unit</small>
+        </strong>
+        <span>The accepted supplier offer</span>
       </div>
-    </div>
+      <div className="deal-summary-savings">
+        <span>
+          {outcome.savings >= 0 ? "Total savings" : "Cost increase"} ·{" "}
+          {outcome.months} months
+        </span>
+        <strong>
+          {price(Math.abs(outcome.savings))}
+          {outcome.savingsPercent != null && (
+            <small>
+              {Math.abs(outcome.savingsPercent).toFixed(1)}%{" "}
+              {outcome.savings >= 0 ? "saved" : "increase"}
+            </small>
+          )}
+        </strong>
+        <span>
+          Opening {price(outcome.openingCost)} → agreed{" "}
+          {price(outcome.totalCost)}
+        </span>
+      </div>
+    </section>
   );
 }
 
-function Shape({ kind, size = 18 }: { kind: "model" | "code"; size?: number }) {
-  const r = size / 2 - 1.5;
-  const c = size / 2;
+export function RunPanel({
+  index,
+  playing,
+  onOpenThread,
+}: {
+  index: number;
+  playing: boolean;
+  onOpenThread: (sid: string) => void;
+}) {
+  const [sid, setSid] = useState(replay.suppliers[0].id);
+  const event = events[index - 1];
+  const state = event?.suppliers ?? {};
+  const current = state[sid];
+  const closed = events.slice(0, index).some((e) => e.stage === "close");
+  const cost =
+    closed && replay.result.c_deal != null ? replay.result.c_deal : event?.best;
   return (
-    <svg width={size} height={size} style={{ alignSelf: "center" }}>
-      {kind === "model" ? (
-        <circle cx={c} cy={c} r={r} fill="none" stroke="var(--ink)" strokeWidth={1.5} />
-      ) : (
-        <polygon
-          points={Array.from({ length: 6 }, (_, i) => `${c + r * Math.cos((Math.PI / 3) * i)},${c + r * Math.sin((Math.PI / 3) * i)}`).join(" ")}
-          fill="none"
-          stroke="var(--ink)"
-          strokeWidth={1.5}
-        />
-      )}
-    </svg>
-  );
-}
-
-function ResearchView({ sid }: { sid: Sid }) {
-  const r = replay.research[sid];
-  const s = r.strategy;
-  const opening = r.opening;
-  return (
-    <div className="view">
-      <div className="col">
-        <div className="eyebrow" style={{ marginBottom: 12 }}>
-          The lead's strategy for {byId[sid].short}
-        </div>
-        <dl className="kv">
-          <dt>Open at</dt>
-          <dd>
-            <span className="mono">{pct(opening, 0)}</span> of its quote
-            {s.shift > 0 ? <span className="quiet">{` (asked +${pct(s.shift, 0)})`}</span> : null}
-          </dd>
-          <dt>Pace</dt>
-          <dd>
-            <span className="mono">{pct(s.fraction, 0)}</span> of the gap a round
-          </dd>
-          <dt>Lead with</dt>
-          <dd>{s.claim_order.slice(0, 3).map((k) => KINDS[k] ?? k).join(", ")}</dd>
-          <dt>Tone</dt>
-          <dd>{s.tone ?? "usual"}</dd>
-        </dl>
-        <p className="quiet clamp2" style={{ fontSize: 17, lineHeight: 1.4, margin: "12px 0 0" }}>
-          {s.reason}
-        </p>
+    <aside className="run-panel live-run-panel" aria-label="Live test run">
+      <div className="panel-heading">
+        <span className="eyebrow">Short test run</span>
+        <span className="small-badge">
+          {replay.case.round_limit} rounds · ~{playbackSeconds}s
+        </span>
       </div>
-      <div className="col grid2">
-        {GROUPS.map(([key, name]) => (
-          <div key={key} className="finding">
-            <div className="eyebrow">{`${name} specialist`}</div>
-            <p>{r.findings[key]?.[0] ?? "Nothing in our records."}</p>
-          </div>
+      <div className="live-case-heading">
+        <div>
+          <h2>{replay.case.title.split(":")[0]}</h2>
+          <p>
+            {replay.suppliers.length} suppliers ·{" "}
+            {replay.case.buyer.need_per_year.toLocaleString("en-GB")} units /
+            year
+          </p>
+        </div>
+        <span className="small-badge">S02</span>
+      </div>
+      <div className="live-case-cost">
+        <span>
+          {closed ? "Accepted total cost" : "Best standing total cost"}
+        </span>
+        <strong>{cost == null ? "Awaiting quotes" : money(cost)}</strong>
+      </div>
+      <div
+        className="supplier-tabs"
+        role="tablist"
+        aria-label="Supplier conversations"
+      >
+        {replay.suppliers.map((supplier, i) => (
+          <button
+            key={supplier.id}
+            id={`supplier-tab-${i}`}
+            role="tab"
+            aria-selected={sid === supplier.id}
+            aria-controls="live-thread-panel"
+            tabIndex={sid === supplier.id ? 0 : -1}
+            onClick={() => setSid(supplier.id)}
+            onKeyDown={(e) => {
+              if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+              e.preventDefault();
+              const next =
+                (i +
+                  (e.key === "ArrowRight" ? 1 : -1) +
+                  replay.suppliers.length) %
+                replay.suppliers.length;
+              setSid(replay.suppliers[next].id);
+              document.getElementById(`supplier-tab-${next}`)?.focus();
+            }}
+          >
+            <span
+              className={`supplier-tab-dot ${playing && event?.supplier === supplier.id ? "is-live" : ""}`}
+            />
+            {supplierLabel(supplier.id)}
+            <small>
+              {
+                threadEntries(index, supplier.id).filter(
+                  (entry) => entry.message,
+                ).length
+              }
+            </small>
+          </button>
         ))}
       </div>
-    </div>
+      <div
+        id="live-thread-panel"
+        role="tabpanel"
+        aria-labelledby={`supplier-tab-${replay.suppliers.findIndex((supplier) => supplier.id === sid)}`}
+      >
+        <div className="live-supplier-title">
+          <h3>{supplierName(sid)}</h3>
+          <span>
+            {closed
+              ? current?.status === "accepted"
+                ? "Accepted"
+                : "Not selected"
+              : !current
+                ? "Awaiting quotes"
+                : current.status === "agreed"
+                  ? "Agreed"
+                  : "Negotiating"}
+          </span>
+        </div>
+        <div className="live-price-pair">
+          <div className="theirs">
+            <span>{closed ? "Last supplier offer" : "Supplier offer"}</span>
+            <strong key={current?.price}>
+              {current?.price != null ? price(current.price) : "—"}
+            </strong>
+          </div>
+          <Icon name="arrow" size={15} />
+          <div className="ours">
+            <span>{closed ? "Our last proposal" : "Our proposal"}</span>
+            <strong key={current?.ours}>
+              {current?.ours != null ? price(current.ours) : "—"}
+            </strong>
+          </div>
+        </div>
+        <LiveThreadLine sid={sid} index={index} playing={playing} />
+        <button
+          className="thread-button live-expand"
+          onClick={() => onOpenThread(sid)}
+          aria-label={`Open conversation with ${supplierName(sid)}`}
+        >
+          <Icon name="expand" size={14} /> Expand thread & offer history{" "}
+          <Icon name="arrow" size={14} />
+        </button>
+      </div>
+      <p className="live-disclaimer">
+        Local simulator trace · scripted model responses · n = 1
+      </p>
+    </aside>
   );
 }
 
-function QuotesView({ snap }: { snap: Snapshot }) {
-  const reads = snap.events.flatMap((e) => (e.kind === "analyst" ? [e] : []));
+export function Activity({
+  index,
+  onInspect,
+}: {
+  index: number;
+  onInspect: (id: Stage) => void;
+}) {
+  const event = events[index - 1];
   return (
-    <div className="view">
-      <div className="col">
-        <div className="rows">
-          <div className="row th" style={{ gridTemplateColumns: "1fr 110px 120px" }}>
-            <span>Supplier</span>
-            <span style={{ textAlign: "right" }}>Price</span>
-            <span style={{ textAlign: "right" }}>Lead time</span>
-          </div>
-          {snap.threads.map((th) => {
-            const lead = th.supplier.quote.lead_time_days ?? th.supplier.std.lead_time_days;
-            const bad = leadBreach(lead);
-            return (
-              <div key={th.supplier.id} className="row" style={{ gridTemplateColumns: "1fr 110px 120px" }}>
-                <span className="who">{th.supplier.name}</span>
-                <span className="num">{price(th.quote ?? 0)}</span>
-                <span className="num" style={bad ? { fontWeight: 700 } : undefined}>
-                  {lead !== undefined ? `${lead} d${bad ? " ✕" : ""}` : "-"}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      <div className="col">
-        <Readings reads={reads} />
-      </div>
-    </div>
-  );
-}
-
-function Readings({ reads }: { reads: { supplier: Sid; mood: string; notes: string; seconds: number }[] }) {
-  const missing = suppliers.filter((s) => !reads.some((r) => r.supplier === s.id));
-  return (
-    <div>
-      {suppliers.flatMap((s) => reads.filter((r) => r.supplier === s.id).slice(-1)).map((r, i) => (
-        <div key={i} className="reading">
-          <div>
-            <div className="who">{byId[r.supplier].short}</div>
-            <span className={`mood ${r.mood}`}>{r.mood}</span>
-            <span className="mono quiet" style={{ fontSize: 13, marginLeft: 8 }}>{`${r.seconds.toFixed(1)} s`}</span>
-          </div>
-          <p>{r.notes}</p>
-        </div>
-      ))}
-      {missing.length > 0 && (
-        <p className="quiet" style={{ fontSize: 16, margin: "10px 0 0" }}>
-          {`${missing.map((s) => s.short).join(", ")}: no reading. Under 2 s left on its clock, the e-mail went out without one.`}
+    <div className="activity" aria-live="polite" aria-atomic="true">
+      <span className={`activity-icon ${event ? "started" : ""}`}>
+        <Icon name={event?.stage ?? "play"} size={21} />
+      </span>
+      <div>
+        <span className="eyebrow">
+          {event
+            ? `Step ${String(index).padStart(2, "0")} · ${agents[event.stage].name}`
+            : "Ready when you are"}
+        </span>
+        <h3>{event?.title ?? "Follow one case through the whole team"}</h3>
+        <p>
+          {event?.summary ??
+            "Start the test run to watch quotes become checked offers, a decision and a lesson."}
         </p>
+      </div>
+      {event && (
+        <button className="text-button" onClick={() => onInspect(event.stage)}>
+          Inspect <Icon name="arrow" size={16} />
+        </button>
       )}
     </div>
   );
 }
 
-function RehearsalView({ sid }: { sid: Sid }) {
-  const r = replay.research[sid];
-  const reh = r.rehearsal;
-  const pb = r.playbook;
-  const s = byId[sid];
-  const openings = reh ? [...new Set(reh.runs.map((x) => x.anchor))] : [];
+export function RunLog({
+  index,
+  onJump,
+}: {
+  index: number;
+  onJump: (step: number) => void;
+}) {
+  const bottom = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    bottom.current?.scrollIntoView({ block: "nearest", behavior: "instant" });
+  }, [index]);
   return (
-    <div className="view">
-      <div className="col">
-        <div className="eyebrow" style={{ marginBottom: 12 }}>
-          {`${s.short}, as three role-plays agree it bids`}
+    <div className="run-log">
+      <div className="log-intro">
+        <Icon name="data" />
+        <div>
+          <h3>Every handoff, in order</h3>
+          <p>
+            Events from the generated test run. Select an event to return to it.
+          </p>
         </div>
-        {pb ? (
-          <dl className="kv">
-            <dt>Lowest price</dt>
-            <dd>
-              <span className="mono">{pct(pb.floor)}</span> of its quote
-            </dd>
-            <dt>Steps</dt>
-            <dd>
-              <span className="mono">{pct(pb.first_drop)}</span>, then at most <span className="mono">{pct(pb.step)}</span>
-            </dd>
-            <dt>Counters</dt>
-            <dd>
-              <span className="mono">{pb.counters}</span> before its final offer
-            </dd>
-            <dt>Patience</dt>
-            <dd>
-              a gap of <span className="mono">{Math.round(pb.patience * 100)}</span> points to its quote
-            </dd>
-          </dl>
-        ) : null}
-        <p className="quiet clamp2" style={{ fontSize: 17, lineHeight: 1.4, margin: "12px 0 0" }}>
-          {reh
-            ? `Code bid ${reh.runs.length} times against it, ${openings.length} openings at ${new Set(reh.runs.map((x) => x.fraction)).size} paces, in milliseconds. Only the opening may move, by up to 2 points.`
-            : `${s.short} is fully booked, so its opening is fixed at ${pct(r.opening, 0)} of the quote. Nothing to rehearse.`}
-        </p>
       </div>
-      <div className="col">{reh && pb ? <Lanes reh={reh} patience={pb.patience} /> : <Empty text="No demo bids for this supplier." />}</div>
+      {index === 0 ? (
+        <div className="log-empty">
+          <Icon name="play" size={32} />
+          <h3>No events yet</h3>
+          <p>Start the test run or advance one step.</p>
+        </div>
+      ) : (
+        <ol>
+          {events.slice(0, index).map((event, i) => (
+            <li key={i}>
+              <button
+                onClick={() => onJump(i + 1)}
+                aria-current={i + 1 === index ? "step" : undefined}
+              >
+                <span className="log-number">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span
+                  className={`log-icon ${agents[event.stage].kind === "Code" ? "log-code" : ""}`}
+                >
+                  <Icon name={event.stage} size={18} />
+                </span>
+                <span className="log-copy">
+                  <strong>{event.title}</strong>
+                  <span>
+                    {event.supplier
+                      ? supplierName(event.supplier)
+                      : agents[event.stage].name}
+                  </span>
+                </span>
+                <span className="log-stage">{agents[event.stage].kind}</span>
+                <Icon name="arrow" size={16} />
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
+      <div ref={bottom} />
     </div>
   );
 }
 
-function Empty({ text }: { text: string }) {
-  return <p className="quiet" style={{ fontSize: 19, margin: 0 }}>{text}</p>;
-}
-
-// the demo bids, one lane per opening: our opening, its quote, and its patience as a bracket;
-// an opening deeper than its patience ends the talks at once
-function Lanes({ reh, patience }: { reh: { default: number; anchor: number; fraction: number; runs: Run[] }; patience: number }) {
-  const W = 960;
-  const L = 150;
-  const R = 250;
-  const lo = 0.74;
-  const x = (v: number) => L + ((v - lo) / (1 - lo)) * (W - L - R);
-  const openings = [...new Set(reh.runs.map((r) => r.anchor))].sort((a, b) => a - b);
-  const top = 62;
-  const lane = 52;
-  const edge = Math.max(lo, 1 - patience);
+export function Inspector({
+  selected,
+  index,
+  onClose,
+}: {
+  selected: Stage;
+  index: number;
+  onClose: () => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const agent = agents[selected];
+  const event = events
+    .slice(0, index)
+    .reverse()
+    .find((e) => e.stage === selected);
+  useEffect(() => {
+    const element = dialog.current;
+    const previous = document.activeElement as HTMLElement | null;
+    element?.showModal();
+    return () => {
+      element?.close();
+      previous?.focus();
+    };
+  }, []);
   return (
-    <svg className="chart" width={W} height={top + openings.length * lane}>
-      <line x1={x(edge)} x2={x(1)} y1={30} y2={30} stroke="var(--ink-2)" strokeWidth={1.5} />
-      <line x1={x(edge)} x2={x(edge)} y1={23} y2={37} stroke="var(--ink-2)" strokeWidth={1.5} />
-      <line x1={x(1)} x2={x(1)} y1={23} y2={37} stroke="var(--ink-2)" strokeWidth={1.5} />
-      <text x={(x(edge) + x(1)) / 2} y={14} textAnchor="middle">
-        {`its patience: ${Math.round(patience * 100)} points`}
-      </text>
-      <line className="grid" x1={x(edge)} x2={x(edge)} y1={37} y2={top + openings.length * lane - 8} strokeDasharray="3 4" />
-      {openings.map((a, i) => {
-        const runs = reh.runs.filter((r) => r.anchor === a);
-        const chosen = a === reh.anchor;
-        const ends = runs.every((r) => r.theirs.length === 1 && r.end !== "agreed");
-        const y = top + i * lane + lane / 2 - 6;
-        const color = chosen ? "var(--signal)" : "var(--ink-2)";
-        return (
-          <g key={a}>
-            <text className="label" x={0} y={y} dy="0.35em" style={{ fontWeight: chosen ? 600 : 400 }}>
-              {`open at ${pct(a, 0)}`}
-            </text>
-            <line x1={x(lo)} x2={x(1)} y1={y} y2={y} stroke="var(--rule)" strokeWidth={1} />
-            <motion.rect
-              y={y - 5}
-              height={10}
-              rx={5}
-              fill={chosen ? "var(--signal-wash)" : "var(--wash)"}
-              initial={{ x: x(1), width: 0 }}
-              animate={{ x: x(a), width: x(1) - x(a) }}
-              transition={{ duration: 0.7, delay: 0.15 + i * 0.12, ease: [0.2, 0.7, 0.2, 1] }}
-            />
-            <circle cx={x(1)} cy={y} r={7} fill="var(--sheet)" stroke="var(--ink)" strokeWidth={2} />
-            <motion.circle
-              cy={y}
-              r={7}
-              fill={color}
-              stroke="var(--sheet)"
-              strokeWidth={2}
-              initial={{ cx: x(1) }}
-              animate={{ cx: x(a) }}
-              transition={{ duration: 0.7, delay: 0.15 + i * 0.12, ease: [0.2, 0.7, 0.2, 1] }}
-            />
-            <text className="label" x={W - R + 28} y={y} dy="0.35em" style={{ fill: chosen ? "var(--ink)" : "var(--ink-2)", fontWeight: chosen ? 600 : 400 }}>
-              {ends ? "ends the talks at once" : chosen ? "keeps talking: chosen" : "keeps talking"}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
-
-// ------------------------------------------------------------------ negotiate
-
-const ID = /\(((?:idx|sc|cost|offer|po|fc|doc|ctr|qn|news|quote):[^)]+)\)/;
-const FIGURE = /(EUR\s?[\d.,]+|-?\d+(?:\.\d+)?%)/g;
-
-function figures(text: string): ReactNode[] {
-  const out: ReactNode[] = [];
-  let last = 0;
-  for (const m of text.matchAll(FIGURE)) {
-    if (m.index! > last) out.push(text.slice(last, m.index));
-    out.push(
-      <span key={m.index} className="fig">
-        {m[0]}
-      </span>,
-    );
-    last = m.index! + m[0].length;
-  }
-  out.push(text.slice(last));
-  return out;
-}
-
-function EmailView({ snap, sid }: { snap: Snapshot; sid: Sid }) {
-  const mine = snap.events.flatMap((e) => (e.kind === "send" && e.supplier === sid ? [e] : []));
-  const mail = mine.at(-1) ?? replay.events.flatMap((e) => (e.kind === "send" && e.supplier === sid ? [e] : []))[0];
-  if (!mail || mail.kind !== "send") return <Empty text="No e-mail to this supplier yet." />;
-  const lines = mail.body
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l && !/^(Dear|Kind regards|Hollerau Pumpenwerke, Purchasing|Thank you for your offer and for the time|Thank you for your reply|We confirm a binding)/.test(l));
-  const sent = snap.events.flatMap((e) => (e.kind === "send" ? [e] : []));
-  return (
-    <div className="view">
-      <div className="col">
-        <dl className="kv">
-          <dt>E-mails</dt>
-          <dd>
-            <span className="mono">{sent.length}</span> sent, <span className="mono">{sent.filter((e) => e.model_paragraph).length}</span> with a model paragraph
-          </dd>
-          <dt>Facts</dt>
-          <dd>
-            <span className="mono">{sent.reduce((n, e) => n + e.claims.length, 0)}</span> cited, each with its data ID
-          </dd>
-          <dt>Guard</dt>
-          <dd>a paragraph with a digit, an ID or a leak is dropped</dd>
-          <dt>Late</dt>
-          <dd>under 2 s on the clock: the template goes out</dd>
-        </dl>
-        <div className="key" style={{ marginTop: 16 }}>
-          <span>
-            <Shape kind="model" size={16} /> written by a model
+    <dialog
+      ref={dialog}
+      className="inspector-dialog"
+      aria-labelledby="inspector-title"
+      onCancel={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="dialog-content">
+        <div className="dialog-top">
+          <span className={`kind kind-${agent.kind.toLowerCase()}`}>
+            {agent.kind === "Code" ? "◇" : "○"} {agent.kind} component
           </span>
-          <span>
-            <Shape kind="code" size={16} /> written by code
-          </span>
+          <button
+            className="icon-button"
+            aria-label="Close component details"
+            onClick={onClose}
+          >
+            <Icon name="x" />
+          </button>
         </div>
-      </div>
-      <div className="col mail">
-        <div className="eyebrow" style={{ marginBottom: 2 }}>{`Round ${mail.round} · to ${byId[sid].name}`}</div>
-        {lines.map((l, i) => {
-          const id = l.match(ID);
-          const model = mail.model_paragraph && !/\d/.test(l) && i === 0;
-          const text = id ? l.replace(ID, "").replace(/\s+\./, ".").trim() : l;
-          return (
-            <div key={i} className={`mail-line ${model ? "model" : "code"}`}>
-              <Shape kind={model ? "model" : "code"} size={16} />
-              <p className={model ? "clamp2" : undefined}>
-                {model ? text : figures(text)}
-                {id ? <span className="ref">{id[1].split(", ")[0] + (id[1].includes(", ") ? " +1" : "")}</span> : null}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function RepliesView({ snap }: { snap: Snapshot }) {
-  const reads = snap.events.flatMap((e) => (e.kind === "analyst" ? [e] : []));
-  const latest = suppliers.map((s) => {
-    const rs = snap.events.flatMap((e) => (e.kind === "reply" && e.supplier === s.id ? [e] : []));
-    return { s, r: rs.at(-1), before: rs.at(-2)?.price ?? s.quote.unit_price ?? 0 };
-  });
-  return (
-    <div className="view">
-      <div className="col">
-        <div className="rows">
-          <div className="row th" style={{ gridTemplateColumns: "1fr 100px 100px 90px" }}>
-            <span>Supplier</span>
-            <span style={{ textAlign: "right" }}>Now</span>
-            <span style={{ textAlign: "right" }}>Change</span>
-            <span style={{ textAlign: "right" }}>Facts</span>
+        <span className="dialog-icon">
+          <Icon name={selected} size={28} />
+        </span>
+        <h2 id="inspector-title">{agent.name}</h2>
+        <p className="dialog-role">{agent.role}</p>
+        <div className="io-grid">
+          <div>
+            <span className="eyebrow">Receives</span>
+            <p>{agent.inputs}</p>
           </div>
-          {latest.map(({ s, r, before }) => (
-            <div key={s.id} className="row" style={{ gridTemplateColumns: "1fr 100px 100px 90px" }}>
-              <span className="who">{s.short}</span>
-              <span className="num">{r ? price(r.price) : "-"}</span>
-              <span className="num">{r ? pct(r.price / before - 1) : "-"}</span>
-              <span className="num">{r ? `${r.checks.filter((c) => c === "verified").length}/${r.checks.length} ✓` : "-"}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="col">
-        <Readings reads={reads} />
-      </div>
-    </div>
-  );
-}
-
-const RULE: Record<string, (conceded: number | null) => string> = {
-  anchor: () => "open at the anchor",
-  hold: (c) => `it dropped ${pct(c ?? 0)} at once: room left, hold our price`,
-  step: (c) => (c ? `it moved ${pct(c)}: move ${pct(0.3, 0)} of the gap` : "it held: a small step"),
-};
-
-function DecisionsView({ snap }: { snap: Snapshot }) {
-  const round = Math.max(1, snap.round);
-  const rows = snap.events.flatMap((e) => (e.kind === "send" && e.round === round ? [e] : []));
-  return (
-    <div className="view">
-      <div className="col">
-        <p className="lede">
-          No model sets a number. Each price comes from the same rules for every supplier: open at an anchor set by the case goal, move a share of the gap each round, and hold after a deep first drop, because a supplier that gives that much has more to give.
-        </p>
-      </div>
-      <div className="col">
-        <div className="rows">
-          <div className="row th" style={{ gridTemplateColumns: "150px 110px 110px 1fr" }}>
-            <span>{`Round ${round}`}</span>
-            <span style={{ textAlign: "right" }}>Its price</span>
-            <span style={{ textAlign: "right" }}>Ours</span>
-            <span>Why</span>
+          <div>
+            <span className="eyebrow">Produces</span>
+            <p>{agent.outputs}</p>
           </div>
-          {rows.map((e) => (
-            <div key={e.supplier} className={`row ${e.rule === "hold" ? "pick" : ""}`} style={{ gridTemplateColumns: "150px 110px 110px 1fr" }}>
-              <span className="who">{byId[e.supplier].short}</span>
-              <span className="num">{price(e.theirs)}</span>
-              <span className="num">{price(e.price)}</span>
-              <span className="quiet" style={{ fontSize: 18 }}>
-                {RULE[e.rule](e.conceded)}
-              </span>
-            </div>
-          ))}
         </div>
-      </div>
-    </div>
-  );
-}
-
-const AGREEING = [/good price/i, /accept this/i, /let's get this/i, /lock in/i, /we can do that/i, /keep making/i];
-
-// the sentence of its e-mail that says yes, as it wrote it
-function yes(text: string) {
-  const sentences = text.split(/\n|(?<=[.!?])\s+/).map((x) => x.trim()).filter(Boolean);
-  for (const re of AGREEING) {
-    const hit = sentences.find((x) => re.test(x));
-    if (hit) return hit;
-  }
-  return sentences[1] ?? "";
-}
-
-function AgreedView({ snap }: { snap: Snapshot }) {
-  const agreed = suppliers.map((s) => {
-    const r = snap.events.flatMap((e) => (e.kind === "reply" && e.supplier === s.id && e.status === "agreed" ? [e] : []))[0];
-    return { s, r };
-  });
-  return (
-    <div className="view">
-      <div className="col">
-        <div className="rows">
-          <div className="row th" style={{ gridTemplateColumns: "1fr 110px 110px 90px" }}>
-            <span>Supplier</span>
-            <span style={{ textAlign: "right" }}>Quote</span>
-            <span style={{ textAlign: "right" }}>Agreed</span>
-            <span style={{ textAlign: "right" }}>Round</span>
-          </div>
-          {agreed.map(({ s, r }) => (
-            <div key={s.id} className="row" style={{ gridTemplateColumns: "1fr 110px 110px 90px" }}>
-              <span className="who">{s.short}</span>
-              <span className="num quiet">{price(s.quote.unit_price ?? 0)}</span>
-              <span className="num">{r ? price(r.price) : "open"}</span>
-              <span className="num">{r ? r.round : ""}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="col">
-        {agreed
-          .filter((a) => a.r)
-          .map(({ s, r }) => (
-            <div key={s.id} className="reading" style={{ gridTemplateColumns: "140px 1fr" }}>
-              <div className="who">{s.short}</div>
-              <p>{`\u201C${yes(r!.text)}\u201D`}</p>
-            </div>
-          ))}
-      </div>
-    </div>
-  );
-}
-
-// ------------------------------------------------------------------ close and learn
-
-function CloseView() {
-  const c = replay.close;
-  const saved = 1 - c.c_deal / c.c_open;
-  const rows = suppliers
-    .map((s) => ({ s, cost: c.standing[s.id] }))
-    .sort((a, b) => (a.cost ?? Infinity) - (b.cost ?? Infinity));
-  return (
-    <div className="view">
-      <div className="col">
-        <div className="eyebrow">Total cost of the deal</div>
-        <div className="hero" style={{ marginTop: 6 }}>
-          {money(c.c_deal)}
-        </div>
-        <div className="hero-sub">
-          {`${pct(saved)} below the opening offers (${money(c.c_open)}). That is ${pct(c.score, 0)} of the best saving possible in this case.`}
-        </div>
-      </div>
-      <div className="col">
-        <div className="rows">
-          <div className="row th" style={{ gridTemplateColumns: "1fr 110px 120px 160px" }}>
-            <span>Standing offer</span>
-            <span style={{ textAlign: "right" }}>Price</span>
-            <span style={{ textAlign: "right" }}>Must-have</span>
-            <span style={{ textAlign: "right" }}>Total cost</span>
-          </div>
-          {rows.map(({ s, cost }) => (
-            <div key={s.id} className={`row ${s.id === c.supplier ? "pick" : ""}`} style={{ gridTemplateColumns: "1fr 110px 120px 160px" }}>
-              <span className="who">{s.id === c.supplier ? `${s.short} · accepted` : s.short}</span>
-              <span className="num">{price(lastPrice(s.id))}</span>
-              <span className="num">{cost !== null ? "kept ✓" : "broken ✕"}</span>
-              <span className="num">{cost !== null ? money(cost) : "-"}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function lastPrice(sid: Sid) {
-  const rs = replay.events.flatMap((e) => (e.kind === "reply" && e.supplier === sid ? [e.price] : []));
-  return rs.at(-1) ?? byId[sid].quote.unit_price ?? 0;
-}
-
-function DebriefView() {
-  const l = replay.lesson;
-  const th = l.threads[0];
-  return (
-    <div className="view">
-      <div className="col">
-        <dl className="kv">
-          <dt>Filed under</dt>
-          <dd>{`${l.goal} · ${l.type.toUpperCase()} · ${l.bidders} bidders · ${l.owners.join(", ")}-owned`}</dd>
-          <dt>Our path</dt>
-          <dd className="mono" style={{ fontSize: 17 }}>
-            {th.ours.map((v) => pct(v)).join(" → ")}
-          </dd>
-          <dt>Its path</dt>
-          <dd className="mono" style={{ fontSize: 17 }}>
-            {th.theirs.map((v) => pct(v)).join(" → ")}
-          </dd>
-          <dt>Never</dt>
-          <dd>a supplier's name or an ID</dd>
-        </dl>
-      </div>
-      <div className="col" style={{ display: "grid", alignContent: "center" }}>
-        <p className="quote">{`\u201C${l.lesson}\u201D`}</p>
-        <p className="quiet" style={{ fontSize: 17, margin: "14px 0 0" }}>
-          The next lead researcher on a case like this reads the facts behind it.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function FinalView() {
-  return (
-    <div className="view">
-      <div className="col">
-        <p className="lede">
-          Each case of a wave gets its own team, all at once, within the wave's eight minutes. No one touches the keyboard. The rules that set prices are the same in every team.
-        </p>
-      </div>
-      <div className="col waves">
-        {[1, 2, 3, 4, 5].map((w) => (
-          <div key={w} className="wave">
-            <span className="eyebrow">{`Wave ${w}`}</span>
-            {Array.from({ length: 10 }, (_, i) => (
-              <svg key={i} width={46} height={34} viewBox="0 0 46 34">
-                <rect x={1} y={1} width={44} height={32} rx={8} fill="none" stroke="var(--ink-2)" strokeWidth={1.2} strokeDasharray="3 3" />
-                {[11, 23, 35].map((cx) => (
-                  <circle key={cx} cx={cx} cy={13} r={3.2} fill="var(--ink-2)" />
-                ))}
-                <polygon points="23,19 27,21.5 27,26 23,28.5 19,26 19,21.5" fill="var(--ink)" />
-              </svg>
+        <div className="module-list">
+          <span className="eyebrow">Implementation</span>
+          <div>
+            {agent.modules.map((module) => (
+              <code key={module}>{module}</code>
             ))}
           </div>
-        ))}
+        </div>
+        <div className="event-detail">
+          <div className="event-detail-heading">
+            <span className="eyebrow">Latest output in this playback</span>
+            <span className="small-badge">
+              {event ? "Recorded" : "Pending"}
+            </span>
+          </div>
+          {event ? (
+            <>
+              <h3>{event.title}</h3>
+              <p>
+                {event.supplier ? supplierName(event.supplier) : event.summary}
+              </p>
+              <pre tabIndex={0}>{JSON.stringify(event.detail, null, 2)}</pre>
+            </>
+          ) : (
+            <p>
+              This component has no output yet. Advance the test run to see its
+              recorded input or result.
+            </p>
+          )}
+        </div>
+        <p className="dialog-provenance">
+          Run {replay.id} · scripted model responses · n = {replay.sample_size}
+        </p>
       </div>
+    </dialog>
+  );
+}
+
+function messageTerms(entry: ThreadEntry) {
+  return entry.message?.term_sheets?.[0]?.terms ?? entry.message?.terms ?? {};
+}
+const stringList = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+
+function OfferHistory({ entries }: { entries: ThreadEntry[] }) {
+  const points = entries.flatMap((entry) => {
+    const value = messageTerms(entry).unit_price;
+    return typeof value === "number"
+      ? [{ step: entry.step, value, kind: entry.kind }]
+      : [];
+  });
+  if (!points.length)
+    return (
+      <div className="chart-empty">
+        The offer history starts when a quote arrives.
+      </div>
+    );
+  const low = Math.min(...points.map((p) => p.value));
+  const high = Math.max(...points.map((p) => p.value));
+  const last = Math.max(...points.map((p) => p.step));
+  const x = (step: number) =>
+    65 + ((step - points[0].step) / Math.max(1, last - points[0].step)) * 505;
+  const y = (value: number) => 22 + ((high - value) / (high - low || 1)) * 88;
+  return (
+    <div className="offer-history">
+      <div className="chart-heading">
+        <span className="eyebrow">How the offers evolve</span>
+        <div>
+          <span className="chart-ours">● Our proposal</span>
+          <span className="chart-theirs">● Supplier offer</span>
+        </div>
+      </div>
+      <svg
+        viewBox="0 0 610 144"
+        role="img"
+        aria-label={`Unit prices over recorded steps, from ${price(low)} to ${price(high)}. Orange: our offers. Teal: supplier offers.`}
+      >
+        <title>Unit price by replay step</title>
+        {[...new Set([high, low])].map((value, i) => (
+          <g key={i}>
+            <line
+              x1={65}
+              x2={585}
+              y1={y(value)}
+              y2={y(value)}
+              className="chart-grid"
+            />
+            <text x={0} y={y(value) + 4} className="chart-axis">
+              {price(value)}
+            </text>
+          </g>
+        ))}
+        {["supplier", "buyer"].map((kind) => {
+          const series = points.filter((p) => p.kind === kind);
+          return (
+            <g key={kind} className={`price-series series-${kind}`}>
+              <polyline
+                points={series
+                  .map((p) => `${x(p.step)},${y(p.value)}`)
+                  .join(" ")}
+                fill="none"
+                strokeWidth={2}
+              />
+              {series.map((p) => (
+                <circle key={p.step} cx={x(p.step)} cy={y(p.value)} r={3}>
+                  <title>{`Step ${p.step}: ${price(p.value)}`}</title>
+                </circle>
+              ))}
+            </g>
+          );
+        })}
+        <text x={65} y={137} className="chart-axis">
+          Step {points[0].step}
+        </text>
+        <text x={570} y={137} className="chart-axis" textAnchor="end">
+          Step {last}
+        </text>
+      </svg>
+      <p>
+        Unit price is one input. The decision engine compares complete offers at
+        total cost.
+      </p>
     </div>
+  );
+}
+
+function ThreadRecord({ entry, sid }: { entry: ThreadEntry; sid: string }) {
+  const { event, kind, message } = entry;
+  const outcome = kind === "close" ? dealOutcome(entry.step) : null;
+  const terms = messageTerms(entry);
+  const result = event.detail.result as
+    | {
+        deal?: boolean;
+        supplier_id?: string;
+        c_deal?: number;
+        terms?: Record<string, unknown>;
+      }
+    | undefined;
+  const title =
+    kind === "buyer"
+      ? "Our proposal"
+      : kind === "supplier"
+        ? event.detail.quotes
+          ? "Opening quote"
+          : "Supplier reply"
+        : kind === "analysis"
+          ? "Analyst assessment"
+          : kind === "decision"
+            ? "Code decision"
+            : result?.supplier_id === sid
+              ? "This offer was accepted"
+              : result?.deal
+                ? "Another supplier was selected"
+                : "Case closed without a deal";
+  const claims = stringList(event.detail.claims);
+  const asks = stringList(event.detail.asks);
+  const checks = message?.claim_results ?? [];
+  return (
+    <article className={`thread-record record-${kind}`}>
+      <div className="record-heading">
+        <span className="record-icon">
+          <Icon
+            name={
+              kind === "buyer" || kind === "supplier"
+                ? "writer"
+                : kind === "analysis"
+                  ? "analyst"
+                  : kind === "close"
+                    ? "close"
+                    : "negotiator"
+            }
+            size={16}
+          />
+        </span>
+        <strong>{title}</strong>
+        <span className="record-step">
+          Step {String(entry.step).padStart(2, "0")}
+        </span>
+      </div>
+      {message ? (
+        <>
+          <div className="email-direction">
+            {kind === "buyer"
+              ? "Hollerau Purchasing → Supplier"
+              : `${supplierName(sid)} → Hollerau Purchasing`}
+          </div>
+          {message.subject && (
+            <h4 className="email-subject">{message.subject}</h4>
+          )}
+          <p className="email-body">
+            {message.body ?? message.text ?? "No email body recorded."}
+          </p>
+          {Object.keys(terms).length > 0 && (
+            <div className="email-terms">
+              {Object.entries(terms).map(([field, value]) => (
+                <span key={field}>
+                  <small>{field.replaceAll("_", " ")}</small>
+                  <strong>
+                    {field === "unit_price" && typeof value === "number"
+                      ? price(value)
+                      : typeof value === "object"
+                        ? JSON.stringify(value)
+                        : String(value)}
+                  </strong>
+                </span>
+              ))}
+            </div>
+          )}
+          {(message.term_sheets?.length ?? 0) > 1 && (
+            <details className="extra-sheets">
+              <summary>
+                Alternative term sheets ({message.term_sheets!.length - 1})
+              </summary>
+              <pre>
+                {JSON.stringify(message.term_sheets!.slice(1), null, 2)}
+              </pre>
+            </details>
+          )}
+          {checks.length > 0 && (
+            <p className="claim-verification">
+              <Icon name="check" size={13} />
+              {
+                checks.filter((check) => check.result === "verified").length
+              } / {checks.length} claims verified by the simulator
+            </p>
+          )}
+          {!!message.refs?.length && (
+            <details className="email-refs">
+              <summary>{message.refs.length} evidence references</summary>
+              <ul>
+                {message.refs.map((ref) => (
+                  <li key={ref}>
+                    <code>{ref}</code>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </>
+      ) : kind === "analysis" ? (
+        <>
+          <div className="reason-tags">
+            <span>Mood: {String(event.detail.mood ?? "unrecorded")}</span>
+            <span>Tactic: {String(event.detail.tactic ?? "unrecorded")}</span>
+          </div>
+          <p className="reason-copy">
+            {String(event.detail.notes ?? "No analyst note recorded.")}
+          </p>
+          <p className="reason-footnote">
+            Supplier asks: {asks.length ? asks.join(", ") : "none identified"} ·
+            Scripted model assessment
+          </p>
+        </>
+      ) : kind === "decision" ? (
+        <>
+          <div className="decision-prices">
+            <span>
+              Supplier offer
+              <strong>
+                {typeof event.detail.theirs === "number"
+                  ? price(event.detail.theirs)
+                  : "—"}
+              </strong>
+            </span>
+            <Icon name="arrow" size={18} />
+            <span>
+              Policy proposal
+              <strong>
+                {typeof event.detail.ours === "number"
+                  ? price(event.detail.ours)
+                  : "—"}
+              </strong>
+            </span>
+          </div>
+          <p className="reason-copy">
+            Policy state:{" "}
+            <strong>
+              {String(event.detail.state ?? "unrecorded").replaceAll("_", " ")}
+            </strong>
+            .{" "}
+            {claims.length
+              ? `Evidence selected: ${claims.map((claim) => claim.replaceAll("_", " ")).join(", ")}.`
+              : "No new claim selected for this proposal."}
+          </p>
+          <p className="reason-footnote">
+            Recorded policy decision. The following email carries the complete
+            binding terms.
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="reason-copy">
+            {result?.deal
+              ? `${supplierName(result.supplier_id ?? null)} was selected at ${result.c_deal != null ? money(result.c_deal) : "the recorded"} total cost.`
+              : "The close gate did not accept a standing sheet."}
+          </p>
+          <p className="reason-footnote">
+            {outcome && (
+              <>
+                Agreed price:{" "}
+                <strong>{price(outcome.unitPrice)} per unit</strong>.{" "}
+                {outcome.savings >= 0 ? "Total savings" : "Cost increase"}:{" "}
+                <strong>{price(Math.abs(outcome.savings))}</strong> over{" "}
+                {outcome.months} months versus opening total cost.{" "}
+              </>
+            )}
+            The gate compares valid standing sheets across suppliers, including
+            all terms.
+          </p>
+        </>
+      )}
+    </article>
+  );
+}
+
+export function ThreadInspector({
+  sid,
+  index,
+  playing,
+  onToggle,
+  onClose,
+  onJump,
+}: {
+  sid: string;
+  index: number;
+  playing: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  onJump: (step: number) => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const { following, onScroll, follow } = useAutoFollow(dialog, index, sid);
+  const entries = threadEntries(index, sid);
+  const allEntries = threadEntries(events.length, sid);
+  const previous = [...entries].reverse().find((entry) => entry.step < index);
+  const next = allEntries.find((entry) => entry.step > index);
+  const state = events[index - 1]?.suppliers[sid];
+  const closed = events
+    .slice(0, index)
+    .some((event) => event.stage === "close");
+  const emails = entries.filter((entry) => entry.message);
+  const offers = emails.filter((entry) => entry.kind === "supplier");
+  const opening = offers[0] ? messageTerms(offers[0]).unit_price : undefined;
+  useEffect(() => {
+    const element = dialog.current;
+    const focused = document.activeElement as HTMLElement | null;
+    element?.showModal();
+    return () => {
+      element?.close();
+      focused?.focus();
+    };
+  }, []);
+  const advance = (step: number) => {
+    follow();
+    onJump(step);
+  };
+  return (
+    <dialog
+      ref={dialog}
+      className="thread-dialog"
+      onScroll={onScroll}
+      aria-labelledby="thread-title"
+      onCancel={onClose}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <header className="thread-dialog-header">
+        <div>
+          <span className="eyebrow">
+            Supplier conversation · live test playback
+          </span>
+          <h2 id="thread-title">{supplierName(sid)}</h2>
+          <p>
+            {closed
+              ? state?.status === "accepted"
+                ? "Accepted · case closed"
+                : "Not selected · case closed"
+              : state
+                ? "Negotiation in progress"
+                : "Waiting for opening quote"}
+            <span>·</span>
+            {emails.length} emails<span>·</span>Step {index} of {events.length}
+          </p>
+        </div>
+        <button
+          className="icon-button"
+          aria-label="Close supplier conversation"
+          onClick={onClose}
+        >
+          <Icon name="x" />
+        </button>
+      </header>
+      <div className="thread-dialog-body">
+        <div className="thread-metrics">
+          <div>
+            <span>Opening unit price</span>
+            <strong>
+              {typeof opening === "number" ? price(opening) : "—"}
+            </strong>
+          </div>
+          <div>
+            <span>Current supplier offer</span>
+            <strong>{state?.price != null ? price(state.price) : "—"}</strong>
+          </div>
+          <div>
+            <span>Standing total cost</span>
+            <strong>{state?.cost != null ? money(state.cost) : "—"}</strong>
+          </div>
+        </div>
+        <OfferHistory entries={entries} />
+        <div className="transcript-heading">
+          <h3>Conversation & decision trail</h3>
+          <span>Through step {index}</span>
+        </div>
+        <p className="transcript-note">
+          Original test emails and recorded analyst / policy notes. Model
+          responses are scripted fixtures; future steps stay hidden.
+        </p>
+        {!entries.length && (
+          <div className="thread-empty">
+            <Icon name="writer" size={30} />
+            <h3>No emails yet</h3>
+            <p>
+              Advance to the opening quote to follow this supplier's
+              negotiation.
+            </p>
+          </div>
+        )}
+        <div className="thread-transcript">
+          {entries.map((entry) => (
+            <ThreadRecord
+              key={`${entry.step}-${entry.kind}`}
+              entry={entry}
+              sid={sid}
+            />
+          ))}
+        </div>
+      </div>
+      <footer className="thread-dialog-footer">
+        <button
+          className="thread-nav"
+          disabled={!previous}
+          onClick={() => previous && advance(previous.step)}
+        >
+          <Icon name="back" size={16} /> Previous event
+        </button>
+        <button className="thread-play" onClick={onToggle}>
+          <Icon name={playing ? "pause" : "play"} size={15} />
+          {playing
+            ? "Pause thread"
+            : index === events.length
+              ? "Replay thread"
+              : "Play thread"}
+        </button>
+        {!following && (
+          <button className="thread-nav" onClick={follow}>
+            Latest ↓
+          </button>
+        )}
+        <button
+          className="thread-nav next-thread"
+          disabled={!next}
+          onClick={() => next && advance(next.step)}
+        >
+          Next thread event <Icon name="arrow" size={16} />
+        </button>
+      </footer>
+    </dialog>
   );
 }

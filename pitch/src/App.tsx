@@ -1,265 +1,349 @@
-// The monitor: one fixed 1920 x 1080 stage scaled to the screen. → or the clicker steps the
-// replay, a click on a node inspects it, Esc returns to the step, F toggles fullscreen.
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
-import { clock, money, pct, replay, snapshot, type Sid, type Snapshot } from "./replay";
-import { NODE_X, Schematic } from "./Schematic";
-import { type Focus, nodeView, type Step, steps, type View } from "./steps";
-import { Body, eyebrow, TABBED } from "./views";
-
-function useScale() {
-  const [scale, setScale] = useState(1);
-  useLayoutEffect(() => {
-    const fit = () => setScale(Math.min(window.innerWidth / 1920, window.innerHeight / 1080));
-    fit();
-    window.addEventListener("resize", fit);
-    return () => window.removeEventListener("resize", fit);
-  }, []);
-  return scale;
-}
+import { useCallback, useEffect, useState } from "react";
+import {
+  events,
+  eventDelay,
+  initialStep,
+  replay,
+  playbackSeconds,
+  type Stage,
+} from "./replay";
+import { Icon, Progress, Schematic } from "./Schematic";
+import {
+  Activity,
+  Inspector,
+  RunLog,
+  RunPanel,
+  ThreadInspector,
+  DealSummary,
+} from "./views";
 
 export default function App() {
-  const scale = useScale();
-  const [index, setIndex] = useState(() => Math.max(0, Math.min(steps.length - 1, Number(new URLSearchParams(location.search).get("step")) || 0)));
-  const [picked, setPicked] = useState<Focus | null>(null); // a node clicked: inspect it
-  const step = steps[index];
-  const snap = useMemo(() => snapshot(step.cut), [step.cut]);
-  const focus = picked ?? step.focus;
-  const view: View = picked ? nodeView[picked] : step.view;
-  const edges = picked ? [] : step.edges;
+  const [index, setIndex] = useState(() => initialStep(location.search));
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1);
+  const [tab, setTab] = useState<"pipeline" | "log">("pipeline");
+  const [selected, setSelected] = useState<Stage | null>(null);
+  const [thread, setThread] = useState<string | null>(null);
+  const [fullscreenError, setFullscreenError] = useState("");
+  const complete = index === events.length;
+  const jump = useCallback((value: number) => {
+    setPlaying(false);
+    setIndex(Math.max(0, Math.min(events.length, value)));
+  }, []);
+  const toggle = useCallback(() => {
+    if (index === events.length) setIndex(0);
+    setPlaying((value) => !value);
+  }, [index]);
+  const inspect = (id: Stage) => {
+    setPlaying(false);
+    setThread(null);
+    setSelected(id);
+  };
+  const fullscreen = useCallback(async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+      setFullscreenError("");
+    } catch {
+      setFullscreenError("Full screen is unavailable in this browser.");
+    }
+  }, []);
 
   useEffect(() => {
-    const go = (d: number) => {
-      setPicked(null);
-      setIndex((i) => Math.max(0, Math.min(steps.length - 1, i + d)));
-    };
+    if (!playing || complete || selected) return;
+    const timer = window.setTimeout(
+      () => setIndex((value) => Math.min(events.length, value + 1)),
+      eventDelay(events[index - 1]) / speed,
+    );
+    return () => window.clearTimeout(timer);
+  }, [playing, complete, selected, index, speed]);
+  useEffect(() => {
+    if (complete) setPlaying(false);
+  }, [complete]);
+  useEffect(() => {
+    const url = new URL(location.href);
+    if (index) url.searchParams.set("step", String(index));
+    else url.searchParams.delete("step");
+    history.replaceState(null, "", url);
+  }, [index]);
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) {
+      if (
+        selected ||
+        thread ||
+        e.altKey ||
+        e.ctrlKey ||
+        e.metaKey ||
+        (e.target instanceof HTMLElement &&
+          e.target.closest(
+            "input, select, textarea, button, a, [contenteditable]",
+          ))
+      )
+        return;
+      if (
+        [
+          " ",
+          "ArrowRight",
+          "ArrowLeft",
+          "Home",
+          "End",
+          "PageDown",
+          "PageUp",
+        ].includes(e.key)
+      )
         e.preventDefault();
-        go(1);
-      } else if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) {
-        e.preventDefault();
-        go(-1);
-      } else if (e.key === "Home") go(-steps.length);
-      else if (e.key === "End") go(steps.length);
-      else if (e.key === "Escape") setPicked(null);
-      else if (e.key === "f" || e.key === "F") {
-        if (document.fullscreenElement) document.exitFullscreen();
-        else document.documentElement.requestFullscreen();
-      }
+      if (e.key === " ") toggle();
+      if (["ArrowRight", "PageDown"].includes(e.key)) jump(index + 1);
+      if (["ArrowLeft", "PageUp"].includes(e.key)) jump(index - 1);
+      if (e.key === "Home") jump(0);
+      if (e.key === "End") jump(events.length);
+      if (e.key.toLowerCase() === "f") void fullscreen();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [index, jump, selected, thread, toggle, fullscreen]);
 
   return (
-    <div className="viewport">
-      <div className="stage" style={{ transform: `translate(-50%, -50%) scale(${scale})` }}>
-        <TopBar snap={snap} />
-        <Schematic snap={snap} focus={focus} edges={edges} onSelect={(f) => setPicked(f === step.focus ? null : f)} />
-        <Inspector step={step} view={view} focus={focus} snap={snap} picked={picked !== null} />
-        <Timeline index={index} onJump={(i) => (setPicked(null), setIndex(i))} />
-      </div>
+    <div className="app-shell">
+      <header className="topbar">
+        <a href="./" className="brand" aria-label="ProcureCabana home">
+          <span className="brand-mark">
+            <span />
+            <span />
+            <span />
+            <span />
+          </span>
+          <span>
+            <strong>
+              ProcureCabana<span className="brand-period">.</span>
+            </strong>
+            <small>HOLLERAU PUMPENWERKE</small>
+          </span>
+        </a>
+        <div className="header-right">
+          <span className="environment">
+            <span className="status-dot" /> Local test environment
+          </span>
+          <span className="header-divider" />
+          <button
+            className="icon-button"
+            onClick={() => void fullscreen()}
+            aria-label="Toggle full screen"
+            title="Full screen (F)"
+          >
+            <Icon name="expand" />
+          </button>
+        </div>
+      </header>
+      <main>
+        <h1 className="sr-only">ProcureCabana negotiation monitor</h1>
+        <DealSummary index={index} />
+        <div className="workspace workspace-live">
+          <section
+            className="pipeline-panel"
+            aria-label="Agent architecture and test playback"
+          >
+            <div className="board-toolbar">
+              <div
+                className="view-tabs"
+                role="tablist"
+                aria-label="Monitor view"
+              >
+                <button
+                  id="pipeline-tab"
+                  role="tab"
+                  aria-selected={tab === "pipeline"}
+                  aria-controls="monitor-content"
+                  tabIndex={tab === "pipeline" ? 0 : -1}
+                  className={tab === "pipeline" ? "selected" : ""}
+                  onClick={() => setTab("pipeline")}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowRight") {
+                      setTab("log");
+                      document.getElementById("log-tab")?.focus();
+                    }
+                  }}
+                >
+                  Pipeline
+                </button>
+                <button
+                  id="log-tab"
+                  role="tab"
+                  aria-selected={tab === "log"}
+                  aria-controls="monitor-content"
+                  tabIndex={tab === "log" ? 0 : -1}
+                  className={tab === "log" ? "selected" : ""}
+                  onClick={() => setTab("log")}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowLeft") {
+                      setTab("pipeline");
+                      document.getElementById("pipeline-tab")?.focus();
+                    }
+                  }}
+                >
+                  Run log <span>{index}</span>
+                </button>
+              </div>
+              <span
+                className={`run-status ${playing ? "is-running" : complete ? "is-complete" : ""}`}
+              >
+                <span className="status-dot" />
+                {complete
+                  ? "Complete"
+                  : playing
+                    ? "Running"
+                    : index
+                      ? "Paused"
+                      : "Ready to run"}
+              </span>
+            </div>
+            <div
+              id="monitor-content"
+              role="tabpanel"
+              aria-labelledby={tab === "pipeline" ? "pipeline-tab" : "log-tab"}
+            >
+              {tab === "pipeline" ? (
+                <Schematic index={index} playing={playing} onSelect={inspect} />
+              ) : (
+                <RunLog index={index} onJump={jump} />
+              )}
+            </div>
+            <Activity index={index} onInspect={inspect} />
+          </section>
+          <RunPanel
+            index={index}
+            playing={playing}
+            onOpenThread={(sid) => {
+              setSelected(null);
+              setThread(sid);
+            }}
+          />
+        </div>
+        <div className="workspace-caption">
+          <span>
+            <Icon name="close" size={14} /> Bounded model output. Deterministic
+            fallback at every stage.
+          </span>
+          <span>
+            Test trace <code>{replay.id}</code>
+          </span>
+        </div>
+      </main>
+      <footer className="playback">
+        <Progress index={index} />
+        <div className="playback-inner">
+          <div className="playback-primary">
+            <button className="play-button" onClick={toggle}>
+              <Icon
+                name={playing ? "pause" : complete ? "reset" : "play"}
+                size={17}
+              />
+              {playing
+                ? "Pause run"
+                : complete
+                  ? "Replay test"
+                  : index
+                    ? "Resume run"
+                    : "Start test run"}
+            </button>
+            <button
+              className="icon-button reset-button"
+              aria-label="Reset test run"
+              title="Reset test run"
+              onClick={() => jump(0)}
+              disabled={index === 0 && !playing}
+            >
+              <Icon name="reset" size={19} />
+            </button>
+          </div>
+          <div className="playback-position">
+            <div className="playback-label">
+              <strong>
+                {complete
+                  ? "Test run complete"
+                  : index
+                    ? events[index - 1].title
+                    : `${replay.case.round_limit} rounds · about ${playbackSeconds} seconds`}
+              </strong>
+              <span>
+                {String(index).padStart(2, "0")} / {events.length} steps
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max={events.length}
+              value={index}
+              aria-label="Test run step"
+              aria-valuetext={
+                index
+                  ? `Step ${index}: ${events[index - 1].title}`
+                  : "Ready to run"
+              }
+              onChange={(e) => jump(Number(e.target.value))}
+            />
+          </div>
+          <div className="playback-secondary">
+            <button
+              className="icon-button"
+              aria-label="Previous step"
+              title="Previous step (←)"
+              disabled={index === 0}
+              onClick={() => jump(index - 1)}
+            >
+              <Icon name="back" size={18} />
+            </button>
+            <button
+              className="icon-button"
+              aria-label="Next step"
+              title="Next step (→)"
+              disabled={complete}
+              onClick={() => jump(index + 1)}
+            >
+              <Icon name="next" size={18} />
+            </button>
+            <span className="control-divider" />
+            <label className="speed-label">
+              <span className="sr-only">Playback speed</span>
+              <select
+                aria-label="Playback speed"
+                value={speed}
+                onChange={(e) => setSpeed(Number(e.target.value))}
+              >
+                <option value={0.5}>0.5× speed</option>
+                <option value={1}>1× speed</option>
+                <option value={2}>2× speed</option>
+                <option value={4}>4× speed</option>
+              </select>
+            </label>
+            <span className="keyboard-hint">
+              <kbd>Space</kbd> to play
+            </span>
+          </div>
+        </div>
+        {fullscreenError && (
+          <p className="fullscreen-error" role="status">
+            {fullscreenError}
+          </p>
+        )}
+      </footer>
+      {thread && (
+        <ThreadInspector
+          sid={thread}
+          index={index}
+          playing={playing}
+          onToggle={toggle}
+          onClose={() => setThread(null)}
+          onJump={jump}
+        />
+      )}
+      {selected && (
+        <Inspector
+          selected={selected}
+          index={index}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </div>
   );
 }
-
-// ------------------------------------------------------------------ top bar
-
-function TopBar({ snap }: { snap: Snapshot }) {
-  const k = replay.case;
-  const now = steps.findIndex((s) => s.cut === snap.cut);
-  const trend = steps.map((s) => snapshot(s.cut).best);
-  const must = k.must_haves.find((m) => m.field === "lead_time_days");
-  return (
-    <header className="topbar">
-      <div className="brand">
-        <svg width={40} height={40} viewBox="0 0 40 40" aria-hidden>
-          <rect x={2} y={2} width={36} height={36} rx={9} fill="none" stroke="var(--ink)" strokeWidth={1.8} strokeDasharray="4 3.2" />
-          <circle cx={13} cy={15} r={3.4} fill="var(--ink)" />
-          <circle cx={27} cy={15} r={3.4} fill="var(--ink)" />
-          <polygon points="20,21 25,24 25,30 20,33 15,30 15,24" fill="var(--signal)" />
-        </svg>
-        <div>
-          <div className="brand-name">Purchasing team</div>
-          <div className="eyebrow" style={{ fontSize: 13 }}>
-            Hollerau Pumpenwerke · monitor
-          </div>
-        </div>
-      </div>
-      <div className="case">
-        <span className="case-id">{k.id}</span>
-        <div style={{ minWidth: 0 }}>
-          <div className="case-title">{k.title}</div>
-          <div className="case-meta">
-            {`${replay.suppliers.length} suppliers · ${k.need_per_year.toLocaleString("en-US")} a year · ${k.horizon_years * 12} months${must ? ` · lead time ≤ ${must.value} days` : ""}`}
-          </div>
-        </div>
-      </div>
-      <div className="kpi">
-        <div className="eyebrow">Best offer · total cost</div>
-        <div className={`kpi-value ${snap.best === null ? "empty" : ""}`}>{snap.best !== null ? money(snap.best) : "no offer yet"}</div>
-        <div className="kpi-side">
-          <Spark values={trend} now={now} />
-          <div className="kpi-delta">
-            {snap.best === null ? "" : snap.best < replay.close.c_open ? `${pct(snap.best / replay.close.c_open - 1)} vs. best quote` : "best quote"}
-          </div>
-        </div>
-      </div>
-      <div className="session">
-        <div className="eyebrow">
-          <span className="replay-dot" />
-          {`Replay · session ${replay.session.id.slice(0, 8)}`}
-        </div>
-        <div className="clock">{clock(snap.t)}</div>
-      </div>
-    </header>
-  );
-}
-
-function Spark({ values, now }: { values: (number | null)[]; now: number }) {
-  // the scale covers the whole replay, so it never jumps; only the past is drawn
-  const W = 132;
-  const H = 30;
-  const finite = values.filter((v): v is number => v !== null);
-  const lo = Math.min(...finite);
-  const hi = Math.max(...finite);
-  const x = (i: number) => (i / (values.length - 1)) * W;
-  const y = (v: number) => 3 + ((hi - v) / (hi - lo || 1)) * (H - 6);
-  const pts = values.flatMap((v, i) => (v !== null && i <= now ? [`${x(i).toFixed(1)},${y(v).toFixed(1)}`] : []));
-  const cur = values[now];
-  return (
-    <svg width={W} height={H} aria-hidden>
-      <line x1={0} x2={W} y1={H - 1} y2={H - 1} stroke="var(--rule)" strokeWidth={1} />
-      <polyline points={pts.join(" ")} fill="none" stroke="var(--ink-2)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-      {cur !== null && cur !== undefined && <circle cx={x(now)} cy={y(cur)} r={4.5} fill="var(--signal)" stroke="var(--canvas)" strokeWidth={2} />}
-    </svg>
-  );
-}
-
-// ------------------------------------------------------------------ inspector
-
-function Inspector({ step, view, focus, snap, picked }: { step: Step; view: View; focus: Focus; snap: Snapshot; picked: boolean }) {
-  const reduce = useReducedMotion();
-  const tabbed = TABBED.includes(view);
-  const [sid, setSid] = useState<Sid>(step.supplier ?? replay.close.supplier);
-  useEffect(() => setSid(step.supplier ?? replay.close.supplier), [step.supplier, view]);
-  const headline = picked ? nodeHeadline(focus) : step.headline;
-  const key = `${view}-${step.key}-${picked}`;
-  return (
-    <section className="inspector">
-      <motion.div
-        className="notch"
-        initial={false}
-        animate={{ x: NODE_X[focus] - 48 }}
-        transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 32 }}
-        style={{ left: 48 }}
-      />
-      <div className="ins-head">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={key}
-            className="ins-title"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: reduce ? 0 : 0.2, ease: [0.2, 0.7, 0.2, 1] }}
-          >
-            <div className="eyebrow">{eyebrow(view, snap)}</div>
-            <div className="headline">{headline}</div>
-          </motion.div>
-        </AnimatePresence>
-        {tabbed && (
-          <div className="tabs" role="tablist">
-            {replay.suppliers.map((s) => (
-              <button key={s.id} role="tab" aria-selected={s.id === sid} className={`tab ${s.id === sid ? "on" : ""}`} onClick={() => setSid(s.id)}>
-                {s.short}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="ins-body">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={`${key}-${sid}`}
-            style={{ position: "absolute", inset: 0 }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: reduce ? 0 : 0.18 }}
-          >
-            <Body view={view} snap={snap} sid={sid} />
-          </motion.div>
-        </AnimatePresence>
-      </div>
-    </section>
-  );
-}
-
-const NODE_HEADLINE: Record<Focus, string> = {
-  team: "One case, one purchasing team",
-  records: "Everything the research team reads",
-  research: "Four specialists read our records on each supplier",
-  rehearsal: "Role-played suppliers, demo bids in code",
-  negotiator: "Code sets every price",
-  analyst: "The analyst reads every supplier e-mail",
-  writer: "A model writes the words, code every figure",
-  debrief: "One lesson for the next case like this",
-  suppliers: "Where each supplier stands",
-};
-const nodeHeadline = (f: Focus) => NODE_HEADLINE[f];
-
-// ------------------------------------------------------------------ timeline
-
-function Timeline({ index, onJump }: { index: number; onJump: (i: number) => void }) {
-  const W = 1824;
-  const gap = W / (steps.length - 1);
-  const x = (i: number) => i * gap;
-  const phases = steps.reduce<{ phase: string; from: number; to: number }[]>((acc, s, i) => {
-    const last = acc.at(-1);
-    if (last && last.phase === s.phase) last.to = i;
-    else acc.push({ phase: s.phase, from: i, to: i });
-    return acc;
-  }, []);
-  return (
-    <footer className="timeline">
-      <svg width={W} height={112} viewBox={`0 0 ${W} 112`}>
-        {phases.map((p) => (
-          <g key={p.phase}>
-            <line className="phase-rule" x1={x(p.from) - (p.from ? gap / 2 - 12 : 0)} x2={x(p.to) + (p.to < steps.length - 1 ? gap / 2 - 12 : 0)} y1={24} y2={24} />
-            <text className="phase" x={x(p.from) - (p.from ? gap / 2 - 12 : 0)} y={16}>
-              {p.phase.toUpperCase()}
-            </text>
-          </g>
-        ))}
-        <line className="rail" x1={0} x2={W} y1={52} y2={52} />
-        <motion.line
-          className="rail-done"
-          x1={0}
-          y1={52}
-          y2={52}
-          initial={false}
-          animate={{ x2: x(index) }}
-          transition={{ type: "spring", stiffness: 220, damping: 32 }}
-        />
-        {steps.map((s, i) => {
-          const t = snapshot(s.cut).t;
-          return (
-            <g key={s.key} className={`step ${i < index ? "past" : i === index ? "now" : ""}`} onClick={() => onJump(i)}>
-              <rect x={x(i) - gap / 2} y={30} width={gap} height={80} fill="transparent" />
-              <circle className="step-dot" cx={x(i)} cy={52} r={i === index ? 9 : 6} />
-              <text className="step-label" x={x(i)} y={84} textAnchor={i === 0 ? "start" : i === steps.length - 1 ? "end" : "middle"}>
-                {s.label.toUpperCase()}
-              </text>
-              <text className="step-time" x={x(i)} y={102} textAnchor={i === 0 ? "start" : i === steps.length - 1 ? "end" : "middle"}>
-                {s.key === "final" ? "" : clock(t)}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-    </footer>
-  );
-}
-
