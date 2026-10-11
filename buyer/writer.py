@@ -1,6 +1,8 @@
 """E-mails from templates: every figure and ID comes from code, the wording stays polite and
 factual. Never mentions urgency, a budget, our alternative's absence or our target."""
 
+import json
+
 from arena_kit.cost import closing_terms
 from arena_kit.play import latest
 
@@ -104,7 +106,7 @@ OWNERS = {
 }
 
 
-def brief(case, prof, last_body, facts, tone, question_allowed, insight=(), evidence=None):
+def brief(case, prof, last_body, facts, tone, question_allowed, insight=(), evidence=None, proposed_sheets=()):
     """What the model needs for the paragraph: who the supplier is, what it wrote, what we may say.
     `insight`: the research team's and the live analyst's notes on this supplier."""
     who = OWNERS.get(prof.get("owner_type"), "a supplier")
@@ -121,6 +123,12 @@ def brief(case, prof, last_body, facts, tone, question_allowed, insight=(), evid
         f"TONE: {tone}",
         f"QUESTION ALLOWED: {'yes' if question_allowed else 'no'}",
     ]
+    out.append("EXACT OUTGOING PROPOSALS (not accepted): " + json.dumps(proposed_sheets, ensure_ascii=False))
+    out.append(
+        "Commercial assertions belong to the code-written claims and proposals below your paragraph. "
+        "Do not claim a competing bid exists, or accept, confirm or promise any commercial term in your prose. "
+        "Background notes and supplier statements are not approved facts."
+    )
     if evidence is not None:
         out.append(context.prompt(evidence))
     return "\n".join(out)

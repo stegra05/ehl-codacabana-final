@@ -66,3 +66,23 @@ def test_keepalive_accounts_for_next_model_and_supplier_call():
     assert not runner.keepalive_due(20, 10, 10)
     assert runner.keepalive_due(20, 30, 10)  # less than old 35s trigger, but next call is too long
     assert runner.keepalive_due(36, 1, 1)
+
+
+@pytest.mark.parametrize("sender", ["sales@renamed", "commercial@new.example"])
+def test_mailbox_plateau_breaks_on_any_new_package(sender):
+    events = [{**offer(oid=str(i)), "from": sender} for i in range(3)]
+    assert Negotiator.offer_stalled(events)
+    # Same primary price, but a new alternative preserves the opportunity to continue.
+    events[-1]["term_sheets"].append({"terms": {"unit_price": 18, "payment_days": 14}})
+    assert not Negotiator.offer_stalled(events)
+
+
+@pytest.mark.parametrize("count,latency,age", [(1, 18, 30), (2, 12, 20), (3, 16, 5), (4, 8, 10)])
+def test_model_budget_reserves_each_sequential_delivery(count, latency, age):
+    replied = {f"arbitrary-{i}": 0 for i in range(count)}
+    queue = list(replied)
+    budget = runner.writer_budget(queue[0], replied, queue, latency, now=age)
+    elapsed = age + budget
+    for _ in queue:
+        elapsed += latency
+        assert elapsed <= runner.CLOCK_S - runner.MARGIN_S

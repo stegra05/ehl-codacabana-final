@@ -40,9 +40,9 @@ def keepalive_due(age, send_s, writer_s):
 def writer_budget(sid, replied, live, send_s, now):
     """Seconds the model may take on the message to `sid`: its own clock must not run out, and
     every other live thread must still get a message once this send returns."""
-    left = [CLOCK_S - MARGIN_S - (now - replied[sid])]
-    left += [CLOCK_S - MARGIN_S - send_s - (now - replied[o]) for o in live if o != sid]
-    return min(llm.TIMEOUT_S, *left)
+    queue = [sid] + sorted((s for s in live if s != sid), key=replied.get)
+    left = [CLOCK_S - MARGIN_S - (now - replied[s]) - (i + 1) * send_s for i, s in enumerate(queue)]
+    return max(0.0, min(llm.TIMEOUT_S, *left))
 
 
 def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True, learn=True):

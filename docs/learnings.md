@@ -321,3 +321,29 @@ The score gain does not establish the value of either new guard: upstream code, 
 model variation also changed. Keep the candidate in draft pending separate evaluation;
 no extra hosted runs or merge were performed. Local validation: 86 tests, Ruff lint/format,
 and twelve supplier openings with real data, all positive prices and satisfied must-haves.
+
+
+## Session contract and deadline repair, 11 October
+
+The preceding ten-session batch (`analysis/progress-practice-evaluation.json`) had a
+mean of 0.794930, but its sender filter dropped mailbox-form supplier history.
+Replay of the saved P03 thread retained only buyer messages before this repair;
+afterwards it retains all 15 delivered messages, including eight supplier replies.
+Supplier mailboxes and simulator roles now share one role reader with raw provenance.
+
+The runner reserves measured send latency for every queued live thread and subtracts
+local preparation time from the model budget. This reduces avoidable deadline risk;
+an unexpectedly slow remote call can still exceed the estimate. Writer prompts receive
+exact outgoing packages, model-prepared rebuttals no longer count as verified facts,
+and the paragraph guard rejects competing-bid claims and acceptance/indexation wording.
+Binding terms and cited claims remain code-written. The text guard is conservative,
+not a proof of semantic correctness for every possible paraphrase.
+
+Plateau detection compares entire packages, preserves new alternatives, and only
+stops when no new claim or feasible trade remains. Repeated prices alone are not a
+proven floor. No case IDs, supplier IDs, score-derived thresholds or anchor changes
+were added. Synthetic tests vary mailbox names, package alternatives and send latency.
+The next evaluation is precommitted to exactly ten hosted practice sessions using
+gpt-6-luna, compared with the preceding batch on score, deals and deadline misses.
+These practice cases are reused, not a held-out performance evaluation; combined
+changes and model variation prevent attributing a score delta to any single repair.

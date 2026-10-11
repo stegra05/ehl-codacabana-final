@@ -24,7 +24,9 @@ MIN_S = 2.0  # less time than this left on the clocks: the template, no model ca
 POOL = ThreadPoolExecutor(max_workers=96, thread_name_prefix="model")  # 10 cases x their subagents
 FORBIDDEN = re.compile(
     r"\d|\b(?:idx|quote|offer|sc|qn|po|cost|fc|news|doc|ctr):|urgent|urgency|deadline|budget|no alternative|"
-    r"walk away|other options|last chance|desperate|must close|time pressure|target price",
+    r"walk away|other options|last chance|desperate|must close|time pressure|target price|"
+    r"competitor|competing|rival|quotation|competing quote|\bindex(?:\w*|-linked)\b|deadband|"
+    r"fixed.price|\b(?:accept|agree|confirm|commit|promise|guarantee)\w*\b",
     re.I,
 )
 
@@ -38,7 +40,10 @@ In it:
 - acknowledge its situation where the notes give one (for example cash needs, full capacity, rising
   costs, a long relationship), sincerely and briefly;
 - if it asks for something we cannot give, say so kindly and point to what we do offer;
-- ask one short question only if QUESTION ALLOWED is yes.
+- ask one short question only if QUESTION ALLOWED is yes;
+- leave assertions about competing offers and commercial commitments entirely to the code-written
+  claims and exact proposals appended below. Do not say we accept, agree, confirm or commit to terms.
+  Do not describe fixed pricing or indexation yourself; the exact proposal provides that wording.
 
 Never write any number, price, percentage, date, quantity or data ID (code adds the figures). Never
 mention urgency, deadlines, a budget, our alternatives or the lack of them, a target price, or that

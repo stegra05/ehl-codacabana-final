@@ -65,3 +65,27 @@ def test_existing_model_calls_receive_history_without_extra_call():
     brief = writer.brief(case, {}, "Our offer stands.", [], "warm", False, evidence=state)
     assert "We refused the earlier payment request." in brief
     assert "unverified" in brief and "not accepted" in brief
+
+
+def test_mailbox_senders_preserve_history_and_raw_provenance():
+    case = load_cases()["case:S01"]
+    for sender in ("sales@renamed", "account.manager@example.org", "supplier"):
+        events = [
+            {"from": sender, "message_id": "m1", "body": "Payment request refused."},
+            {"from": "buyer", "body": "Here is a different proposal."},
+            {"from": sender, "message_id": "m2", "body": "The new delivery time works."},
+        ]
+        state = context.snapshot(case, events)
+        assert [e["speaker"] for e in state["delivered_history"]] == ["supplier", "buyer", "supplier"]
+        assert state["delivered_history"][0]["sender"] == sender
+        assert "Payment request refused" in context.prompt(state)
+        assert context.speaker({"from": "arena"}) is None
+
+
+def test_writer_receives_exact_current_proposal_not_a_team_interpretation():
+    case = load_cases()["case:S01"]
+    sheets = [{"unit_price": 12, "index_clause": None}]
+    brief = writer.brief(case, {}, "We only offer indexed prices.", [], "warm", False, proposed_sheets=sheets)
+    assert json.dumps(sheets) in brief
+    assert "not accepted" in brief
+    assert "not approved facts" in brief

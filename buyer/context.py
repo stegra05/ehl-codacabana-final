@@ -15,17 +15,28 @@ RULES = (
 )
 
 
+def speaker(event):
+    """Arena buyer tags, simulator roles and supplier mailbox senders share one role contract."""
+    sender = event.get("from")
+    if sender in ("buyer", "supplier"):
+        return sender
+    if isinstance(sender, str) and "@" in sender:
+        return "supplier"
+    return None
+
+
 def snapshot(case, events):
     """Keep message provenance and exact sheets; excerpts are explicitly incomplete, never summaries."""
     history = []
     for index, event in enumerate(events):
-        if event.get("from") not in ("buyer", "supplier"):
+        if speaker(event) is None:
             continue
         body = event.get("body") or ""
         history.append(
             {
                 "source": {"index": index, "message_id": event.get("message_id"), "round": event.get("round")},
-                "speaker": event["from"],
+                "speaker": speaker(event),
+                "sender": event["from"],
                 "text_excerpt": body[:800],
                 "text_truncated": len(body) > 800,
                 "sheets": copy.deepcopy(event.get("term_sheets") or []),

@@ -118,6 +118,7 @@ class Negotiator:
         self.used = set()  # claim IDs cited in this case (a rival quote: per supplier)
         self.notes = []  # what we decided, for the log
         self.writer_s = llm.TIMEOUT_S  # wall clock the model may take on the move being built
+        self.move_deadline = time.monotonic() + self.writer_s
 
     # -- setup -------------------------------------------------------------------------------
     def setup(self, sid, events):
@@ -384,26 +385,15 @@ class Negotiator:
         self.note(s.sid, "analyst", seconds=round(time.monotonic() - t0, 1), **seen)
 
     def team_facts(self, s, first, extra):
-        """What the team adds to the writer's facts: our prepared answer to the argument its e-mail
-        made, a weak point to press in the opening, the trades on offer, the mood to meet."""
+        """Tone and available package choices only; model hypotheses never become approved facts."""
         out = []
-        rebuttals = s.playbook.get("rebuttals") or []
-        if s.argument and s.argument <= len(rebuttals) and rebuttals[s.argument - 1]:
-            out.append(
-                f'they argue: "{s.playbook["arguments"][s.argument - 1]}" Our answer, in your own words: '
-                f"{rebuttals[s.argument - 1]}"
-            )
-        if first and s.playbook.get("press"):
-            out.append(f"a point to raise politely, once: {s.playbook['press'][0]}")
         if extra:
-            why = "; ".join(t["why"] for t in [*s.trades, *s.active_trades] if t.get("why"))
             out.append(
                 "our proposal lists alternative packages after the first one: say they are free to choose the "
-                f"one that suits them best ({why})"
+                "one that suits them best"
             )
         elif s.active_trades:
-            why = "; ".join(t["why"] for t in s.active_trades if t.get("why"))
-            out.append(f"we adjusted the package in response to {why}; explain the commercial terms clearly")
+            out.append("our proposed package follows below; do not describe it as already accepted")
         if s.mood == "irritated":
             out.append("they sound irritated: acknowledge it sincerely before anything else")
         elif s.mood == "pressured":
@@ -455,6 +445,7 @@ class Negotiator:
         s, events = self.sides[sid], threads[sid]
         s.evidence = context.snapshot(self.case, events)
         self.writer_s = writer_s
+        self.move_deadline = time.monotonic() + max(0, writer_s)
         s.prev_state = s.state
         last = latest(events)
         status = last.get("status")
@@ -644,7 +635,7 @@ class Negotiator:
         can change on each reply, so only terms are compared. No text-based refusal inference.
         """
         replies = [e for e in events if e.get("from") != "buyer"][-3:]
-        if len(replies) < 3 or any(e.get("from") != "supplier" for e in replies):
+        if len(replies) < 3 or any(context.speaker(e) != "supplier" for e in replies):
             return False
         packages = []
         for event in replies:
@@ -808,8 +799,9 @@ class Negotiator:
                 first,
                 [s.research, s.live],
                 evidence=context.snapshot(self.case, events),
+                proposed_sheets=sheets,
             ),
-            self.writer_s,
+            min(self.writer_s, max(0, self.move_deadline - time.monotonic())),
         )
         body = writer.email(
             self.case,

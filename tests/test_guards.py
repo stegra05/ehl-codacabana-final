@@ -135,8 +135,8 @@ def test_a_refused_close_decides_again_with_the_guards(dear, last):
 
 def test_writer_budget_leaves_time_for_every_live_clock():
     replied = {"a": 0.0, "b": 0.0, "c": 20.0}
-    # a: 25 s left; b: must still get a message after a 10 s send, 15 s; c: 35 s
-    assert runner.writer_budget("a", replied, ["a", "b", "c"], 10, now=30) == pytest.approx(15)
+    # Reserve one send per queued thread: a has 15 s, b 5 s, c 15 s for model work.
+    assert runner.writer_budget("a", replied, ["a", "b", "c"], 10, now=30) == pytest.approx(5)
     assert runner.writer_budget("a", replied, ["a"], 10, now=0) == llm.TIMEOUT_S  # capped
     assert runner.writer_budget("a", replied, ["a", "b"], 10, now=44) < llm.MIN_S  # no model
     assert runner.writer_budget("a", replied, ["a", "b"], 10, now=0) == llm.TIMEOUT_S
@@ -172,3 +172,16 @@ def test_a_bundle_has_no_should_cost():
     bundle = Negotiator(case).setup(sid, events)
     assert "full_cost" not in bundle.est
     assert bundle.target is None
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "We accept the indexed pricing arrangement.",
+        "Your price is above the competing quote.",
+        "We agree to a fixed price.",
+        "We are ready to proceed with index-linked pricing.",
+    ],
+)
+def test_writer_cannot_introduce_commercial_claims_or_acceptance(text):
+    assert llm.paragraph(lambda system, user: text, "context") is None
