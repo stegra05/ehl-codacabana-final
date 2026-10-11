@@ -55,3 +55,22 @@ read at runtime through the ID index.
 
 [agentic-approach.md](agentic-approach.md) is a proposal for a model-chosen tactic inside these
 boundaries; not implemented.
+
+### Delivered session evidence
+
+The analyst and writer receive a session evidence block in their existing calls. It is rebuilt
+from delivered thread messages on every move, including after a restart: exact sheets, cited
+references, raw claim feedback, message indexes and text excerpts (up to 800 characters, with an
+explicit truncation flag). It also carries the current supplier sheets and case constraints.
+Buyer proposals are distinct from supplier offers. Supplier statements and team interpretations
+remain unverified; contradictory statements are retained rather than resolved by a negation
+heuristic. Pending drafts are not delivered history. The existing economic policy, historical
+lesson retrieval and model call count are unchanged. This is a context experiment, not a claim
+of improved scores or reliable natural-language contradiction resolution.
+
+The alternative-price ceiling must start from a feasible positive price. Relationship charges
+make total cost nonmonotone below its minimum, and a zero-price evaluation can divide by zero.
+The ceiling search starts near the relationship-cost minimum when an estimate is available,
+then locates the upper feasible boundary. An infeasible ceiling ends concessions rather than
+emitting zero or raising a proposal above that ceiling. The final acceptance gate still checks
+the standing package independently.

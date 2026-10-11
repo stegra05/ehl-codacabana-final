@@ -22,7 +22,7 @@ import time
 from arena_kit.docs import standard_terms
 from arena_kit.play import ENDED, latest, live_threads, moves_left, standing
 
-from . import analyst, llm, writer
+from . import analyst, context, llm, writer
 from . import economics as eco
 from .claims import ClaimBank, rival_offer
 from .personas import profile, signals_in
@@ -100,6 +100,7 @@ class Side:
         self.trades = []  # terms the lead expects it to value: offered next to our opening sheet
         self.active_trades = []  # explicit supplier needs priced for the current move
         self.playbook = {}  # the demo bidding: its expected arguments, our answers, points to press
+        self.evidence = None  # rebuilt from delivered messages, not pending drafts
         self.live = ""  # the live analyst's notes on its last e-mail
         self.mood = None  # the live analyst on its last e-mail: the writer's mood
         self.tactic = None  # and our next move: steady | hold | argue
@@ -371,7 +372,9 @@ class Negotiator:
             return
         t0 = time.monotonic()
         arguments = s.playbook.get("arguments") or []
-        seen = analyst.read(self.complete, self.case, body, s.ours, s.theirs, arguments, self.writer_s / 2)
+        seen = analyst.read(
+            self.complete, self.case, body, s.ours, s.theirs, arguments, self.writer_s / 2, evidence=s.evidence
+        )
         self.writer_s -= time.monotonic() - t0
         if seen is None:
             return
@@ -450,6 +453,7 @@ class Negotiator:
         """The next message to this supplier: {"message": ...}, or None when the thread is done.
         `writer_s`: what the supplier clocks leave for the model paragraph."""
         s, events = self.sides[sid], threads[sid]
+        s.evidence = context.snapshot(self.case, events)
         self.writer_s = writer_s
         s.prev_state = s.state
         last = latest(events)
@@ -495,6 +499,10 @@ class Negotiator:
         if status in DONE or left <= 0:
             return self.finish(s, sheets, events, theirs, left)
         cap = eco.break_even(self.case, s.terms, s.std, s.est)
+        if cap is not None and (cap <= 0 or (s.ours and s.ours[-1] > cap)):
+            s.state = "done"
+            self.note(sid, "no_feasible_concession", cap=cap)
+            return None
         if s.ours and s.target and theirs <= s.target:
             # The supplier already offers at or below our estimated optimum. Let the close gate
             # evaluate its standing sheet instead of raising the price to our target.
@@ -766,7 +774,16 @@ class Negotiator:
         facts += writer.facts(self.case, s, claims, moved, statements, attachments, traded)
         para = llm.paragraph(
             self.complete,
-            writer.brief(self.case, s.prof, latest(events).get("body"), facts, tone, first, [s.research, s.live]),
+            writer.brief(
+                self.case,
+                s.prof,
+                latest(events).get("body"),
+                facts,
+                tone,
+                first,
+                [s.research, s.live],
+                evidence=context.snapshot(self.case, events),
+            ),
             self.writer_s,
         )
         body = writer.email(
