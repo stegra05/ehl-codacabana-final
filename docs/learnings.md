@@ -369,3 +369,15 @@ future non-price package; further score evaluation must retain that uncertainty.
 Validation: 106 tests passed, two skipped; lint and formatting passed. Nine new
 regression checks fail against baseline 109fe87 and pass with the changes. No
 anchors, concession rates, supplier IDs or historical best prices were tuned.
+
+Fresh candidate batch at `529ab8b`: all ten sessions closed autonomously, ten valid
+deals, zero timeout events. P05 `992047545593c408` closed at 0.821845 without recovery.
+Mean 0.773815 versus prior recovered 0.779599, a decline of 0.005784. P18 moved from
+0.688312 to 0.629510, accounting for almost all of the aggregate decline; its final
+package had a different price and index deadband. No score uplift is established.
+The model, timing and packages varied, so this is not a controlled causal estimate.
+All 84 paired simulator outcomes matched across original, freight, financing and
+renamed-ID inputs, with zero errors or invalid deals. Keep the reliability claim
+separate from score optimization; investigate package selection in a separate change.
+Evidence: `out/reliability-candidate-practice/20261011-081702/final-report.json` in
+the experiment workspace; case sessions are recorded in that batch's manifest.
