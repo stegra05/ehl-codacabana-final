@@ -1,9 +1,9 @@
 {
-  "id": "local-S02-short-4aa55f26b166",
+  "id": "local-S02-short-28557b2be975",
   "source": "arena-kit simulator",
   "model": "scripted fixtures",
-  "commit": "65ed9a5",
-  "fingerprint": "4aa55f26b166",
+  "commit": "03fcfe8",
+  "fingerprint": "28557b2be975",
   "sample_size": 1,
   "scenario": "S02 shortened to three rounds per supplier",
   "case": {
