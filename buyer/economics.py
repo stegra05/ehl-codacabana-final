@@ -36,6 +36,22 @@ def deal_cost(case, terms, std, est=None):
     return c if c < c_alt(case) else None
 
 
+def break_even(case, terms, std, est=None):
+    """The highest price at `terms` still cheaper than the alternative (C below C_alt by a cent of
+    price), or None when the case has no alternative. No sheet of ours goes above it: a deal there
+    would be refused at the close, and an agreement freezes the supplier's price."""
+    ceiling = c_alt(case)
+    if math.isinf(ceiling):
+        return None
+    lo, hi = 0.0, max(1.0, terms.get("unit_price") or 1.0) * 3
+    if not cost(case, at_price(terms, lo), std, est) < ceiling:
+        return 0.0
+    for _ in range(60):  # C rises with the price
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if cost(case, at_price(terms, mid), std, est) < ceiling else (lo, mid)
+    return round(math.floor(lo * 100) / 100 - 0.01, 2)
+
+
 def quoted_offer(case, terms, std=None):
     """An outgoing sheet with exactly the quoted effective package, never snapped terms."""
     effective = closing_terms(case, terms, std)
