@@ -131,6 +131,11 @@ class Reasoner(Negotiator):
         budget = self.writer_s * READ_SHARE
         t0 = time.monotonic()
         s.read = reader.read(self.complete, last.get("body"), budget)
+        if s.read.get("source") == "model":
+            # a trade rests on the supplier naming the lever: the patterns must see it too (the model read
+            # "Zahlungsziel 90 days net" in Werdenfels' own terms as a payment lever and we paid 14 days for it)
+            plain = reader.read_regex(last.get("body"))
+            s.read["levers"] = [f for f in s.read.get("levers") or [] if f in plain["levers"]]
         secs = round(time.monotonic() - t0, 1)
         self.writer_s = max(0.0, self.writer_s - secs)
         self.note(s.sid, "reader", source=s.read.get("source"), secs=secs, fallback=s.read.get("fallback"))
@@ -152,8 +157,10 @@ class Reasoner(Negotiator):
         out = []
 
         def add(oid, terms, price, note, claims=n):
-            price = round(min(max(price, lo if terms == s.terms else 0.0), hi if terms == s.terms else price), 2)
-            sheet = eco.at_price(terms, price)
+            if s.ours and terms == s.terms:  # the opening goes out as planned: the anchor, or the relationship target
+                price = min(max(price, lo), hi)
+            sheet = eco.at_price(terms, round(price, 2))
+            price = sheet["unit_price"]
             if not eco.must_haves_ok(case, sheet, s.std):
                 return
             c = eco.cost(case, sheet, s.std, s.est)

@@ -221,6 +221,26 @@ def test_the_model_choice_is_validated_and_a_bad_answer_takes_the_code_move():
     assert not any(n["what"] == "reason" and n["option"] != "step" for n in neg.notes)
 
 
+def test_a_lever_only_the_model_sees_is_not_traded():
+    """P18: the model read the supplier's own "Zahlungsziel 90 days net" as a payment lever; the patterns
+    did not. Without the patterns' agreement there is no trade option, and the opening is never clipped."""
+    terms_body = "Our terms: a price of EUR 5.30 per unit, Zahlungsziel 90 days net, a contract term of 36 months."
+
+    def complete(system, user):
+        if "OPTIONS" not in user:
+            return json.dumps({"asks": [], "levers": ["payment_days"], "counted": ["index"], "cash": True})
+        return json.dumps({"option": "trade:payment_days=14", "claims": 1, "reason": "x"})
+
+    case, neg, s, events = thread_after_counter(complete, body=terms_body)
+    neg.writer_s = 15.0
+    opening = events[1]["term_sheets"][0]["terms"]["unit_price"]
+    assert opening == s.anchor  # the opening went out at the anchor
+    move = neg.move("sup:S", {"sup:S": events})
+    assert move["message"]["term_sheets"][0]["terms"]["payment_days"] == s.terms["payment_days"]
+    assert s.levers == []
+    assert not any(n["what"] == "reason" and n["option"].startswith("trade") for n in neg.notes)
+
+
 def test_claims_the_supplier_dismissed_go_last_and_counted_kinds_first():
     case, neg, s, events = thread_after_counter(None)
     s.claims = [

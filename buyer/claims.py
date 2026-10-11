@@ -254,46 +254,28 @@ class ClaimBank:
                 uniq.append(c)
         return uniq
 
-    def scorecards(self, sid, quality, quarters=3):
-        """The latest quarters, newest first: each ID is a distinct argument (a supplier that moves
-        only on new data, Kalwisz, holds once the bank is empty). Quality: the ppm; else on-time
-        delivery. Older quarters rank below the latest."""
+    def scorecard(self, sid, quality):
+        """The latest scorecard. Quality: the ppm; else on-time delivery. One per supplier: the arena
+        counts its `sc` rows as one argument, so older quarters came back `duplicate` (P11), and so did
+        quality notifications after it ("we already took the quality issues into account")."""
         ids = self.ids(f"sc:{sid.split(':')[-1]}@")
         if not ids:
-            return []
-        out = []
-        for n, ref in enumerate(reversed(ids[-quarters:])):
-            f = self.fact(ref)
-            strength = 2 - 0.5 * n
-            if f is None:  # demo world: cite without a figure
-                text = f"We have reviewed your delivery performance in our supplier scorecard ({ref})."
-                out.append({"kind": "scorecard", "ids": [ref], "text": text, "strength": strength})
-                continue
-            quarter = f.get("quarter") or ref.split("@")[-1]
-            if quality:
-                if (f.get("ppm") or 0) < 1000:
-                    continue
-                text = f"Your deliveries ran at {f['ppm']} ppm in {quarter} ({ref})."
-            else:
-                if (f.get("otd_pct") or 100) >= 90:
-                    continue
-                text = f"Your on-time delivery was {f['otd_pct']}% in {quarter} ({ref})."
-            out.append({"kind": "scorecard", "ids": [ref], "text": text, "strength": strength})
-        return out
-
-    def quality_notes(self, part, sid, limit=2):
-        """Quality cases: the latest quality notifications on this part, each with its ppm (the
-        arena checks `qn` rows like scorecards)."""
-        out = []
-        for ref in reversed(self.ids("qn:")):
-            f = self.fact(ref)
-            if not f or f.get("supplier") != sid or f.get("part") != part or not f.get("ppm"):
-                continue
-            text = f"Our quality notification {ref} on this part recorded {f['ppm']} ppm."
-            out.append({"kind": "scorecard", "ids": [ref], "text": text, "strength": 1.5})
-            if len(out) >= limit:
-                break
-        return out
+            return None
+        ref = ids[-1]
+        f = self.fact(ref)
+        if f is None:  # demo world: cite without a figure
+            text = f"We have reviewed your delivery performance in our supplier scorecard ({ref})."
+            return {"kind": "scorecard", "ids": [ref], "text": text, "strength": 2}
+        quarter = f.get("quarter") or ref.split("@")[-1]
+        if quality:
+            if (f.get("ppm") or 0) < 1000:
+                return None
+            text = f"Your deliveries ran at {f['ppm']} ppm in {quarter} ({ref})."
+        else:
+            if (f.get("otd_pct") or 100) >= 90:
+                return None
+            text = f"Your on-time delivery was {f['otd_pct']}% in {quarter} ({ref})."
+        return {"kind": "scorecard", "ids": [ref], "text": text, "strength": 2}
 
     def payment_record(self, sid):
         """How we paid this supplier: (invoices paid, paid after the due date, days late on average).
@@ -343,15 +325,14 @@ class ClaimBank:
             out += self.rival_quote(part, sid, quote)
             if c := self.forecast(part):
                 forecasts.append(c)
-            if quality:
-                out += self.quality_notes(part, sid)
         if forecasts:  # one forecast per case: a second part's came back `duplicate` (P07)
             out.append(max(forecasts, key=lambda c: float(c["text"].split("up ")[1].split("%")[0])))
         if c := self.notice():
             out.append(c)
         out += self.signal_notes(sid)
         if single or quality:  # in a bundle the record "does not bear on this part" (P07)
-            out += self.scorecards(sid, quality)
+            if c := self.scorecard(sid, quality):
+                out.append(c)
         if self.foreign:
             out += self.demo_refs()
         seen, uniq = set(), []

@@ -216,6 +216,25 @@ against a frozen 4.94.
 
 ## Experiments, a log (`arena`)
 
+- 2026-10-11 **Reasoner v15 on practice, five cases in parallel, `gpt-6.1-sol`, paragraph at effort
+  high** (`logs/practice-v15-reasoner.log`; sessions `ee35b4671cad1c25`, `237a761baedb7462`,
+  `d7b83861a916ace4`, `2d83310d89423c0f`, `415af23564de6cc8`): P02 0.213 (best 0.735), P05 0.822
+  (0.828), P08 0.748 (0.670, a new best), P11 0.710 (0.710), P18 0.598 (0.688); mean 0.618 against
+  0.726. What happened: (1) P02: the reasoner's menu cut the opening from the relationship target
+  361.67 to 345.56, just under Nordmark's quote converted to the clause terms; Nordmark countered
+  351.05 with the clause, our closing sheet at 361.67 was answered "My call: hold" and the standing
+  351.05 was accepted; relationship charge 123,821. (2) P18: the model read Werdenfels' own
+  "Zahlungsziel 90 days net" as a payment lever, the patterns did not; the trade sent 14-day
+  payment with the clause and Werdenfels' path (5.5, 5.3, 5.2, final 5.1) was the same as at 45 or
+  90 days: payment cost 2,471 for nothing. (3) P11: the scorecard quarters `sc:70140@2026Q2`,
+  `@2026Q1` and the quality notifications came back `duplicate` ("we already took the quality
+  issues into account"): the arena counts a supplier's quality rows as one argument. (4) P08:
+  fixed sheet kept all the way, a counted claim in every round, forecast attached on its proof
+  ask: 5.40, 5.29, 5.22, final 5.17. (5) The paragraph at effort high took 7.7 to 13.1 s (14
+  calls), timed out 3 times and was skipped 8 times for lack of clock, all in the three-bidder
+  P05; no message was late. Changes after the run: the opening is never clipped, a lever counts
+  only when the model and the patterns both read it, one scorecard per supplier again.
+
 - 2026-10-11 **The reasoner (`--agent reasoner`, branch `julian/reasoner`), simulator and sandbox,
   no practice quota.** `gpt-6-luna` without reasoning effort: reader 0.9 s median and 1.8 s max,
   chooser 1.1 s median and 3.5 s max (82 decisions); at effort "low" the chooser took 3 to 15 s
