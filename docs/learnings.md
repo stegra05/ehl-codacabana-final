@@ -75,6 +75,11 @@ against a frozen 4.94.
   saw the counter drop below the old target and stepped on instead: 129.70 (0.990,
   `70aa14dd8bc30772`), 129.80 (0.987, `7a9c670ba7362973`), 129.50 (0.995, `1c9b55304adcb64f`);
   P02 361.67 (0.735) and P03 431.85 (0.930) unchanged in the same batch.
+- **The alternative as a ceiling.** On the simulator D02, P07 and P12 ended in walk-aways with the
+  scripted final 1 to 3 % above C_alt; capping our sheets at the break-even price and sending one
+  sheet there before a walk changes nothing there (the no-progress guard stops a repeated ceiling
+  sheet). Hosted practice alternatives sit 3 to 10 % above the deals, so the cap never fired: P04
+  4.94 (0.860, `run-d`), P07 5.41 (0.712), both inside their earlier bands.
 - Uncovered need costs `fallback_unit_price` plus the risk rate; coverage is
   `min(volume, need) x min(months / 12, horizon)`. Volume above the need is bought anyway; months
   beyond the horizon neither cost nor earn.
