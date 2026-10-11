@@ -45,3 +45,17 @@ squash merge
 ---
 
 Confirm that you are ready, and we can wait
+
+---
+
+have we followed every rule for submissions?
+
+---
+
+<task-notification>
+<task-id>b6i5hxxr8</task-id>
+<tool-use-id>toolu_012wnKM3NHozQXeYSVf6hP3J</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-stef-Projects-ehlcodacabana-final/833fab75-c51c-4a43-b9e3-391523ffd23a/tasks/b6i5hxxr8.output</output-file>
+<status>failed</status>
+<summary>Background command "Fetch newest kit and list changes since our pin" failed with exit code 128</summary>
+</task-notification>
