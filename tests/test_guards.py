@@ -7,11 +7,12 @@ import time
 import pytest
 from arena_kit import complete_offer
 from arena_kit.client import ArenaError
+from arena_kit.docs import standard_terms
 from arena_kit.sim import load_cases
 
 from buyer import economics as eco
 from buyer import llm, runner
-from buyer.policy import Negotiator, Side
+from buyer.policy import Negotiator, Side, std_terms
 
 
 def s01(price=15.0):
@@ -172,3 +173,26 @@ def test_a_bundle_has_no_should_cost():
     bundle = Negotiator(case).setup(sid, events)
     assert "full_cost" not in bundle.est
     assert bundle.target is None
+
+
+def test_an_unparseable_quote_line_keeps_the_other_standard_terms():
+    # the kit raises on a value it does not expect; one odd line must not drop the whole quote,
+    # nor the supplier at the close (`best_offer` skips a supplier whose cost raises)
+    text = (
+        "Quote\nOur standard terms (apply to everything not stated above)\n"
+        "Payment terms (days net) none\nLead time (days) 42\nIncoterm FCA"
+    )
+    events = [{"from": "sales@1", "attachments": [{"name": "quote.pdf", "text": text}]}]
+    with pytest.raises(ValueError):
+        standard_terms(events)
+    assert std_terms(events) == {"lead_time_days": 42, "incoterm": "FCA"}
+
+
+def test_a_document_that_cannot_be_read_never_costs_the_case():
+    class Table:
+        def attachment(self, attachment_id):
+            raise ValueError("not a PDF")
+
+    message = {"attachments": [{"attachment_id": "att:1", "name": "quote.pdf"}]}
+    runner.fetch(Table(), "case:X", message)  # logged, not raised: the case goes on
+    assert "text" not in message["attachments"][0]

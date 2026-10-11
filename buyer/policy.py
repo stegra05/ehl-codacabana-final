@@ -19,7 +19,7 @@ import logging
 import re
 import time
 
-from arena_kit.docs import standard_terms
+from arena_kit.docs import quote_terms, standard_terms
 from arena_kit.play import ENDED, latest, live_threads, moves_left, standing
 
 from . import analyst, context, llm, writer
@@ -57,6 +57,30 @@ ASKS = {
     # it asks for our current price level or our target
     "target": r"what price|which price|your target|price you have in mind",
 }
+
+
+def std_terms(events):
+    """The supplier's standard terms from its latest quote PDF. A line the kit cannot parse (a
+    value it does not expect) is dropped instead of the whole quote: one odd line must not lose
+    the supplier's standard terms, nor the supplier at the close."""
+    try:
+        return standard_terms(events)
+    except (ValueError, TypeError, KeyError, AttributeError):
+        pass
+    for msg in reversed(events):
+        for att in msg.get("attachments") or []:
+            if att.get("name", "").startswith("quote") and att.get("text"):
+                lines = [line for line in att["text"].splitlines() if parses(line)]
+                return quote_terms("\n".join(lines)).get("standard", {})
+    return {}
+
+
+def parses(line):
+    try:
+        quote_terms(f"Our standard terms\n{line}")
+        return True
+    except (ValueError, TypeError, KeyError, AttributeError):
+        return False
 
 
 def asks(body):
@@ -122,7 +146,7 @@ class Negotiator:
     # -- setup -------------------------------------------------------------------------------
     def setup(self, sid, events):
         case, s = self.case, Side(sid)
-        s.std = safe(lambda: standard_terms(events), {}) or {}
+        s.std = safe(lambda: std_terms(events), {}) or {}
         sheet_id, quote = standing(events)
         s.prof = safe(lambda: profile(self.pkg, sid), profile(None, sid))
         self.read_signals(s, latest(events).get("body"))
@@ -466,7 +490,7 @@ class Negotiator:
             s.state = "ended" if not standing(events)[0] else "done"
             return None
         std_before = s.std
-        s.std = standard_terms(events) or s.std
+        s.std = std_terms(events) or s.std
         fresh = s.last_reply is not last
         if fresh:
             terms_before = dict(s.terms)
@@ -499,7 +523,12 @@ class Negotiator:
         if status in DONE or left <= 0:
             return self.finish(s, sheets, events, theirs, left)
         cap = eco.break_even(self.case, s.terms, s.std, s.est)
-        if cap is not None and (cap <= 0 or (s.ours and s.ours[-1] > cap)):
+        if cap is not None and cap <= 0:
+            # no price beats the alternative on our estimate: negotiate on without a ceiling, since
+            # its counters bound the estimate (`bound_full_cost`) and the close gate still refuses
+            # a deal above the alternative; walking before the first sheet forgoes both
+            cap = None
+        if cap is not None and s.ours and s.ours[-1] > cap:
             s.state = "done"
             self.note(sid, "no_feasible_concession", cap=cap)
             return None
@@ -900,7 +929,7 @@ class Negotiator:
 
     def deal_cost(self, sid, events, terms):
         side = self.sides.get(sid) or Side(sid)
-        return eco.deal_cost(self.case, terms, standard_terms(events) or side.std, side.est)
+        return eco.deal_cost(self.case, terms, std_terms(events) or side.std, side.est)
 
     def close(self, threads):
         best = self.best_offer(threads)

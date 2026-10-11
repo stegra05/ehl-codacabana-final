@@ -264,6 +264,8 @@ def test_release_letters_are_read():
         "we bought our bright and cold-drawn bar requirement forward at fixed prices"
     )
     assert personas.signals_in("we are happy to discuss individual price reductions for volume") == []
+    assert "cash_need" in personas.signals_in("Odlewnia Kalwisz Sp. z o.o. files for insolvency proceedings")
+    assert "cash_need" in personas.signals_in("a credit insurer has withdrawn its limits; suppliers ask for prepayment")
 
 
 class Release:

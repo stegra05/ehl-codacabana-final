@@ -92,7 +92,7 @@ TRAITS = {
     "hedged": "it bought its material forward at fixed prices",
     "open_book": "its owner once offered to walk us through its calculation",
     "stale_costing": "its costing has not followed the actual material prices",
-    "partnership_2022": "it kept supplying at the old price during the 2022 crisis",
+    "partnership_2022": "it kept supplying at the old price for a quarter in the last crisis",
     "reference_customer": "it values having our company as a reference customer",
     "complains_late_pay": "it complained that our invoices were paid late",
 }

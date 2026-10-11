@@ -58,7 +58,7 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True,
         return table.done
     for events in threads.values():
         for m in events:
-            fetch_documents(table, m)
+            fetch(table, case_id, m)
     neg = Negotiator(case, pkg, complete, briefs)
     for sid, events in threads.items():
         try:
@@ -139,10 +139,7 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True,
     if result is None:
         for events in threads.values():  # the latest quote PDFs: standard terms for the close
             for m in events[-2:]:
-                try:
-                    fetch_documents(table, m)
-                except ArenaError as e:
-                    log.warning("%s: document not fetched: %s", case_id, e)
+                fetch(table, case_id, m)
         result = close(table, case_id, neg, threads)
     save(table.session_id, case_id, neg, result)
     if learn and briefs is not None:
@@ -151,6 +148,16 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True,
         except Exception:  # the case is closed: a failed debrief costs nothing
             log.exception("%s: debrief failed", case_id)
     return result
+
+
+def fetch(table, case_id, message):
+    """A supplier message's attachments as text. One the arena does not deliver or the reader cannot
+    parse is skipped: its terms then come from the e-mail and the case file, and the case goes on
+    (unguarded, a broken quote PDF would crash every resumption of the case)."""
+    try:
+        fetch_documents(table, message)
+    except Exception as e:  # noqa: BLE001 - a document must never cost the case
+        log.warning("%s: document not read: %r", case_id, e)
 
 
 def safe_briefs(case, pkg, complete):

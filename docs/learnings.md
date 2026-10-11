@@ -31,6 +31,23 @@ suppliers vary 1 to 2 % between runs with the same sheets. Sessions: `exports/` 
 `exports/README.md`), `logs/sessions/`, `logs/runs/`. Tags: `arena` seen in a session, `data` from
 the package, `rules` from `docs/api.md` or the kit.
 
+## Hidden-case readiness (Sunday 09:15 to 10:00)
+
+- Stress (`rules`, arena-sim, no model): every practice, sandbox and sim case file plus 613
+  variants (other goals, an RFQ with release suppliers, a new or unknown supplier, an added
+  negotiable field, six fields at once, no or a current-contract alternative, a must-have, a
+  case-only letter fact, round limit 6) with the data package and the Sunday release: no
+  exception left a case, no sheet the sim refused, no deal breaking a must-have or above the
+  alternative. A quote line the kit's parser cannot read (`int("none")`) raised in
+  `standard_terms` and dropped the supplier at the close: P10 and P11 with six fields walked
+  (0.0); with a reader that skips the line they closed (0.814, 0.499).
+- An estimate on which no price beats the alternative ended the thread before our first sheet
+  (P01, P02, P17 with a current-contract alternative 5 % above today's price: 0 messages).
+- Writer: 9 of 15 dropped paragraphs in the logs carried the year 2022, which the persona trait
+  text itself handed the model (09:00 pre-flight: 5 of 8 paragraphs on P01).
+- Supplier e-mails carry `from: "sales@70110"` (`GET .../threads/sup:70110`, session
+  `0a7cec486b95c091`), not `supplier`.
+
 ## Where we stand (Saturday night)
 
 Mean of best scores 0.776, rank 3 of 24 on the practice board (first 0.838); the last ten-case
