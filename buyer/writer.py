@@ -207,7 +207,8 @@ def fallback_email(statements=()):
     lines = [
         "Dear Sir or Madam,",
         "",
-        "Thank you for explaining your position. We have noted your points and are reviewing the full commercial terms.",
+        "Thank you for explaining your position. We have noted your points and are reviewing the full commercial",
+        "terms.",
         *statements,
         "We will follow up with a considered proposal.",
         "",

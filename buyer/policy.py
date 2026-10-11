@@ -689,7 +689,7 @@ class Negotiator:
             {"field": field, "value": value, "why": why_by_field.get(field, "your stated need")}
             for _, _, field, value in found[:2]
         ]
-        for cost, terms, field, value in found[:2]:
+        for cost, _terms, field, value in found[:2]:
             self.note(
                 s.sid,
                 "need_trade_sheet",

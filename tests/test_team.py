@@ -157,7 +157,12 @@ def test_move_stops_when_its_primary_sheet_would_repeat():
     case = leverage_case()
     sid = "sup:S"
     terms = eco.complete_offer(case, {"unit_price": 15.0, "payment_days": 30})
-    event = {"from": "supplier", "status": "offer", "body": "Our offer.", "term_sheets": [{"terms": {**terms, "unit_price": 15.5}}]}
+    event = {
+        "from": "supplier",
+        "status": "offer",
+        "body": "Our offer.",
+        "term_sheets": [{"terms": {**terms, "unit_price": 15.5}}],
+    }
     neg = Negotiator(case)
     side = Side(sid)
     side.terms = terms
@@ -183,7 +188,8 @@ def test_model_failure_fallback_answers_known_ask_without_repeating_offer():
     side.last_sent_terms = eco.complete_offer(case, {"unit_price": 15.0})
     neg = Negotiator(case)
     neg.sides[sid] = side
-    result = neg.fallback_move(sid, {sid: [{"from": "supplier", "subject": "Re: offer", "body": "Can you pay sooner?"}]})
+    events = {sid: [{"from": "supplier", "subject": "Re: offer", "body": "Can you pay sooner?"}]}
+    result = neg.fallback_move(sid, events)
     assert result["message"]["term_sheets"] == []
     assert "Payment is fixed at 30 days" in result["message"]["body"]
 
