@@ -221,29 +221,31 @@ class ClaimBank:
         """Its own words in our notes that weaken its case: material bought forward at fixed prices,
         an offer to open its calculation. Context for the person reading, not a checked figure."""
         out = []
-        for d in self.query(
-            "SELECT id, date, kind, file FROM documents WHERE supplier_id = ? ORDER BY date DESC", (sid,)
-        ):
+        # through the ID index, not the SQL tables: the Sunday release's letters reach only the index
+        docs = [(ref, self.fact(ref) or {}) for ref in self.ids("doc:")]
+        docs = sorted((d for d in docs if d[1].get("supplier") == sid), key=lambda d: str(d[1].get("date")))
+        hedged = r"covered at fixed prices|bought (their|our) [\w ,-]{1,60} forward|material covered until"
+        for ref, d in reversed(docs):
             try:
-                text = self.pkg.document(d["id"])
+                text = self.pkg.document(ref)
             except (FileNotFoundError, UnicodeDecodeError):
                 text = ""
-            if re.search(r"covered at fixed prices|bought their \w+ forward|material covered until", text, re.I):
+            if re.search(hedged, text, re.I):
                 out.append(
                     {
                         "kind": "hedged",
-                        "ids": [d["id"]],
-                        "text": f"Your letter of {d['date']} ({d['id']}) says your material is covered at fixed "
+                        "ids": [ref],
+                        "text": f"Your letter of {d.get('date')} ({ref}) says your material is covered at fixed "
                         "prices, so recent index movements do not reach your costs yet.",
                         "strength": 5,
                     }
                 )
-            if re.search(r"walk us through their calculation", text, re.I):
+            if re.search(r"walk (us|you) through (their|our) calculation", text, re.I):
                 out.append(
                     {
                         "kind": "open_book",
-                        "ids": [d["id"]],
-                        "text": f"In our call of {d['date']} ({d['id']}) you offered to walk us through your "
+                        "ids": [ref],
+                        "text": f"In our call of {d.get('date')} ({ref}) you offered to walk us through your "
                         "calculation; we would welcome that now.",
                         "strength": 4,
                     }

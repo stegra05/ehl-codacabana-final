@@ -85,3 +85,18 @@ def test_no_feasible_package_never_sends_zero_price():
     neg.setup(sid, events)
     move = neg.move(sid, {sid: events})
     assert move is None
+
+
+def test_a_relationship_charge_does_not_drive_the_ceiling_to_zero():
+    # below the supplier's full cost the relationship charge makes a lower price dearer (P01 sent a
+    # 0.0 sheet): the ceiling is the top of the prices that beat the alternative
+    case = case_with_alternative(16.0)
+    case["buyer"].update(category_goal="secure_supply", relationship_eur_per_point=1_000, sustainable_margin_pct=5)
+    sid = case["suppliers"][0]
+    s = Negotiator(case).setup(sid, [reply(18.0)])
+    est = {**s.est, "full_cost": 14.0}
+    assert eco.cost(case, eco.at_price(s.terms, 0.01), s.std, est) > eco.c_alt(case)
+    cap = eco.break_even(case, s.terms, s.std, est)
+    assert cap is not None and cap > 14.0
+    assert eco.deal_cost(case, eco.at_price(s.terms, cap), s.std, est) is not None
+    assert eco.deal_cost(case, eco.at_price(s.terms, cap + 0.02), s.std, est) is None
