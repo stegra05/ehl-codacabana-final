@@ -1,6 +1,6 @@
 """The Live Final loop end to end on arena-sim: waves appear one after another in the case list,
-every case of a wave plays within its cap, a poll error is polled again, and the loop ends when
-the last wave has closed. No network, no model."""
+every case of a wave plays within its cap, a poll error is polled again, a crashed case is resumed,
+and the loop ends when the last wave has closed. No network, no model."""
 
 import secrets
 
@@ -37,13 +37,51 @@ class FinalClient(ArenaClient):
         return out
 
 
+def final_client(sim_url, waves):
+    key = ArenaClient(sim_url).register(f"test-{secrets.token_hex(3)}", "sim")["api_key"]
+    return FinalClient(sim_url, key, waves)
+
+
 def test_play_waves_plays_every_wave(sim_url, tmp_path, monkeypatch):
     monkeypatch.setattr(runner, "RUNS", tmp_path)
-    key = ArenaClient(sim_url).register(f"test-{secrets.token_hex(3)}", "sim")["api_key"]
     waves = [["case:S01", "case:S02"], ["case:S03"]]
-    client = FinalClient(sim_url, key, waves)
-    out = runner.play_waves(client, waves=2, parallel=3, poll=0.05)
+    out = runner.play_waves(final_client(sim_url, waves), waves=2, parallel=3, poll=0.05)
     assert set(out) == {"case:S01", "case:S02", "case:S03"}
     for case_id, result in out.items():
         assert not isinstance(result, Exception), (case_id, result)
         assert "deal" in result
+
+
+def test_a_crashed_case_is_resumed_while_its_cap_leaves_time(sim_url, tmp_path, monkeypatch):
+    """Transient failures (a network blip, a broken reply) must not end a final case: the runner
+    opens it again as long as the cap leaves time, and the case still closes."""
+    monkeypatch.setattr(runner, "RUNS", tmp_path)
+    monkeypatch.setattr(runner, "RETRY_S", 0)
+    real, crashes = runner.play_case, {"left": 3}
+
+    def flaky(*args, **kwargs):
+        if crashes["left"] > 0:
+            crashes["left"] -= 1
+            raise RuntimeError("blip")
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(runner, "play_case", flaky)
+    out = runner.play_waves(final_client(sim_url, [["case:S01"]]), waves=1, parallel=1, poll=0.05)
+    assert crashes["left"] == 0
+    assert "deal" in out["case:S01"]
+
+
+def test_a_case_that_keeps_crashing_returns_its_error(sim_url, tmp_path, monkeypatch):
+    monkeypatch.setattr(runner, "RUNS", tmp_path)
+    monkeypatch.setattr(runner, "RETRY_S", 0)
+    monkeypatch.setattr(runner, "RETRY_MAX", 3)
+    calls = {"n": 0}
+
+    def broken(*args, **kwargs):
+        calls["n"] += 1
+        raise RuntimeError("down")
+
+    monkeypatch.setattr(runner, "play_case", broken)
+    out = runner.play_waves(final_client(sim_url, [["case:S01"]]), waves=1, parallel=1, poll=0.05)
+    assert calls["n"] == 3
+    assert isinstance(out["case:S01"], RuntimeError)

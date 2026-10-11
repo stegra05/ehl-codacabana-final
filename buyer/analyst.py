@@ -10,7 +10,7 @@ from . import llm
 
 TIMEOUT_S = 6.0
 MOODS = ("warm", "neutral", "irritated", "pressured")
-TACTICS = ("steady", "hold", "close_in", "argue")
+TACTICS = ("steady", "hold", "argue")
 ASKS = ("volume", "proof", "payment", "target")  # the kinds `policy.asks` reads
 
 SYSTEM = """You are the analyst next to our buyer at Hollerau Pumpenwerke during a negotiation. Read
@@ -19,8 +19,6 @@ Return JSON only:
 {"mood": the mood of the person writing: "warm", "neutral", "irritated" or "pressured",
  "tactic": our best next move, one of:
    "hold" - it still concedes or signals room to move: we move less than usual,
-   "close_in" - it says in so many words that this is nearly its last step or that its patience
-     is used up: we move further towards its price to keep the talks alive,
    "argue" - it brings an argument we can answer or doubts our data: we answer it with evidence,
    "steady" - none of these,
  "argument": the number of the EXPECTED ARGUMENT its e-mail makes, or 0 if none,

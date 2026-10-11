@@ -10,9 +10,10 @@ from arena_kit import ArenaClient, RemoteTable
 from arena_kit.sim import load_cases
 from test_buyer import reply
 
-from buyer import analyst, llm, memory, rehearsal, research, runner
+from buyer import analyst, llm, memory, personas, rehearsal, research, runner
 from buyer import economics as eco
-from buyer.policy import CLOSE_IN, Negotiator, Side
+from buyer.claims import ClaimBank
+from buyer.policy import Negotiator, Side
 
 QUOTE = {"unit_price": 15.88, "payment_days": 30}
 WILD = {  # every subagent's answer at once, with values no code may take as they are
@@ -67,6 +68,14 @@ def test_strategy_and_playbook_are_checked():
     book = rehearsal.playbook(view, WILD)
     assert book["rebuttals"] == ["Wages are a small share of this part."] and book["press"] == WILD["press"]
     assert rehearsal.playbook(view, WILD, informed=False)["press"] == []  # no data, no "our records show"
+
+
+def test_no_findings_no_trades(monkeypatch):
+    monkeypatch.setattr(research, "CACHE", {})
+    monkeypatch.setattr(memory, "recall", lambda case: [])
+    brief = research.briefs(leverage_case(), None, scripted)["sup:S"]  # no package: the analysts saw nothing
+    assert brief["trades"] == [] and not brief["findings"]
+    assert brief["notes"] == WILD["notes"]  # tone and notes for the writer still come through
 
 
 def test_briefs_survive_a_broken_model(monkeypatch):
@@ -210,8 +219,6 @@ def test_tactic_paces_the_next_price_and_adds_evidence():
     steady, claims = neg.next_price(s, 15.5)
     s.tactic = "hold"
     assert neg.next_price(s, 15.5)[0] < steady
-    s.tactic = "close_in"
-    assert steady < neg.next_price(s, 15.5)[0] <= round(12.0 + CLOSE_IN * 3.5, 2)  # further, never a jump
     s.tactic = "argue"
     assert neg.next_price(s, 15.5) == (steady, claims + 1)
 
@@ -219,6 +226,11 @@ def test_tactic_paces_the_next_price_and_adds_evidence():
 def test_analyst_answers_from_its_lists_only():
     seen = analyst.read(scripted, leverage_case(), "Which volume can you commit to?", [], [15.88], ["Wages rose."])
     assert (seen["mood"], seen["tactic"], seen["argument"], seen["asks"]) == ("irritated", "hold", 1, ["volume"])
+
+    def stale(system, user):
+        return json.dumps({**WILD, "tactic": "close_in"})
+
+    assert analyst.read(stale, leverage_case(), "hello", [], [])["tactic"] == "steady"
     assert analyst.read(scripted, leverage_case(), "hello", [], [])["argument"] == 0  # nothing to match
     assert analyst.read(broken, leverage_case(), "hello", [], []) is None
 
@@ -234,8 +246,60 @@ def test_case_plays_with_the_team_and_leaves_a_lesson(sim_url, tmp_path, monkeyp
     assert result["deal"] and 0 <= result["score"] <= 1
     notes = json.loads(next(tmp_path.glob("S01_*.json")).read_text())["notes"]
     assert {"research", "analyst"} <= {n["what"] for n in notes}
-    assert memory.recall(case)[0].endswith(WILD["lesson"])
+    assert WILD["lesson"] in memory.LESSONS.read_text()
+    recalled = memory.recall(case)
+    assert recalled and WILD["lesson"] not in recalled[0]  # the lead reads the run, not one run's moral
 
     monkeypatch.setattr(research, "CACHE", {})
     result = runner.play_case(RemoteTable(client, case), "case:S01", complete=broken)  # the plain engine plays on
     assert result["deal"]
+
+
+def test_release_letters_are_read():
+    assert "price_frozen" in personas.signals_in("our price list 2027 applies to all customers without exception")
+    assert "price_frozen" in personas.signals_in("our board has ruled out individual price reductions")
+    assert "price_frozen" in personas.signals_in("we can no longer grant individual price reductions")
+    assert "price_frozen" in personas.signals_in("prices will be set centrally by the group")
+    assert "hedged" in personas.signals_in(
+        "we bought our bright and cold-drawn bar requirement forward at fixed prices"
+    )
+    assert personas.signals_in("we are happy to discuss individual price reductions for volume") == []
+
+
+class Release:
+    """A package whose SQL tables know nothing of the Sunday release: only the ID index does."""
+
+    rows = {
+        "doc:new": {"supplier": "sup:S", "date": "2026-10-08", "type": "letter", "title": "Prices"},
+        "doc:old": {"supplier": "sup:S", "date": "2026-03-01", "type": "email", "title": "Holiday shutdown"},
+        "doc:other": {"supplier": "sup:T", "date": "2026-10-09", "type": "letter", "title": "Prices"},
+        "news:new": {"supplier": "sup:S", "date": "2026-10-06", "headline": "Sold to a group"},
+    }
+
+    def ids(self, prefix):
+        return [k for k in self.rows if k.startswith(prefix)]
+
+    def lookup(self, ref):
+        return self.rows.get(ref)
+
+    def document(self, ref):
+        return f"text of {ref}"
+
+    def query(self, sql, params=(), limit=None):
+        return []
+
+
+def test_research_reads_the_release_through_the_id_index():
+    assert research.letters(Release(), "sup:S") == ["2026-10-08 letter: text of doc:new"]  # routine mail is left out
+    assert research.news(Release(), "sup:S") == ["2026-10-06: Sold to a group. text of news:new"]
+    persona = research.digest(Release(), {"parts": [], "trigger_doc": None}, "sup:S", "persona")
+    assert "text of doc:new" in persona and "Sold to a group" in persona and "doc:other" not in persona
+
+
+def test_claims_cite_a_release_letter():
+    class Hedged(Release):
+        def document(self, ref):
+            return "we bought our bright and cold-drawn bar requirement forward at fixed prices"
+
+    notes = ClaimBank(Hedged(), {}).signal_notes("sup:S")
+    assert [(n["kind"], n["ids"]) for n in notes] == [("hedged", ["doc:new"])]  # latest first, one per kind
