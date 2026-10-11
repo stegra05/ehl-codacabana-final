@@ -10,9 +10,9 @@ from arena_kit import ArenaClient, RemoteTable
 from arena_kit.sim import load_cases
 from test_buyer import reply
 
-from buyer import analyst, memory, rehearsal, research, runner
+from buyer import analyst, llm, memory, rehearsal, research, runner
 from buyer import economics as eco
-from buyer.policy import CLOSE_IN, Negotiator
+from buyer.policy import CLOSE_IN, Negotiator, Side
 
 QUOTE = {"unit_price": 15.88, "payment_days": 30}
 WILD = {  # every subagent's answer at once, with values no code may take as they are
@@ -89,6 +89,112 @@ def test_a_trade_sheet_costs_us_what_the_main_sheet_costs(monkeypatch):
         assert sheet["payment_days"] != main["payment_days"]
         c, c_main = eco.cost(case, sheet, s.std, s.est), eco.cost(case, main, s.std, s.est)
         assert c <= c_main and c_main - c < 0.01 * c_main
+
+
+def test_explicit_cash_need_gets_only_a_cost_checked_earlier_payment_trade():
+    case = leverage_case()
+    neg = Negotiator(case)
+    s = neg.setup("sup:S", reply("open", QUOTE))
+    s.est["interest_rate"] = 0.5
+    s.asks = ["payment"]
+    main = eco.complete_offer(case, {"unit_price": QUOTE["unit_price"], "payment_days": 60})
+    trades = neg.need_trade_sheets(s, main)
+    assert trades
+    assert all(t["payment_days"] < main["payment_days"] for t in trades)
+    assert all(eco.must_haves_ok(case, t, s.std) for t in trades)
+    assert all(eco.deal_cost(case, t, s.std, s.est) is not None for t in trades)
+    assert all(eco.cost(case, t, s.std, s.est) < eco.cost(case, main, s.std, s.est) for t in trades)
+
+
+def test_supplier_need_trade_respects_must_haves_and_never_buys_surplus_volume():
+    case = leverage_case()
+    need = case["buyer"]["need_per_year"]
+    case["negotiable"].append("volume_per_year")
+    case["fixed_terms"].pop("volume_per_year", None)
+    case["term_options"]["volume_per_year"] = [need // 2, need, need * 2]
+    neg = Negotiator(case)
+    s = neg.setup("sup:S", reply("open", QUOTE))
+    s.asks = ["volume"]
+    main = eco.complete_offer(
+        case, {"unit_price": QUOTE["unit_price"], "payment_days": 60, "volume_per_year": need // 2}
+    )
+    trade = neg.need_trade_sheets(s, main)
+    assert trade and all(t["volume_per_year"] == need for t in trade)
+    assert all(eco.cost(case, t, s.std, s.est) < eco.cost(case, main, s.std, s.est) for t in trade)
+    case["buyer"]["must_haves"] = [{"field": "volume_per_year", "op": "<=", "value": need // 2}]
+    assert neg.need_trade_sheets(s, main) == []
+
+
+def test_claim_picker_uses_one_forecast_argument_per_period_then_allows_new_evidence():
+    neg = Negotiator(leverage_case())
+    side = neg.setup("sup:S", reply("open", QUOTE))
+    same_period = [
+        {"kind": "forecast", "ids": ["fc:360010@2026-09"], "text": "Forecast for part A", "strength": 3},
+        {"kind": "forecast", "ids": ["fc:360011@2026-09"], "text": "Forecast for part B", "strength": 2},
+        {"kind": "forecast", "ids": ["fc:360010@2026-10"], "text": "New month for part A", "strength": 2},
+        {"kind": "should_cost", "ids": ["cost:part-a"], "text": "Cost evidence", "strength": 5},
+    ]
+    side.claims = same_period
+    chosen = neg.pick(side, 3, {side.sid: []})
+    assert chosen == [same_period[0], same_period[2], same_period[3]]
+    side.pending = {
+        "state": "open",
+        "keys": same_period[0]["ids"],
+        "families": neg.claim_families(same_period[0]),
+    }
+    neg.commit(side.sid)
+    assert neg.pick(side, 3, {side.sid: []}) == [same_period[2], same_period[3]]
+
+
+def test_unchanged_offer_guard_tolerates_rounding_but_detects_term_changes():
+    previous = {"unit_price": 45.43, "payment_days": 60, "volume_per_year": 100}
+    assert Negotiator.same_offer(previous, {**previous, "unit_price": 45.434})
+    assert not Negotiator.same_offer(previous, {**previous, "unit_price": 45.45})
+    assert not Negotiator.same_offer(previous, {**previous, "payment_days": 30})
+
+
+def test_move_stops_when_its_primary_sheet_would_repeat():
+    case = leverage_case()
+    sid = "sup:S"
+    terms = eco.complete_offer(case, {"unit_price": 15.0, "payment_days": 30})
+    event = {"from": "supplier", "status": "offer", "body": "Our offer.", "term_sheets": [{"terms": {**terms, "unit_price": 15.5}}]}
+    neg = Negotiator(case)
+    side = Side(sid)
+    side.terms = terms
+    side.ours = [15.0]
+    side.theirs = [16.0, 15.5]
+    side.last_reply = event
+    expected = neg.next_price(side, 15.5)[0]
+    side.last_sent_terms = eco.at_price(terms, expected)
+    neg.sides[sid] = side
+    assert neg.move(sid, {sid: [event]}) is None
+    assert side.state == "done"
+    assert neg.notes[-1]["what"] == "no_progress"
+
+
+def test_model_failure_fallback_answers_known_ask_without_repeating_offer():
+    case = leverage_case()
+    case["negotiable"].remove("payment_days")
+    case["fixed_terms"]["payment_days"] = 30
+    sid = "sup:S"
+    side = Side(sid)
+    side.std = {}
+    side.asks = ["payment"]
+    side.last_sent_terms = eco.complete_offer(case, {"unit_price": 15.0})
+    neg = Negotiator(case)
+    neg.sides[sid] = side
+    result = neg.fallback_move(sid, {sid: [{"from": "supplier", "subject": "Re: offer", "body": "Can you pay sooner?"}]})
+    assert result["message"]["term_sheets"] == []
+    assert "Payment is fixed at 30 days" in result["message"]["body"]
+
+
+def test_model_metrics_report_rejection_rate():
+    before = llm.metrics_snapshot()
+    assert llm.paragraph(lambda system, brief: "We can reduce the price by 5 percent.", "brief") is None
+    metrics = llm.metrics_since(before)
+    assert metrics["writer.attempted"] == 1
+    assert metrics["writer.rejected"] == 1
+    assert metrics["writer.failure_rate"] == 1.0
 
 
 def test_tactic_paces_the_next_price_and_adds_evidence():

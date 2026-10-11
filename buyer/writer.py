@@ -200,3 +200,18 @@ def reply_subject(events, case):
 def keepalive_message(events):
     subject = latest(events).get("subject") or "Re: your offer"
     return {"subject": subject[:300], "body": keepalive(), "term_sheets": []}
+
+
+def fallback_email(statements=()):
+    """A deterministic reply for policy/model failures that does not repeat a term sheet."""
+    lines = [
+        "Dear Sir or Madam,",
+        "",
+        "Thank you for explaining your position. We have noted your points and are reviewing the full commercial terms.",
+        *statements,
+        "We will follow up with a considered proposal.",
+        "",
+        "Kind regards,",
+        "Hollerau Pumpenwerke, Purchasing",
+    ]
+    return "\n".join(lines)

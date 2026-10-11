@@ -14,6 +14,7 @@ What the suppliers showed (sandbox and practice, `docs/learnings.md`):
 
 import base64
 import functools
+import json
 import logging
 import re
 import time
@@ -89,12 +90,16 @@ class Side:
         self.state = "open"  # open | mirror | closing | done | ended
         self.prev_state = "open"  # the state before the message in flight
         self.pending = None  # the message in flight: what to undo if it times out
+        self.last_sent_terms = None  # last committed primary sheet, for the no-progress guard
+        self.used_claim_families = set()  # semantic evidence already used with this supplier
+        self.offered_trade_keys = set()  # term/value alternatives already offered in this thread
         self.term_change = False  # its last counter changed our non-price terms
         self.last_reply = None
         self.asks = []  # what its last e-mail asked of us (asks)
         self.attached = set()  # files we already sent it
         self.research = ""  # the lead researcher's notes for the e-mail writer
         self.trades = []  # terms the lead expects it to value: offered next to our opening sheet
+        self.active_trades = []  # explicit supplier needs priced for the current move
         self.playbook = {}  # the demo bidding: its expected arguments, our answers, points to press
         self.live = ""  # the live analyst's notes on its last e-mail
         self.mood = None  # the live analyst on its last e-mail: the writer's mood
@@ -307,8 +312,15 @@ class Negotiator:
         theirs = None
         for m in events:
             if m.get("from") == "buyer":
-                self.used.update(m.get("refs") or [])
+                refs = m.get("refs") or []
+                self.used.update(refs)
+                s.used_claim_families.update(
+                    family for ref in refs for family in self.claim_families({"kind": "forecast", "ids": [ref]})
+                )
                 if m.get("term_sheets"):
+                    sent_sheets = [sh.get("terms") or {} for sh in m["term_sheets"]]
+                    s.last_sent_terms = dict(sent_sheets[0])
+                    s.offered_trade_keys.update(self.trade_keys(sent_sheets))
                     price = self.their_price(s, m["term_sheets"][0]["terms"])
                     s.ours.append(price)
                     s.gaps.append(max(0.0, (theirs - price) / theirs) if theirs else 0.0)
@@ -368,11 +380,14 @@ class Negotiator:
         if first and s.playbook.get("press"):
             out.append(f"a point to raise politely, once: {s.playbook['press'][0]}")
         if extra:
-            why = "; ".join(t["why"] for t in s.trades if t.get("why"))
+            why = "; ".join(t["why"] for t in [*s.trades, *s.active_trades] if t.get("why"))
             out.append(
                 "our proposal lists alternative packages after the first one: say they are free to choose the "
                 f"one that suits them best ({why})"
             )
+        elif s.active_trades:
+            why = "; ".join(t["why"] for t in s.active_trades if t.get("why"))
+            out.append(f"we adjusted the package in response to {why}; explain the commercial terms clearly")
         if s.mood == "irritated":
             out.append("they sound irritated: acknowledge it sincerely before anything else")
         elif s.mood == "pressured":
@@ -468,7 +483,12 @@ class Negotiator:
         if s.ours and s.target and theirs <= s.target:
             # relationship goal: below the target a lower price costs more than it saves
             s.state = "closing"
-            return self.send(s, [eco.at_price(s.terms, max(s.target, theirs))], [], events, theirs)
+            sheet = eco.at_price(s.terms, max(s.target, theirs))
+            if self.same_offer(s.last_sent_terms, sheet):
+                s.state = "done"
+                self.note(sid, "no_progress", reason="relationship target already offered")
+                return None
+            return self.send(s, [sheet], [], events, theirs)
         if s.ours and theirs <= s.ours[-1]:  # it came below what we offered: take it
             return self.finish(s, sheets, events, theirs, left)
         price, n_claims = self.next_price(s, theirs)
@@ -476,7 +496,35 @@ class Negotiator:
         sheets = [eco.at_price(s.terms, price)]
         if not s.ours and s.trades:
             sheets += safe(lambda: self.trade_sheets(s, sheets[0]), [])[:2]
-        return self.send(s, sheets, claims, events, theirs)
+        elif s.ours:
+            sheets += safe(lambda: self.need_trade_sheets(s, sheets[0]), [])[:2]
+        switched_trade_keys = set()
+        if self.same_offer(s.last_sent_terms, sheets[0]):
+            if len(sheets) == 1:
+                s.state = "done"
+                self.note(sid, "no_progress", reason="unchanged price and terms")
+                return None
+            # Do not resend the old primary sheet. Move the thread onto the best new package,
+            # whose buyer cost is lower and whose estimated supplier value matches the main offer.
+            switched_trade_keys = self.trade_keys(sheets)
+            sheet = sheets[1]
+            old_target = s.target
+            self.switch(s, sheet, "cost-checked response to a supplier need")
+            if old_target is not None and s.est.get("full_cost"):
+                floor = s.est["full_cost"] * 0.85
+                s.target = eco.relationship_optimum(
+                    self.case,
+                    s.terms,
+                    s.std,
+                    s.est,
+                    floor,
+                    max(floor, s.quote, old_target, s.theirs[-1]),
+                )
+            sheets = [sheet]
+        result = self.send(s, sheets, claims, events, theirs)
+        if s.pending and switched_trade_keys:
+            s.pending["trade_keys"].update(switched_trade_keys)
+        return result
 
     def moves_left(self, s, events):
         """Messages we may still send: the arena counts a late message as a round too."""
@@ -529,14 +577,129 @@ class Negotiator:
                 if price < s.theirs[-1]:
                     rivals.append((price, rival_offer(other, oid, t["unit_price"])))
         pool = [c for _, c in sorted(rivals, key=lambda r: r[0])[:1]] + s.claims
+        selected_families = set()
         for c in pool:
             key = [(s.sid, i) if c.get("rival") else i for i in c["ids"]]
             if any(k in self.used for k in key):
                 continue
+            families = self.claim_families(c)
+            if families & (s.used_claim_families | selected_families):
+                continue
             out.append(c)
+            selected_families.update(families)
             if len(out) >= n:
                 break
         return out
+
+    @staticmethod
+    def claim_families(claim):
+        """Forecast rows for the same period make one demand-growth argument."""
+        if claim.get("kind") != "forecast" or claim.get("rival"):
+            return set()
+        periods = {month for ref in claim.get("ids", []) for month in re.findall(r"@(\d{4}-\d{2})", ref)}
+        return {("forecast", month) for month in periods}
+
+    @staticmethod
+    def same_offer(previous, candidate):
+        if not previous or not candidate:
+            return False
+        previous_terms = {k: v for k, v in previous.items() if k != "unit_price"}
+        candidate_terms = {k: v for k, v in candidate.items() if k != "unit_price"}
+        if previous_terms != candidate_terms:
+            return False
+        try:
+            return abs(float(previous.get("unit_price")) - float(candidate.get("unit_price"))) <= 0.005
+        except (TypeError, ValueError):
+            return False
+
+    @staticmethod
+    def trade_key(field, value):
+        return json.dumps([field, value], sort_keys=True, separators=(",", ":"))
+
+    def trade_keys(self, sheets):
+        """Remember one-term alternatives already shown, including after a resumed session."""
+        if len(sheets) < 2:
+            return set()
+        main = sheets[0]
+        out = set()
+        for sheet in sheets[1:]:
+            changed = [f for f in self.case.get("negotiable", []) if f != "unit_price" and sheet.get(f) != main.get(f)]
+            if len(changed) == 1:
+                field = changed[0]
+                out.add(self.trade_key(field, sheet[field]))
+        return out
+
+    def need_trade_sheets(self, s, main):
+        """Offer evidence-backed supplier needs only when their complete package costs us less.
+
+        The price preserves our estimated supplier value; must-haves, allowed values, the alternative
+        and full buyer cost remain hard gates. Unknown volume/capacity value is never invented.
+        """
+        signals = set(s.prof.get("signals") or [])
+        requested = set()
+        if "payment" in s.asks or "cash_need" in signals:
+            requested.add(("payment_days", "lower"))
+        if "volume" in s.asks or "spare_capacity" in signals:
+            requested.add(("volume_per_year", "higher"))
+        if "capacity_full" in signals:
+            requested.update({("lead_time_days", "higher"), ("contract_months", "higher")})
+        if not requested:
+            s.active_trades = []
+            return []
+
+        case = self.case
+        base_cost = eco.cost(case, main, s.std, s.est)
+        base_value = eco.value(case, main, s.est)
+        found = []
+        for field, direction in requested:
+            if field not in case.get("negotiable", []):
+                continue
+            current = main.get(field)
+            options = (case.get("term_options") or {}).get(field) or []
+            eligible = []
+            for value in options:
+                if direction == "lower" and (current is None or value >= current):
+                    continue
+                if direction == "higher" and (current is None or value <= current):
+                    continue
+                if field == "volume_per_year" and value > case["buyer"].get("need_per_year", value):
+                    continue  # do not promise surplus purchases as a persuasion tactic
+                key = self.trade_key(field, value)
+                if key in s.offered_trade_keys:
+                    continue
+                terms = {**main, field: value}
+                terms["unit_price"] = round(eco.price_for_value(case, terms, s.est, base_value), 2)
+                terms = eco.quoted_offer(case, terms, s.std)
+                if terms is None or not eco.must_haves_ok(case, terms, s.std):
+                    continue
+                cost = eco.deal_cost(case, terms, s.std, s.est)
+                if cost is None or cost >= base_cost - 1.0:
+                    continue
+                eligible.append((cost, terms, field, value))
+            if eligible:
+                found.append(min(eligible, key=lambda row: (row[0], repr(sorted(row[1].items())))))
+        found.sort(key=lambda row: (row[0], row[2], repr(row[3])))
+        why_by_field = {
+            "payment_days": "your request for earlier payment",
+            "volume_per_year": "your request for a firm volume commitment",
+            "lead_time_days": "your capacity constraint",
+            "contract_months": "your capacity constraint and the value of planning security",
+        }
+        s.active_trades = [
+            {"field": field, "value": value, "why": why_by_field.get(field, "your stated need")}
+            for _, _, field, value in found[:2]
+        ]
+        for cost, terms, field, value in found[:2]:
+            self.note(
+                s.sid,
+                "need_trade_sheet",
+                field=field,
+                value=value,
+                buyer_cost=round(cost, 2),
+                main_cost=round(base_cost, 2),
+                supplier_value=round(base_value, 2),
+            )
+        return [row[1] for row in found[:2]]
 
     def attachments(self, s):
         """Its proof asked for, as a file it reads: the forecast rows of the part (figures from the
@@ -561,7 +724,14 @@ class Negotiator:
         moved = len(s.theirs) > 1 and s.theirs[-1] < s.theirs[-2] - 0.005
         price = sheets[0]["unit_price"]
         keys = [(s.sid, i) if c.get("rival") else i for c in claims for i in c["ids"]]
-        s.pending = {"state": s.prev_state, "keys": keys}
+        families = set().union(*(self.claim_families(c) for c in claims)) if claims else set()
+        s.pending = {
+            "state": s.prev_state,
+            "keys": keys,
+            "families": families,
+            "primary": dict(sheets[0]),
+            "trade_keys": self.trade_keys(sheets),
+        }
         statements = writer.statements(self.case, s, sheets)
         attachments = self.attachments(s)
         if s.state not in ("mirror",):
@@ -609,20 +779,19 @@ class Negotiator:
         return {"message": message}
 
     def fallback_move(self, sid, threads):
-        """After an error in move(): our last sheet again with the template e-mail, so the thread
-        never falls silent; without a sheet of ours yet, a short question."""
+        """A safe template acknowledgement, without resending an unchanged binding offer."""
         s = self.sides.get(sid)
         events = threads[sid]
-        if not s or not s.ours or not s.terms:
-            return {"message": writer.keepalive_message(events)}
-        sheets = [eco.at_price(s.terms, s.ours[-1])]
-        body = writer.email(self.case, sheets, [], [], warm=s.prof.get("warm", True))
-        self.note(sid, "fallback", ours=s.ours[-1])
+        statements = []
+        if s and s.last_sent_terms:
+            statements = writer.statements(self.case, s, [s.last_sent_terms])
+        body = writer.fallback_email(statements)
+        self.note(sid, "fallback", reason="template acknowledgement; no repeated sheet")
         return {
             "message": {
                 "subject": writer.reply_subject(events, self.case),
                 "body": body,
-                "term_sheets": [{"terms": t} for t in sheets],
+                "term_sheets": [],
                 "refs": [],
             }
         }
@@ -632,6 +801,10 @@ class Negotiator:
         s = self.sides[sid]
         if s.pending:
             self.used.update(s.pending["keys"])
+            s.used_claim_families.update(s.pending.get("families", set()))
+            s.offered_trade_keys.update(s.pending.get("trade_keys", set()))
+            if s.pending.get("primary"):
+                s.last_sent_terms = s.pending["primary"]
             s.pending = None
 
     def rollback(self, sid):

@@ -1,5 +1,36 @@
 # Learnings
 
+## General safeguards from the 10-case Louis run
+
+- 2026-10-11 `arena` The hosted batch at `/private/tmp/codacabana-louis-practice/fixes-20261010T225238Z/results.json`
+  scored P10 0.6629, P08 0.6704, P11 0.7099, P07 0.7247, P02 0.7347 and P18 0.7559. P10's
+  recorded `c_best` gap was about EUR 203k; its supplier cited capacity and approval constraints.
+  P08 had partial cost evidence and hedged material. P11 asked repeatedly for faster payment, but
+  payment was fixed, and the buyer sent EUR 45.43 three times before agreement at EUR 45.50. P07
+  received multiple forecasts from one period while asking for a binding volume commitment. These
+  are observed traces, not proof that a particular anchor or tactic would have improved the scores.
+- 2026-10-11 `rules` The engine now treats forecasts from the same period as one argument within a
+  supplier thread, suppresses a repeated primary offer, and evaluates explicit supplier needs as
+  allowed, must-have-safe packages at supplier-equivalent value. Faster payment, higher volume,
+  longer delivery and contract options are sent only when the complete buyer cost improves and
+  beats the alternative. Capacity and volume value are not invented when the cost model has no
+  evidence for them. The fallback acknowledges the supplier without repeating a binding sheet.
+- 2026-10-11 `rules` Model outcomes are counted by case batch: attempts, successes, timeouts,
+  errors, rejected text and deadline skips, with writer and subagent failure rates. These counts
+  diagnose reliability; they do not establish that personalization improves negotiation scores.
+
+## Hypotheses
+
+- An earlier-payment option may help when the supplier explicitly signals cash need and the case
+  permits the term, but only a lower full-package cost at equal estimated supplier value justifies
+  sending it. Fixed payment terms cannot be traded.
+- A volume commitment should never exceed our actual annual need just to persuade a supplier. A
+  larger commitment is offered only if it is an allowed term, satisfies every must-have and lowers
+  our total cost. Full capacity may justify a later lead time or longer contract only where those
+  options are legal and the complete package passes the same cost checks.
+- Repeated evidence and unchanged offers likely waste a negotiation round. The next hosted
+  comparison is still needed to measure per-case effects and any regressions.
+
 What we know about the arena, its supplier bots and the data package, and what it means for the
 agent. Basis, Saturday 10 October: the probe (15 practice sessions covering all 10 hosted cases
 and 12 suppliers, 17 sandbox sessions), our agent's practice runs v1 to v13, the team's simulator

@@ -187,6 +187,7 @@ def play_all(client, cases, pkg=None, parallel=8, complete=None, team=True):
     """Practice or sandbox: many case files at once. {case_id: result or the exception that stopped it}."""
     used_up = threading.Event()
     files = {c["case_id"]: c for c in cases}
+    model_metrics_before = llm.metrics_snapshot()
 
     def one(case_id):
         if used_up.is_set():
@@ -204,7 +205,9 @@ def play_all(client, cases, pkg=None, parallel=8, complete=None, team=True):
             return case_id, e
 
     with ThreadPoolExecutor(max_workers=parallel) as pool:
-        return dict(pool.map(one, files))
+        outcomes = dict(pool.map(one, files))
+    log.info("model reliability across %d cases: %s", len(files), llm.metrics_since(model_metrics_before))
+    return outcomes
 
 
 class PracticeTable(RemoteTable):
