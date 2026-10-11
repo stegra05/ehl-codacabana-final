@@ -13,7 +13,16 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from arena_kit.client import ArenaError
-from arena_kit.play import ENDED, RemoteTable, fetch_documents, latest, moves_left, quota_used_up
+from arena_kit.play import (
+    CLOSE_BEFORE_CAP_S,
+    ENDED,
+    ROUND_MARGIN_S,
+    RemoteTable,
+    fetch_documents,
+    latest,
+    moves_left,
+    quota_used_up,
+)
 
 from . import llm, memory, research
 from .policy import Negotiator, Side
@@ -82,12 +91,17 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True,
     def live(sid):
         return latest(threads[sid]).get("status") not in ENDED
 
-    while not deadline_near(deadline):
+    slowest = 0.0  # the longest round so far, our move and the supplier's reply: a wave's cap must
+    # leave room for one more of them, or a round started in time ends after the cap without a deal
+    while not deadline_near(deadline, max(CLOSE_BEFORE_CAP_S, slowest + ROUND_MARGIN_S)):
+        round_t0 = time.monotonic()
+        neg.prune(threads)
         todo = sorted(open_threads(), key=lambda s: (replied[s], rank[s]))
         waiting = [
             s
             for s in threads
             if neg.sides[s].state == "done"
+            and not neg.sides[s].dominated
             and live(s)
             and todo
             and replied[s] < replied[todo[0]]
@@ -118,9 +132,11 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True,
         try:
             reply = table.send(sid, message)
             send_s = max(send_s, time.monotonic() - t0)
+            slowest = max(slowest, time.monotonic() - round_t0)
         except ArenaError as e:
             if e.status != 409:
                 raise
+            slowest = max(slowest, time.monotonic() - round_t0)
             log.info("%s %s: %s", case_id, sid, e.detail)
             neg.rollback(sid)  # it never got this message: our last offer stands for it
             reply = table.missed(sid, e)

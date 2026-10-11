@@ -321,3 +321,8 @@ The score gain does not establish the value of either new guard: upstream code, 
 model variation also changed. Keep the candidate in draft pending separate evaluation;
 no extra hosted runs or merge were performed. Local validation: 86 tests, Ruff lint/format,
 and twelve supplier openings with real data, all positive prices and satisfied must-haves.
+
+### Final-day safety, 11 October
+
+- The arena serialises calls within a session (sandbox D02, 2 tests: alone 24 and 29 s, sent together 15 and 38 s), so with three bidders each thread waits for the others' replies. After an agreed or final sheet, bidders that cannot beat it now get no rounds and no keepalives: P05 closed 1 s after Dralveck agreed (`ea15b6e17847ec89`, 0.822, 87 s, no timeout) against 47 s of keepalives without the keepalive rule (`6a5c6e47de5c554b`) and a 204 s median before; same deals (0.828, 0.822, 0.822 in 3 runs). All 21 case files unchanged on the sim.
+- The close before a wave's cap now leaves room for the slowest round so far (the kit's rule, `max(90 s, slowest + 15 s)`); with slow replies the fixed 90 s closed after the cap in a scaled test (`tests/test_deadline.py`).

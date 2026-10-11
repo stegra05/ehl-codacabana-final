@@ -16,6 +16,7 @@ import base64
 import functools
 import json
 import logging
+import math
 import re
 import time
 
@@ -87,6 +88,7 @@ class Side:
         self.theirs = []  # its price at our terms, one per reply
         self.gaps = []  # relative gap of each of our sheets to its counter
         self.state = "open"  # open | mirror | done | ended
+        self.dominated = False  # a frozen sheet elsewhere beats any deal here: no rounds, no keepalives
         self.prev_state = "open"  # the state before the message in flight
         self.pending = None  # the message in flight: what to undo if it times out
         self.last_sent_terms = None  # last committed primary sheet, for the no-progress guard
@@ -884,6 +886,34 @@ class Negotiator:
             self.note(sid, "rollback", late=s.late)
 
     # -- close -------------------------------------------------------------------------------
+    def prune(self, threads):
+        """Several bidders: an agreed or final sheet does not move again, and our sheets to any
+        other bidder only rise, so a bidder whose deal at our latest sheets would cost at least the
+        cheapest acceptable frozen sheet cannot improve the case. It is done: no more rounds on the
+        session's shared clock (the arena answers one call per session at a time, so every round
+        with it delays the others; P05 had timeouts in 24 of 46 practice sessions)."""
+        frozen = []
+        for sid, events in threads.items():
+            if latest(events).get("status") in DONE:
+                oid, terms = standing(events)
+                c = safe(functools.partial(self.deal_cost, sid, events, terms)) if oid else None
+                if c is not None:
+                    frozen.append(c)
+        if not frozen:
+            return
+        best = min(frozen)
+        for sid, events in threads.items():
+            s = self.sides.get(sid)
+            if s is None or s.state != "open" or latest(events).get("status") in DONE | ENDED:
+                continue
+            ours = [m for m in events if m.get("from") == "buyer" and m.get("term_sheets")]
+            if not ours:
+                continue
+            lowest = min(eco.cost(self.case, sh.get("terms") or {}, s.std, s.est) for sh in ours[-1]["term_sheets"])
+            if math.isfinite(lowest) and lowest >= best:
+                s.state, s.dominated = "done", True
+                self.note(sid, "dominated", ours=round(lowest, 2), frozen=round(best, 2))
+
     def best_offer(self, threads):
         """(C, supplier, term_sheet_id) of the cheapest acceptable standing sheet (only a standing
         sheet can be accepted; alternatives were sent back to become standing). One supplier's
