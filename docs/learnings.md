@@ -63,6 +63,23 @@ against a frozen 4.94.
   missing margin points, so C has a minimum below the sustainable margin (D01: 2 points below its
   4 %). It also moves with payment terms (P02: 5,483 at 368.70 and 90 days, 901 at 366.41 and
   14 days).
+- **Should-cost against true full cost.** The relationship charge in the cost breakdown of a deal
+  gives the supplier's full cost (solved with the kit's `relationship_cost`, supplier rate 0 to 7 %):
+  P01 129.5 to 130.7 against the should-cost 132.64 (11 distinct deals), P02 367.4 to 371.7 against
+  374.95 (14), P03 394.7 to 399.4 against 403.21 (7); P10 at most 28.0 against 24.31 (no charge at
+  31.10, 6). The package names a 5 to 15 % error for the should-cost (`KNOWN_ISSUES.md`, 14). A
+  target built on the overshoot closed P01 at exactly 131.27 in 8 sessions (0.909) where the
+  counter had already dropped below it; sessions whose counter stayed above the target stepped to
+  130.08 (0.978, 5 sessions) and 129.10 (0.999, 1).
+  With the estimate bounded by the supplier's own counters (`bound_full_cost`), three P01 sessions
+  saw the counter drop below the old target and stepped on instead: 129.70 (0.990,
+  `70aa14dd8bc30772`), 129.80 (0.987, `7a9c670ba7362973`), 129.50 (0.995, `1c9b55304adcb64f`);
+  P02 361.67 (0.735) and P03 431.85 (0.930) unchanged in the same batch.
+- **The alternative as a ceiling.** On the simulator D02, P07 and P12 ended in walk-aways with the
+  scripted final 1 to 3 % above C_alt; capping our sheets at the break-even price and sending one
+  sheet there before a walk changes nothing there (the no-progress guard stops a repeated ceiling
+  sheet). Hosted practice alternatives sit 3 to 10 % above the deals, so the cap never fired: P04
+  4.94 (0.860, `run-d`), P07 5.41 (0.712), both inside their earlier bands.
 - Uncovered need costs `fallback_unit_price` plus the risk rate; coverage is
   `min(volume, need) x min(months / 12, horizon)`. Volume above the need is bought anyway; months
   beyond the horizon neither cost nor earn.
