@@ -209,6 +209,16 @@ against a frozen 4.94.
 
 ## Experiments, a log (`arena`)
 
+- Pacing arms, Sunday 08:00 to 08:40 (`steffen/pacing`, parked): the share of the gap sized to
+  the supplier's answer (12 to 30 %), no move after two holds, the patience budget as a ceiling
+  only. Baseline (main plus hidden-case fixes, same morning) against it, 3 runs each: P08 0.704,
+  0.704, 0.704 against 0.604, 0.593, 0.549; P18 0.621, 0.688, 0.621 against 0.688, 0.688, 0.630;
+  P10 0.663 ×3 against 0.671 ×3; mean 0.670 against 0.641. D01 (deterministic): 49.30 against
+  49.20. Guards P02 0.735 and P05 0.822, no walk-away in 21 sessions. Donautal's first counter
+  was 5.50 to 5.52 in all three baseline runs and 5.68 in all three pacing runs with the same
+  opening sheet and round-1 code; cause unknown. Ravensteiner (P10): a round-2 sheet at 30.36 or
+  30.53 instead of 31.42 got a final at 31.60 instead of 31.70 (its floor at 56 days sits near
+  31.6; C_best 28.21 at 42 days is a different lead time).
 - v14, no quota: every case file through setup on the sim; P14 and P17 hit rules with one supplier
   behind them (clause trade on a hedged supplier, near-cost branch without a relationship
   target). PR #18: a target refresh clipped by the opening quote sent a 344.50 closing proposal on
