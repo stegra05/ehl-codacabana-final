@@ -2,6 +2,7 @@
 
 import copy
 
+import pytest
 from arena_kit.sim import load_cases
 
 from buyer import economics as eco
@@ -55,6 +56,21 @@ def test_price_only_reply_does_not_recalculate_target(monkeypatch):
     assert side.ours[-1] < 14.82
 
 
+@pytest.mark.parametrize("counter", [14.8, 14.7])
+def test_counter_at_or_below_target_closes_on_standing_sheet(counter):
+    neg, side, event = prepared()
+    side.ours = [14]
+    side.theirs = [15]
+    side.last_reply = object()
+    event["term_sheets"][0]["terms"]["unit_price"] = counter
+    threads = {side.sid: [event]}
+
+    assert neg.move(side.sid, threads) is None
+    assert side.state == "done"
+    assert side.ours == [14]  # no new sheet above the supplier's counter
+    assert neg.close(threads)["message"]["action"] == {"type": "accept", "term_sheet_id": "quoted"}
+
+
 def test_changed_economics_refresh_target_without_clipping_search(monkeypatch):
     neg, side, event = prepared()
     side.ours = [14]
@@ -74,7 +90,9 @@ def test_changed_economics_refresh_target_without_clipping_search(monkeypatch):
         return 16
 
     monkeypatch.setattr(eco, "relationship_optimum", optimum)
-    neg.move(side.sid, {side.sid: [event]})
+    assert neg.move(side.sid, {side.sid: [event]}) is None
     assert len(bounds) == 1
     assert bounds[0][1] >= 16
-    assert side.ours[-1] == 16
+    assert side.target == 16
+    assert side.ours == [14]
+    assert side.state == "done"

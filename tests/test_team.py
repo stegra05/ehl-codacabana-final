@@ -12,7 +12,7 @@ from test_buyer import reply
 
 from buyer import analyst, llm, memory, rehearsal, research, runner
 from buyer import economics as eco
-from buyer.policy import CLOSE_IN, Negotiator, Side
+from buyer.policy import Negotiator, Side
 
 QUOTE = {"unit_price": 15.88, "payment_days": 30}
 WILD = {  # every subagent's answer at once, with values no code may take as they are
@@ -210,8 +210,6 @@ def test_tactic_paces_the_next_price_and_adds_evidence():
     steady, claims = neg.next_price(s, 15.5)
     s.tactic = "hold"
     assert neg.next_price(s, 15.5)[0] < steady
-    s.tactic = "close_in"
-    assert steady < neg.next_price(s, 15.5)[0] <= round(12.0 + CLOSE_IN * 3.5, 2)  # further, never a jump
     s.tactic = "argue"
     assert neg.next_price(s, 15.5) == (steady, claims + 1)
 
@@ -219,6 +217,11 @@ def test_tactic_paces_the_next_price_and_adds_evidence():
 def test_analyst_answers_from_its_lists_only():
     seen = analyst.read(scripted, leverage_case(), "Which volume can you commit to?", [], [15.88], ["Wages rose."])
     assert (seen["mood"], seen["tactic"], seen["argument"], seen["asks"]) == ("irritated", "hold", 1, ["volume"])
+
+    def stale(system, user):
+        return json.dumps({**WILD, "tactic": "close_in"})
+
+    assert analyst.read(stale, leverage_case(), "hello", [], [])["tactic"] == "steady"
     assert analyst.read(scripted, leverage_case(), "hello", [], [])["argument"] == 0  # nothing to match
     assert analyst.read(broken, leverage_case(), "hello", [], []) is None
 

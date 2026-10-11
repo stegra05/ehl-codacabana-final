@@ -31,12 +31,16 @@ Score is total cost C, not price. Every step has a fallback that still sends a m
 | `buyer/writer.py`, `buyer/llm.py` | the e-mail: a model paragraph answering the supplier's last e-mail and asks (no digits, IDs or leaks, else a deterministic fallback), then code sentences with figures, claims and the proposal; forecast rows as CSV when proof is asked; tracks model attempts, successes, timeouts, rejections and deadline skips |
 | `buyer/runner.py` | one message at a time per session, to the thread whose 60 s clock has run longest; keepalive questions for finished bidders; rollback when the arena refuses a send; a non-repeating fallback for failed policy moves; the model's time budgeted so every live clock gets a message; Live Final waves never raise and resume a crashed case |
 
+When a relationship-goal counter reaches or falls below our estimated target, the policy stops
+offering and the close gate evaluates the supplier's standing sheet.
+
 ## Subagent team
 
 Before negotiation, `buyer/research.py` assigns four specialists to supplier data groups and has a
 lead choose up to two allowed term trades, claim order and tone. `buyer/rehearsal.py` prepares
 possible supplier arguments and evidence-based responses. During negotiation,
-`buyer/analyst.py` classifies each reply for tone and tactic; code still controls price and terms.
+`buyer/analyst.py` classifies each reply for tone and a steady, hold or argue tactic; code still
+controls price and terms.
 After a case, `buyer/memory.py` writes a debrief to `buyer/lessons.jsonl` for later research. All
 model output is bounded and validated; failures fall back to code-owned behavior.
 

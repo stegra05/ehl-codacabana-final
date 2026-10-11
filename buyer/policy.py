@@ -39,7 +39,6 @@ DEEP = 0.06  # a first concession this large (share of its quote) means a deep f
 MIN_MOVE = 0.002  # every sheet moves at least this share of the price
 FIRST_CLAIMS, LATER_CLAIMS = 3, 1
 HOLD = 0.7  # the live analyst's "hold": it still concedes, we move this share of our usual step
-CLOSE_IN = 0.5  # "close_in": the end is near, we close this share of the gap (never a jump to its price)
 ANALYST_MIN_S = 10.0  # the clocks must leave this much for analyst and writer together, else no analyst
 TRADE_MIN = 0.7  # a trade sheet's price never sits below this share of what the supplier quotes for it
 DONE = {"agreed", "final_offer"}
@@ -87,7 +86,7 @@ class Side:
         self.ours = []  # our prices at s.terms, one per message with a sheet
         self.theirs = []  # its price at our terms, one per reply
         self.gaps = []  # relative gap of each of our sheets to its counter
-        self.state = "open"  # open | mirror | closing | done | ended
+        self.state = "open"  # open | mirror | done | ended
         self.prev_state = "open"  # the state before the message in flight
         self.pending = None  # the message in flight: what to undo if it times out
         self.last_sent_terms = None  # last committed primary sheet, for the no-progress guard
@@ -103,7 +102,7 @@ class Side:
         self.playbook = {}  # the demo bidding: its expected arguments, our answers, points to press
         self.live = ""  # the live analyst's notes on its last e-mail
         self.mood = None  # the live analyst on its last e-mail: the writer's mood
-        self.tactic = None  # and our next move: steady | hold | close_in | argue
+        self.tactic = None  # and our next move: steady | hold | argue
         self.tactics = []  # every tactic played, for the debrief
         self.argument = 0  # which expected argument its last e-mail made (1-based), 0 for none
 
@@ -474,21 +473,17 @@ class Negotiator:
                     max(s.est["full_cost"] * 0.85, s.quote, s.target, s.theirs[-1]),
                 )
         theirs = s.theirs[-1]
-        if s.state in ("mirror", "closing"):  # we sent its own sheet or our target: done
+        if s.state == "mirror":  # we sent its own sheet: done
             s.state = "done"
             return None
         left = self.moves_left(s, events)
         if status in DONE or left <= 0:
             return self.finish(s, sheets, events, theirs, left)
         if s.ours and s.target and theirs <= s.target:
-            # relationship goal: below the target a lower price costs more than it saves
-            s.state = "closing"
-            sheet = eco.at_price(s.terms, max(s.target, theirs))
-            if self.same_offer(s.last_sent_terms, sheet):
-                s.state = "done"
-                self.note(sid, "no_progress", reason="relationship target already offered")
-                return None
-            return self.send(s, [sheet], [], events, theirs)
+            # The supplier already offers at or below our estimated optimum. Let the close gate
+            # evaluate its standing sheet instead of raising the price to our target.
+            s.state = "done"
+            return None
         if s.ours and theirs <= s.ours[-1]:  # it came below what we offered: take it
             return self.finish(s, sheets, events, theirs, left)
         price, n_claims = self.next_price(s, theirs)
@@ -539,8 +534,6 @@ class Negotiator:
         conceded = (s.theirs[-2] - theirs) / s.theirs[-2] if len(s.theirs) > 1 else 0.0
         fraction = FRACTION * (HOLD if s.tactic == "hold" else 1.0)
         price = step(last, theirs, conceded, len(s.ours) == 1, fraction, s.budget, sum(s.gaps), s.term_change)
-        if s.tactic == "close_in":
-            price = min(max(price, last + CLOSE_IN * (theirs - last)), theirs * 0.998)
         return round(max(price, last), 2), LATER_CLAIMS + (s.tactic == "argue")  # an argument gets evidence
 
     def finish(self, s, sheets, events, theirs, left):
