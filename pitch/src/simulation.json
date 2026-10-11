@@ -1,0 +1,1732 @@
+{
+  "id": "local-S02-short-28557b2be975",
+  "source": "arena-kit simulator",
+  "model": "scripted fixtures",
+  "commit": "03fcfe8",
+  "fingerprint": "28557b2be975",
+  "sample_size": 1,
+  "scenario": "S02 shortened to three rounds per supplier",
+  "case": {
+    "case_id": "case:S02",
+    "set": "practice",
+    "type": "rfq",
+    "title": "Motor bracket HB: two quotes",
+    "briefing": "Simulator example. You buy part:330030 for Hollerau Pumpenwerke from sup:70340, sup:70360. Need: 18790 pc a year for 2 year(s). The supplier in the simulator is a plain script, not a real bot.",
+    "trigger_doc": null,
+    "parts": [
+      "part:330030"
+    ],
+    "suppliers": [
+      "sup:70340",
+      "sup:70360"
+    ],
+    "negotiable": [
+      "unit_price",
+      "payment_days",
+      "lead_time_days"
+    ],
+    "fixed_terms": {
+      "volume_per_year": 18790,
+      "contract_months": 24,
+      "index_clause": null,
+      "incoterm": "DAP",
+      "tooling_eur": 0
+    },
+    "term_options": {
+      "payment_days": [
+        14,
+        30,
+        45,
+        60,
+        90
+      ],
+      "lead_time_days": [
+        21,
+        28,
+        35,
+        42,
+        49
+      ]
+    },
+    "buyer": {
+      "need_per_year": 18790,
+      "horizon_years": 2,
+      "current_unit_price": 15.63,
+      "fallback_unit_price": 17.97,
+      "interest_rate": 0.08,
+      "reference_payment_days": 60,
+      "need_lead_time_days": 42,
+      "category_goal": "leverage",
+      "fallback_risk_pct": 3,
+      "index_risk_pct": 1,
+      "late_cost_per_day": 200,
+      "cost_per_defect": 50,
+      "freight_eur_per_unit": {
+        "EXW": 0.47,
+        "FCA": 0.31,
+        "DAP": 0.0
+      },
+      "index_paths": {},
+      "must_haves": [],
+      "alternative": {
+        "kind": "none",
+        "ref": null,
+        "terms": {}
+      }
+    },
+    "round_limit": 3,
+    "refs": [
+      "sc:70340@2026Q3",
+      "sc:70360@2026Q3",
+      "idx:PPI-C241@2025-08",
+      "idx:PPI-C241@2026-08",
+      "idx:LCI-C@2025-08"
+    ],
+    "facts": {
+      "sc:70340@2026Q3": {
+        "colour": "green",
+        "otd_confirmed_pct": 90.4,
+        "otd_pct": 88.5,
+        "ppm": 489,
+        "quarter": "2026Q3",
+        "supplier": "sup:70340"
+      },
+      "sc:70360@2026Q3": {
+        "colour": "amber",
+        "otd_confirmed_pct": 84.0,
+        "otd_pct": 76.0,
+        "ppm": 762,
+        "quarter": "2026Q3",
+        "supplier": "sup:70360"
+      },
+      "idx:PPI-C241@2025-08": {
+        "month": "2025-08",
+        "series": "PPI-C241",
+        "value": 99.4
+      },
+      "idx:PPI-C241@2026-08": {
+        "month": "2026-08",
+        "series": "PPI-C241",
+        "value": 105.9
+      },
+      "idx:LCI-C@2025-08": {
+        "month": "2025-08",
+        "series": "LCI-C",
+        "value": 117.0
+      }
+    }
+  },
+  "suppliers": [
+    {
+      "id": "sup:70340",
+      "name": "Metallbau Steinfelder KG"
+    },
+    {
+      "id": "sup:70360",
+      "name": "Kantteile Strasser GmbH"
+    }
+  ],
+  "events": [
+    {
+      "stage": "research",
+      "title": "Supplier briefs prepared",
+      "summary": "Four specialist roles and a lead review each supplier.",
+      "supplier": null,
+      "detail": {
+        "briefs": {
+          "sup:70340": {
+            "trades": [],
+            "claim_order": [
+              "should_cost",
+              "index",
+              "scorecard"
+            ],
+            "tone": "businesslike",
+            "notes": "Use the recorded evidence and keep the proposal clear.",
+            "reason": "Scripted test strategy; all figures come from the policy.",
+            "playbook": {
+              "arguments": [
+                "Our production costs leave limited room to move."
+              ],
+              "rebuttals": [
+                "Let us review the complete package against the available evidence."
+              ],
+              "press": [],
+              "wants": [
+                "a clear purchase commitment"
+              ]
+            },
+            "findings": {
+              "economics": [
+                "Use the supplied records to substantiate the proposal."
+              ],
+              "persona": [
+                "Use the supplied records to substantiate the proposal."
+              ],
+              "history": [
+                "Use the supplied records to substantiate the proposal."
+              ],
+              "leverage": [
+                "Use the supplied records to substantiate the proposal."
+              ]
+            }
+          },
+          "sup:70360": {
+            "trades": [],
+            "claim_order": [
+              "should_cost",
+              "index",
+              "scorecard"
+            ],
+            "tone": "businesslike",
+            "notes": "Use the recorded evidence and keep the proposal clear.",
+            "reason": "Scripted test strategy; all figures come from the policy.",
+            "playbook": {
+              "arguments": [
+                "Our production costs leave limited room to move."
+              ],
+              "rebuttals": [
+                "Let us review the complete package against the available evidence."
+              ],
+              "press": [],
+              "wants": [
+                "a clear purchase commitment"
+              ]
+            },
+            "findings": {
+              "economics": [
+                "Use the supplied records to substantiate the proposal."
+              ],
+              "persona": [
+                "Use the supplied records to substantiate the proposal."
+              ],
+              "history": [
+                "Use the supplied records to substantiate the proposal."
+              ],
+              "leverage": [
+                "Use the supplied records to substantiate the proposal."
+              ]
+            }
+          }
+        },
+        "model_calls": {
+          "specialist": 8,
+          "lead": 2,
+          "supplier": 2,
+          "buyer": 2
+        }
+      },
+      "suppliers": {},
+      "best": null
+    },
+    {
+      "stage": "rehearsal",
+      "title": "Arguments rehearsed",
+      "summary": "A supplier role raises objections; a buyer role prepares responses.",
+      "supplier": null,
+      "detail": {
+        "sup:70340": {
+          "arguments": [
+            "Our production costs leave limited room to move."
+          ],
+          "rebuttals": [
+            "Let us review the complete package against the available evidence."
+          ],
+          "press": [],
+          "wants": [
+            "a clear purchase commitment"
+          ]
+        },
+        "sup:70360": {
+          "arguments": [
+            "Our production costs leave limited room to move."
+          ],
+          "rebuttals": [
+            "Let us review the complete package against the available evidence."
+          ],
+          "press": [],
+          "wants": [
+            "a clear purchase commitment"
+          ]
+        }
+      },
+      "suppliers": {},
+      "best": null
+    },
+    {
+      "stage": "analyst",
+      "title": "Opening quotes received",
+      "summary": "The runner opens supplier threads and starts the reply clocks.",
+      "supplier": null,
+      "detail": {
+        "quotes": {
+          "sup:70340": {
+            "offer_id": "offer:70340-0",
+            "round": 0,
+            "status": "open",
+            "terms": {
+              "unit_price": 17.19
+            },
+            "missing_fields": [
+              "lead_time_days",
+              "payment_days"
+            ],
+            "claims": [],
+            "claim_results": [],
+            "signals": {
+              "reply_delay_days": 1,
+              "validity_days": 30
+            },
+            "text": "Simulated supplier. Our quote is attached."
+          },
+          "sup:70360": {
+            "offer_id": "offer:70360-0",
+            "round": 0,
+            "status": "open",
+            "terms": {
+              "unit_price": 17.51
+            },
+            "missing_fields": [
+              "lead_time_days",
+              "payment_days"
+            ],
+            "claims": [],
+            "claim_results": [],
+            "signals": {
+              "reply_delay_days": 1,
+              "validity_days": 30
+            },
+            "text": "Simulated supplier. Our quote is attached."
+          }
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 17.19,
+          "status": "open",
+          "cost": 652603.76,
+          "terms": {
+            "unit_price": 17.19
+          },
+          "valid": true
+        },
+        "sup:70360": {
+          "price": 17.51,
+          "status": "open",
+          "cost": 664752.29,
+          "terms": {
+            "unit_price": 17.51
+          },
+          "valid": true
+        }
+      },
+      "best": 652603.76
+    },
+    {
+      "stage": "analyst",
+      "title": "Reply interpreted",
+      "summary": "The analyst selects a bounded tactic; the policy controls its effect.",
+      "supplier": "sup:70340",
+      "detail": {
+        "seconds": 0.0,
+        "mood": "neutral",
+        "tactic": "steady",
+        "argument": 0,
+        "asks": [],
+        "notes": "Acknowledge the counter and respond with a complete proposal."
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 17.19,
+          "status": "open",
+          "cost": 652603.76,
+          "terms": {
+            "unit_price": 17.19
+          },
+          "valid": true
+        },
+        "sup:70360": {
+          "price": 17.51,
+          "status": "open",
+          "cost": 664752.29,
+          "terms": {
+            "unit_price": 17.51
+          },
+          "valid": true
+        }
+      },
+      "best": 652603.76
+    },
+    {
+      "stage": "negotiator",
+      "title": "Offer priced and checked",
+      "summary": "The policy sets price, complete terms and supporting claims.",
+      "supplier": "sup:70340",
+      "detail": {
+        "state": "open",
+        "theirs": 17.19,
+        "ours": 13.62,
+        "claims": [
+          "index",
+          "scorecard",
+          "order_history"
+        ],
+        "asks": [],
+        "attached": []
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 17.19,
+          "status": "open",
+          "cost": 652603.76,
+          "terms": {
+            "unit_price": 17.19
+          },
+          "valid": true
+        },
+        "sup:70360": {
+          "price": 17.51,
+          "status": "open",
+          "cost": 664752.29,
+          "terms": {
+            "unit_price": 17.51
+          },
+          "valid": true
+        }
+      },
+      "best": 652603.76
+    },
+    {
+      "stage": "writer",
+      "title": "Proposal sent",
+      "summary": "Code supplies the figures and claims; the writer supplies the words.",
+      "supplier": "sup:70340",
+      "detail": {
+        "message": {
+          "subject": "Re: Motor bracket HB: two quotes",
+          "body": "Dear Sir or Madam,\n\nThank you for your offer and for the time your team has put into it.\nThank you for your proposal. Please consider the complete package below.\n\nWe confirm a binding volume of 18790 units a year for the 24-month term, our full demand for this part, all placed with you.\n\nElectricity producer prices changed -6.1% from 2025-11 to 2026-08 (idx:PPI-D351@2025-11, idx:PPI-D351@2026-08).\nYour on-time delivery was 88.5% in 2026Q3 (sc:70340@2026Q3).\nOur last 3 orders for this part were at EUR 15.63 (po:4500014452-20, po:4500014401-10, po:4500014317-20).\n\nOn this basis we propose: EUR 13.62 per unit, payment 90 days net, lead time 42 days, for our full demand of 18790 units a year over 24 months.\n\nKind regards,\nHollerau Pumpenwerke, Purchasing",
+          "term_sheets": [
+            {
+              "terms": {
+                "unit_price": 13.62,
+                "payment_days": 90,
+                "lead_time_days": 42
+              }
+            }
+          ],
+          "refs": [
+            "idx:PPI-D351@2025-11",
+            "idx:PPI-D351@2026-08",
+            "po:4500014317-20",
+            "po:4500014401-10",
+            "po:4500014452-20",
+            "sc:70340@2026Q3"
+          ]
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 17.19,
+          "status": "open",
+          "cost": 652603.76,
+          "terms": {
+            "unit_price": 17.19
+          },
+          "valid": true,
+          "ours": 13.62
+        },
+        "sup:70360": {
+          "price": 17.51,
+          "status": "open",
+          "cost": 664752.29,
+          "terms": {
+            "unit_price": 17.51
+          },
+          "valid": true
+        }
+      },
+      "best": 652603.76
+    },
+    {
+      "stage": "analyst",
+      "title": "Supplier replied",
+      "summary": "The standing quote updates before the next decision.",
+      "supplier": "sup:70340",
+      "detail": {
+        "reply": {
+          "thread_id": "thread:S02:70340",
+          "message_id": "msg:70340-1-2",
+          "in_reply_to": null,
+          "from": "sales@70340",
+          "subject": "Re: Motor bracket HB: two quotes",
+          "body": "Simulated supplier. Our counter-offer.",
+          "refs": [],
+          "action": null,
+          "term_sheets": [
+            {
+              "term_sheet_id": "offer:70340-1",
+              "terms": {
+                "unit_price": 16.85
+              }
+            }
+          ],
+          "status": "open",
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "claim_results": [
+            {
+              "index": 0,
+              "result": "verified"
+            },
+            {
+              "index": 1,
+              "result": "verified"
+            },
+            {
+              "index": 2,
+              "result": "verified"
+            }
+          ],
+          "missing_fields": [
+            "lead_time_days",
+            "payment_days"
+          ],
+          "attachments": []
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.85,
+          "status": "open",
+          "cost": 639695.95,
+          "terms": {
+            "unit_price": 16.85
+          },
+          "valid": true,
+          "ours": 13.62
+        },
+        "sup:70360": {
+          "price": 17.51,
+          "status": "open",
+          "cost": 664752.29,
+          "terms": {
+            "unit_price": 17.51
+          },
+          "valid": true
+        }
+      },
+      "best": 639695.95
+    },
+    {
+      "stage": "analyst",
+      "title": "Reply interpreted",
+      "summary": "The analyst selects a bounded tactic; the policy controls its effect.",
+      "supplier": "sup:70360",
+      "detail": {
+        "seconds": 0.0,
+        "mood": "neutral",
+        "tactic": "steady",
+        "argument": 0,
+        "asks": [],
+        "notes": "Acknowledge the counter and respond with a complete proposal."
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.85,
+          "status": "open",
+          "cost": 639695.95,
+          "terms": {
+            "unit_price": 16.85
+          },
+          "valid": true,
+          "ours": 13.62
+        },
+        "sup:70360": {
+          "price": 17.51,
+          "status": "open",
+          "cost": 664752.29,
+          "terms": {
+            "unit_price": 17.51
+          },
+          "valid": true
+        }
+      },
+      "best": 639695.95
+    },
+    {
+      "stage": "negotiator",
+      "title": "Offer priced and checked",
+      "summary": "The policy sets price, complete terms and supporting claims.",
+      "supplier": "sup:70360",
+      "detail": {
+        "state": "open",
+        "theirs": 17.51,
+        "ours": 13.66,
+        "claims": [
+          "rival",
+          "scorecard",
+          "order_history"
+        ],
+        "asks": [],
+        "attached": []
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.85,
+          "status": "open",
+          "cost": 639695.95,
+          "terms": {
+            "unit_price": 16.85
+          },
+          "valid": true,
+          "ours": 13.62
+        },
+        "sup:70360": {
+          "price": 17.51,
+          "status": "open",
+          "cost": 664752.29,
+          "terms": {
+            "unit_price": 17.51
+          },
+          "valid": true
+        }
+      },
+      "best": 639695.95
+    },
+    {
+      "stage": "writer",
+      "title": "Proposal sent",
+      "summary": "Code supplies the figures and claims; the writer supplies the words.",
+      "supplier": "sup:70360",
+      "detail": {
+        "message": {
+          "subject": "Re: Motor bracket HB: two quotes",
+          "body": "Dear Sir or Madam,\n\nThank you for your offer and for the time your team has put into it.\nThank you for your proposal. Please consider the complete package below.\n\nWe confirm a binding volume of 18790 units a year for the 24-month term, our full demand for this part, all placed with you.\n\nAnother bidder offers EUR 16.85 per unit for this part (offer:70340-1).\nYour on-time delivery was 76.0% in 2026Q3 (sc:70360@2026Q3).\nOur last 3 orders for this part were at EUR 16.11 (po:4500014435-10, po:4500014435-20, po:4500014296-10).\n\nOn this basis we propose: EUR 13.66 per unit, payment 14 days net, lead time 42 days, for our full demand of 18790 units a year over 24 months.\n\nKind regards,\nHollerau Pumpenwerke, Purchasing",
+          "term_sheets": [
+            {
+              "terms": {
+                "unit_price": 13.66,
+                "payment_days": 14,
+                "lead_time_days": 42
+              }
+            }
+          ],
+          "refs": [
+            "offer:70340-1",
+            "po:4500014296-10",
+            "po:4500014435-10",
+            "po:4500014435-20",
+            "sc:70360@2026Q3"
+          ]
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.85,
+          "status": "open",
+          "cost": 639695.95,
+          "terms": {
+            "unit_price": 16.85
+          },
+          "valid": true,
+          "ours": 13.62
+        },
+        "sup:70360": {
+          "price": 17.51,
+          "status": "open",
+          "cost": 664752.29,
+          "terms": {
+            "unit_price": 17.51
+          },
+          "valid": true,
+          "ours": 13.66
+        }
+      },
+      "best": 639695.95
+    },
+    {
+      "stage": "analyst",
+      "title": "Supplier replied",
+      "summary": "The standing quote updates before the next decision.",
+      "supplier": "sup:70360",
+      "detail": {
+        "reply": {
+          "thread_id": "thread:S02:70360",
+          "message_id": "msg:70360-1-2",
+          "in_reply_to": null,
+          "from": "sales@70360",
+          "subject": "Re: Motor bracket HB: two quotes",
+          "body": "Simulated supplier. Our counter-offer.",
+          "refs": [],
+          "action": null,
+          "term_sheets": [
+            {
+              "term_sheet_id": "offer:70360-1",
+              "terms": {
+                "unit_price": 17.16
+              }
+            }
+          ],
+          "status": "open",
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "claim_results": [
+            {
+              "index": 0,
+              "result": "verified"
+            },
+            {
+              "index": 1,
+              "result": "verified"
+            },
+            {
+              "index": 2,
+              "result": "verified"
+            }
+          ],
+          "missing_fields": [
+            "lead_time_days",
+            "payment_days"
+          ],
+          "attachments": []
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.85,
+          "status": "open",
+          "cost": 639695.95,
+          "terms": {
+            "unit_price": 16.85
+          },
+          "valid": true,
+          "ours": 13.62
+        },
+        "sup:70360": {
+          "price": 17.16,
+          "status": "open",
+          "cost": 651464.83,
+          "terms": {
+            "unit_price": 17.16
+          },
+          "valid": true,
+          "ours": 13.66
+        }
+      },
+      "best": 639695.95
+    },
+    {
+      "stage": "analyst",
+      "title": "Reply interpreted",
+      "summary": "The analyst selects a bounded tactic; the policy controls its effect.",
+      "supplier": "sup:70340",
+      "detail": {
+        "seconds": 0.0,
+        "mood": "neutral",
+        "tactic": "steady",
+        "argument": 0,
+        "asks": [],
+        "notes": "Acknowledge the counter and respond with a complete proposal."
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.85,
+          "status": "open",
+          "cost": 639695.95,
+          "terms": {
+            "unit_price": 16.85
+          },
+          "valid": true,
+          "ours": 13.62
+        },
+        "sup:70360": {
+          "price": 17.16,
+          "status": "open",
+          "cost": 651464.83,
+          "terms": {
+            "unit_price": 17.16
+          },
+          "valid": true,
+          "ours": 13.66
+        }
+      },
+      "best": 639695.95
+    },
+    {
+      "stage": "negotiator",
+      "title": "Offer priced and checked",
+      "summary": "The policy sets price, complete terms and supporting claims.",
+      "supplier": "sup:70340",
+      "detail": {
+        "state": "open",
+        "theirs": 16.85,
+        "ours": 14.59,
+        "claims": [
+          "open_book"
+        ],
+        "asks": [],
+        "attached": []
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.85,
+          "status": "open",
+          "cost": 639695.95,
+          "terms": {
+            "unit_price": 16.85
+          },
+          "valid": true,
+          "ours": 13.62
+        },
+        "sup:70360": {
+          "price": 17.16,
+          "status": "open",
+          "cost": 651464.83,
+          "terms": {
+            "unit_price": 17.16
+          },
+          "valid": true,
+          "ours": 13.66
+        }
+      },
+      "best": 639695.95
+    },
+    {
+      "stage": "writer",
+      "title": "Proposal sent",
+      "summary": "Code supplies the figures and claims; the writer supplies the words.",
+      "supplier": "sup:70340",
+      "detail": {
+        "message": {
+          "subject": "Re: Motor bracket HB: two quotes",
+          "body": "Dear Sir or Madam,\n\nThank you for your reply and for the step you have taken; we appreciate it.\nThank you for your proposal. Please consider the complete package below.\n\nIn our call of 2026-07-21 (doc:20260721-70340-M2) you offered to walk us through your calculation; we would welcome that now.\n\nOn this basis we propose: EUR 14.59 per unit, payment 90 days net, lead time 42 days, for our full demand of 18790 units a year over 24 months.\n\nKind regards,\nHollerau Pumpenwerke, Purchasing",
+          "term_sheets": [
+            {
+              "terms": {
+                "unit_price": 14.59,
+                "payment_days": 90,
+                "lead_time_days": 42
+              }
+            }
+          ],
+          "refs": [
+            "doc:20260721-70340-M2"
+          ]
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.85,
+          "status": "open",
+          "cost": 639695.95,
+          "terms": {
+            "unit_price": 16.85
+          },
+          "valid": true,
+          "ours": 14.59
+        },
+        "sup:70360": {
+          "price": 17.16,
+          "status": "open",
+          "cost": 651464.83,
+          "terms": {
+            "unit_price": 17.16
+          },
+          "valid": true,
+          "ours": 13.66
+        }
+      },
+      "best": 639695.95
+    },
+    {
+      "stage": "analyst",
+      "title": "Supplier replied",
+      "summary": "The standing quote updates before the next decision.",
+      "supplier": "sup:70340",
+      "detail": {
+        "reply": {
+          "thread_id": "thread:S02:70340",
+          "message_id": "msg:70340-2-3",
+          "in_reply_to": null,
+          "from": "sales@70340",
+          "subject": "Re: Motor bracket HB: two quotes",
+          "body": "Simulated supplier. Our counter-offer.",
+          "refs": [],
+          "action": null,
+          "term_sheets": [
+            {
+              "term_sheet_id": "offer:70340-2",
+              "terms": {
+                "unit_price": 16.51
+              }
+            }
+          ],
+          "status": "open",
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "claim_results": [
+            {
+              "index": 0,
+              "result": "verified"
+            }
+          ],
+          "missing_fields": [
+            "lead_time_days",
+            "payment_days"
+          ],
+          "attachments": []
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.51,
+          "status": "open",
+          "cost": 626788.13,
+          "terms": {
+            "unit_price": 16.51
+          },
+          "valid": true,
+          "ours": 14.59
+        },
+        "sup:70360": {
+          "price": 17.16,
+          "status": "open",
+          "cost": 651464.83,
+          "terms": {
+            "unit_price": 17.16
+          },
+          "valid": true,
+          "ours": 13.66
+        }
+      },
+      "best": 626788.13
+    },
+    {
+      "stage": "analyst",
+      "title": "Reply interpreted",
+      "summary": "The analyst selects a bounded tactic; the policy controls its effect.",
+      "supplier": "sup:70360",
+      "detail": {
+        "seconds": 0.0,
+        "mood": "neutral",
+        "tactic": "steady",
+        "argument": 0,
+        "asks": [],
+        "notes": "Acknowledge the counter and respond with a complete proposal."
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.51,
+          "status": "open",
+          "cost": 626788.13,
+          "terms": {
+            "unit_price": 16.51
+          },
+          "valid": true,
+          "ours": 14.59
+        },
+        "sup:70360": {
+          "price": 17.16,
+          "status": "open",
+          "cost": 651464.83,
+          "terms": {
+            "unit_price": 17.16
+          },
+          "valid": true,
+          "ours": 13.66
+        }
+      },
+      "best": 626788.13
+    },
+    {
+      "stage": "negotiator",
+      "title": "Offer priced and checked",
+      "summary": "The policy sets price, complete terms and supporting claims.",
+      "supplier": "sup:70360",
+      "detail": {
+        "state": "open",
+        "theirs": 17.16,
+        "ours": 14.71,
+        "claims": [
+          "rival"
+        ],
+        "asks": [],
+        "attached": []
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.51,
+          "status": "open",
+          "cost": 626788.13,
+          "terms": {
+            "unit_price": 16.51
+          },
+          "valid": true,
+          "ours": 14.59
+        },
+        "sup:70360": {
+          "price": 17.16,
+          "status": "open",
+          "cost": 651464.83,
+          "terms": {
+            "unit_price": 17.16
+          },
+          "valid": true,
+          "ours": 13.66
+        }
+      },
+      "best": 626788.13
+    },
+    {
+      "stage": "writer",
+      "title": "Proposal sent",
+      "summary": "Code supplies the figures and claims; the writer supplies the words.",
+      "supplier": "sup:70360",
+      "detail": {
+        "message": {
+          "subject": "Re: Motor bracket HB: two quotes",
+          "body": "Dear Sir or Madam,\n\nThank you for your reply and for the step you have taken; we appreciate it.\nThank you for your proposal. Please consider the complete package below.\n\nAnother bidder offers EUR 16.51 per unit for this part (offer:70340-2).\n\nOn this basis we propose: EUR 14.71 per unit, payment 14 days net, lead time 42 days, for our full demand of 18790 units a year over 24 months.\n\nKind regards,\nHollerau Pumpenwerke, Purchasing",
+          "term_sheets": [
+            {
+              "terms": {
+                "unit_price": 14.71,
+                "payment_days": 14,
+                "lead_time_days": 42
+              }
+            }
+          ],
+          "refs": [
+            "offer:70340-2"
+          ]
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.51,
+          "status": "open",
+          "cost": 626788.13,
+          "terms": {
+            "unit_price": 16.51
+          },
+          "valid": true,
+          "ours": 14.59
+        },
+        "sup:70360": {
+          "price": 17.16,
+          "status": "open",
+          "cost": 651464.83,
+          "terms": {
+            "unit_price": 17.16
+          },
+          "valid": true,
+          "ours": 14.71
+        }
+      },
+      "best": 626788.13
+    },
+    {
+      "stage": "analyst",
+      "title": "Supplier replied",
+      "summary": "The standing quote updates before the next decision.",
+      "supplier": "sup:70360",
+      "detail": {
+        "reply": {
+          "thread_id": "thread:S02:70360",
+          "message_id": "msg:70360-2-3",
+          "in_reply_to": null,
+          "from": "sales@70360",
+          "subject": "Re: Motor bracket HB: two quotes",
+          "body": "Simulated supplier. Our counter-offer.",
+          "refs": [],
+          "action": null,
+          "term_sheets": [
+            {
+              "term_sheet_id": "offer:70360-2",
+              "terms": {
+                "unit_price": 16.81
+              }
+            }
+          ],
+          "status": "open",
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "claim_results": [
+            {
+              "index": 0,
+              "result": "verified"
+            }
+          ],
+          "missing_fields": [
+            "lead_time_days",
+            "payment_days"
+          ],
+          "attachments": []
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.51,
+          "status": "open",
+          "cost": 626788.13,
+          "terms": {
+            "unit_price": 16.51
+          },
+          "valid": true,
+          "ours": 14.59
+        },
+        "sup:70360": {
+          "price": 16.81,
+          "status": "open",
+          "cost": 638177.38,
+          "terms": {
+            "unit_price": 16.81
+          },
+          "valid": true,
+          "ours": 14.71
+        }
+      },
+      "best": 626788.13
+    },
+    {
+      "stage": "analyst",
+      "title": "Reply interpreted",
+      "summary": "The analyst selects a bounded tactic; the policy controls its effect.",
+      "supplier": "sup:70340",
+      "detail": {
+        "seconds": 0.0,
+        "mood": "neutral",
+        "tactic": "steady",
+        "argument": 0,
+        "asks": [],
+        "notes": "Acknowledge the counter and respond with a complete proposal."
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.51,
+          "status": "open",
+          "cost": 626788.13,
+          "terms": {
+            "unit_price": 16.51
+          },
+          "valid": true,
+          "ours": 14.59
+        },
+        "sup:70360": {
+          "price": 16.81,
+          "status": "open",
+          "cost": 638177.38,
+          "terms": {
+            "unit_price": 16.81
+          },
+          "valid": true,
+          "ours": 14.71
+        }
+      },
+      "best": 626788.13
+    },
+    {
+      "stage": "negotiator",
+      "title": "Offer priced and checked",
+      "summary": "The policy sets price, complete terms and supporting claims.",
+      "supplier": "sup:70340",
+      "detail": {
+        "state": "open",
+        "theirs": 16.51,
+        "ours": 15.17,
+        "claims": [
+          "forecast"
+        ],
+        "asks": [],
+        "attached": []
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.51,
+          "status": "open",
+          "cost": 626788.13,
+          "terms": {
+            "unit_price": 16.51
+          },
+          "valid": true,
+          "ours": 14.59
+        },
+        "sup:70360": {
+          "price": 16.81,
+          "status": "open",
+          "cost": 638177.38,
+          "terms": {
+            "unit_price": 16.81
+          },
+          "valid": true,
+          "ours": 14.71
+        }
+      },
+      "best": 626788.13
+    },
+    {
+      "stage": "writer",
+      "title": "Proposal sent",
+      "summary": "Code supplies the figures and claims; the writer supplies the words.",
+      "supplier": "sup:70340",
+      "detail": {
+        "message": {
+          "subject": "Re: Motor bracket HB: two quotes",
+          "body": "Dear Sir or Madam,\n\nThank you for your reply and for the step you have taken; we appreciate it.\nThank you for your proposal. Please consider the complete package below.\n\nOur forecast for this part is up 2.3% (fc:330030@2026-09).\n\nOn this basis we propose: EUR 15.17 per unit, payment 90 days net, lead time 42 days, for our full demand of 18790 units a year over 24 months.\n\nKind regards,\nHollerau Pumpenwerke, Purchasing",
+          "term_sheets": [
+            {
+              "terms": {
+                "unit_price": 15.17,
+                "payment_days": 90,
+                "lead_time_days": 42
+              }
+            }
+          ],
+          "refs": [
+            "fc:330030@2026-09"
+          ]
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.51,
+          "status": "open",
+          "cost": 626788.13,
+          "terms": {
+            "unit_price": 16.51
+          },
+          "valid": true,
+          "ours": 15.17
+        },
+        "sup:70360": {
+          "price": 16.81,
+          "status": "open",
+          "cost": 638177.38,
+          "terms": {
+            "unit_price": 16.81
+          },
+          "valid": true,
+          "ours": 14.71
+        }
+      },
+      "best": 626788.13
+    },
+    {
+      "stage": "analyst",
+      "title": "Supplier replied",
+      "summary": "The standing quote updates before the next decision.",
+      "supplier": "sup:70340",
+      "detail": {
+        "reply": {
+          "thread_id": "thread:S02:70340",
+          "message_id": "msg:70340-3-4",
+          "in_reply_to": null,
+          "from": "sales@70340",
+          "subject": "Re: Motor bracket HB: two quotes",
+          "body": "Simulated supplier. Our counter-offer.",
+          "refs": [],
+          "action": null,
+          "term_sheets": [
+            {
+              "term_sheet_id": "offer:70340-3",
+              "terms": {
+                "unit_price": 16.17
+              }
+            }
+          ],
+          "status": "open",
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "claim_results": [
+            {
+              "index": 0,
+              "result": "verified"
+            }
+          ],
+          "missing_fields": [
+            "lead_time_days",
+            "payment_days"
+          ],
+          "attachments": []
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.17,
+          "status": "open",
+          "cost": 613880.32,
+          "terms": {
+            "unit_price": 16.17
+          },
+          "valid": true,
+          "ours": 15.17
+        },
+        "sup:70360": {
+          "price": 16.81,
+          "status": "open",
+          "cost": 638177.38,
+          "terms": {
+            "unit_price": 16.81
+          },
+          "valid": true,
+          "ours": 14.71
+        }
+      },
+      "best": 613880.32
+    },
+    {
+      "stage": "analyst",
+      "title": "Reply interpreted",
+      "summary": "The analyst selects a bounded tactic; the policy controls its effect.",
+      "supplier": "sup:70360",
+      "detail": {
+        "seconds": 0.0,
+        "mood": "neutral",
+        "tactic": "steady",
+        "argument": 0,
+        "asks": [],
+        "notes": "Acknowledge the counter and respond with a complete proposal."
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.17,
+          "status": "open",
+          "cost": 613880.32,
+          "terms": {
+            "unit_price": 16.17
+          },
+          "valid": true,
+          "ours": 15.17
+        },
+        "sup:70360": {
+          "price": 16.81,
+          "status": "open",
+          "cost": 638177.38,
+          "terms": {
+            "unit_price": 16.81
+          },
+          "valid": true,
+          "ours": 14.71
+        }
+      },
+      "best": 613880.32
+    },
+    {
+      "stage": "negotiator",
+      "title": "Offer priced and checked",
+      "summary": "The policy sets price, complete terms and supporting claims.",
+      "supplier": "sup:70360",
+      "detail": {
+        "state": "open",
+        "theirs": 16.81,
+        "ours": 15.34,
+        "claims": [
+          "rival"
+        ],
+        "asks": [],
+        "attached": []
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.17,
+          "status": "open",
+          "cost": 613880.32,
+          "terms": {
+            "unit_price": 16.17
+          },
+          "valid": true,
+          "ours": 15.17
+        },
+        "sup:70360": {
+          "price": 16.81,
+          "status": "open",
+          "cost": 638177.38,
+          "terms": {
+            "unit_price": 16.81
+          },
+          "valid": true,
+          "ours": 14.71
+        }
+      },
+      "best": 613880.32
+    },
+    {
+      "stage": "writer",
+      "title": "Proposal sent",
+      "summary": "Code supplies the figures and claims; the writer supplies the words.",
+      "supplier": "sup:70360",
+      "detail": {
+        "message": {
+          "subject": "Re: Motor bracket HB: two quotes",
+          "body": "Dear Sir or Madam,\n\nThank you for your reply and for the step you have taken; we appreciate it.\nThank you for your proposal. Please consider the complete package below.\n\nAnother bidder offers EUR 16.17 per unit for this part (offer:70340-3).\n\nOn this basis we propose: EUR 15.34 per unit, payment 14 days net, lead time 42 days, for our full demand of 18790 units a year over 24 months.\n\nKind regards,\nHollerau Pumpenwerke, Purchasing",
+          "term_sheets": [
+            {
+              "terms": {
+                "unit_price": 15.34,
+                "payment_days": 14,
+                "lead_time_days": 42
+              }
+            }
+          ],
+          "refs": [
+            "offer:70340-3"
+          ]
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.17,
+          "status": "open",
+          "cost": 613880.32,
+          "terms": {
+            "unit_price": 16.17
+          },
+          "valid": true,
+          "ours": 15.17
+        },
+        "sup:70360": {
+          "price": 16.81,
+          "status": "open",
+          "cost": 638177.38,
+          "terms": {
+            "unit_price": 16.81
+          },
+          "valid": true,
+          "ours": 15.34
+        }
+      },
+      "best": 613880.32
+    },
+    {
+      "stage": "analyst",
+      "title": "Supplier replied",
+      "summary": "The standing quote updates before the next decision.",
+      "supplier": "sup:70360",
+      "detail": {
+        "reply": {
+          "thread_id": "thread:S02:70360",
+          "message_id": "msg:70360-3-4",
+          "in_reply_to": null,
+          "from": "sales@70360",
+          "subject": "Re: Motor bracket HB: two quotes",
+          "body": "Simulated supplier. Our counter-offer.",
+          "refs": [],
+          "action": null,
+          "term_sheets": [
+            {
+              "term_sheet_id": "offer:70360-3",
+              "terms": {
+                "unit_price": 16.46
+              }
+            }
+          ],
+          "status": "open",
+          "signals": {
+            "reply_delay_days": 1,
+            "validity_days": 30
+          },
+          "claim_results": [
+            {
+              "index": 0,
+              "result": "verified"
+            }
+          ],
+          "missing_fields": [
+            "lead_time_days",
+            "payment_days"
+          ],
+          "attachments": []
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.17,
+          "status": "open",
+          "cost": 613880.32,
+          "terms": {
+            "unit_price": 16.17
+          },
+          "valid": true,
+          "ours": 15.17
+        },
+        "sup:70360": {
+          "price": 16.46,
+          "status": "open",
+          "cost": 624889.93,
+          "terms": {
+            "unit_price": 16.46
+          },
+          "valid": true,
+          "ours": 15.34
+        }
+      },
+      "best": 613880.32
+    },
+    {
+      "stage": "analyst",
+      "title": "Reply interpreted",
+      "summary": "The analyst selects a bounded tactic; the policy controls its effect.",
+      "supplier": "sup:70340",
+      "detail": {
+        "seconds": 0.0,
+        "mood": "neutral",
+        "tactic": "steady",
+        "argument": 0,
+        "asks": [],
+        "notes": "Acknowledge the counter and respond with a complete proposal."
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.17,
+          "status": "open",
+          "cost": 613880.32,
+          "terms": {
+            "unit_price": 16.17
+          },
+          "valid": true,
+          "ours": 15.17
+        },
+        "sup:70360": {
+          "price": 16.46,
+          "status": "open",
+          "cost": 624889.93,
+          "terms": {
+            "unit_price": 16.46
+          },
+          "valid": true,
+          "ours": 15.34
+        }
+      },
+      "best": 613880.32
+    },
+    {
+      "stage": "analyst",
+      "title": "Reply interpreted",
+      "summary": "The analyst selects a bounded tactic; the policy controls its effect.",
+      "supplier": "sup:70360",
+      "detail": {
+        "seconds": 0.0,
+        "mood": "neutral",
+        "tactic": "steady",
+        "argument": 0,
+        "asks": [],
+        "notes": "Acknowledge the counter and respond with a complete proposal."
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.17,
+          "status": "open",
+          "cost": 613880.32,
+          "terms": {
+            "unit_price": 16.17
+          },
+          "valid": true,
+          "ours": 15.17
+        },
+        "sup:70360": {
+          "price": 16.46,
+          "status": "open",
+          "cost": 624889.93,
+          "terms": {
+            "unit_price": 16.46
+          },
+          "valid": true,
+          "ours": 15.34
+        }
+      },
+      "best": 613880.32
+    },
+    {
+      "stage": "close",
+      "title": "Deal accepted",
+      "summary": "The close gate checks the standing sheet, must-haves and total cost.",
+      "supplier": "sup:70340",
+      "detail": {
+        "result": {
+          "ended": true,
+          "deal": true,
+          "supplier_id": "sup:70340",
+          "offer_id": "offer:70340-3",
+          "terms": {
+            "volume_per_year": 18790,
+            "contract_months": 24,
+            "payment_days": 14,
+            "lead_time_days": 21,
+            "incoterm": "DAP",
+            "index_clause": null,
+            "tooling_eur": 0,
+            "unit_price": 16.17
+          },
+          "c_open": 652603.76,
+          "c_deal": 613880.32,
+          "c_alt": null,
+          "c_best": 577486.85,
+          "score": 0.5155089579696508,
+          "must_haves_ok": true,
+          "cost_breakdown": {
+            "price": 607668.6000000001,
+            "uncovered_need": 0.0,
+            "fallback_risk": 0.0,
+            "payment_terms": 6211.723466666667,
+            "freight": 0.0,
+            "late_delivery": 0,
+            "quality": 0.0,
+            "tooling": 0.0,
+            "index_clause": 0.0,
+            "index_risk": 0.0,
+            "relationship": 0.0
+          }
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.17,
+          "status": "accepted",
+          "cost": 613880.32,
+          "terms": {
+            "unit_price": 16.17
+          },
+          "valid": true,
+          "ours": 15.17
+        },
+        "sup:70360": {
+          "price": 16.46,
+          "status": "open",
+          "cost": 624889.93,
+          "terms": {
+            "unit_price": 16.46
+          },
+          "valid": true,
+          "ours": 15.34
+        }
+      },
+      "best": 613880.32
+    },
+    {
+      "stage": "debrief",
+      "title": "Run complete · lesson saved",
+      "summary": "Observed outcomes are saved for research on similar cases.",
+      "supplier": null,
+      "detail": {
+        "lesson": {
+          "goal": "leverage",
+          "type": "rfq",
+          "bidders": 2,
+          "owners": [
+            "family",
+            "founder"
+          ],
+          "signals": [
+            "open_book",
+            "reference_customer",
+            "spare_capacity",
+            "stale_costing"
+          ],
+          "deal": true,
+          "score": 0.516,
+          "threads": [
+            {
+              "opened": 0.78,
+              "ours": [
+                0.78,
+                0.835,
+                0.868
+              ],
+              "theirs": [
+                0.984,
+                0.965,
+                0.945,
+                0.926
+              ],
+              "tactics": [
+                "steady",
+                "steady",
+                "steady",
+                "steady"
+              ],
+              "trades": []
+            }
+          ],
+          "lesson": "This scripted run exercised the complete pipeline. Validate tactics on further cases."
+        }
+      },
+      "suppliers": {
+        "sup:70340": {
+          "price": 16.17,
+          "status": "accepted",
+          "cost": 613880.32,
+          "terms": {
+            "unit_price": 16.17
+          },
+          "valid": true,
+          "ours": 15.17
+        },
+        "sup:70360": {
+          "price": 16.46,
+          "status": "open",
+          "cost": 624889.93,
+          "terms": {
+            "unit_price": 16.46
+          },
+          "valid": true,
+          "ours": 15.34
+        }
+      },
+      "best": 613880.32
+    }
+  ],
+  "result": {
+    "ended": true,
+    "deal": true,
+    "supplier_id": "sup:70340",
+    "offer_id": "offer:70340-3",
+    "terms": {
+      "volume_per_year": 18790,
+      "contract_months": 24,
+      "payment_days": 14,
+      "lead_time_days": 21,
+      "incoterm": "DAP",
+      "index_clause": null,
+      "tooling_eur": 0,
+      "unit_price": 16.17
+    },
+    "c_open": 652603.76,
+    "c_deal": 613880.32,
+    "c_alt": null,
+    "c_best": 577486.85,
+    "score": 0.5155089579696508,
+    "must_haves_ok": true,
+    "cost_breakdown": {
+      "price": 607668.6000000001,
+      "uncovered_need": 0.0,
+      "fallback_risk": 0.0,
+      "payment_terms": 6211.723466666667,
+      "freight": 0.0,
+      "late_delivery": 0,
+      "quality": 0.0,
+      "tooling": 0.0,
+      "index_clause": 0.0,
+      "index_risk": 0.0,
+      "relationship": 0.0
+    }
+  },
+  "calls": {
+    "specialist": 8,
+    "lead": 2,
+    "supplier": 2,
+    "buyer": 2,
+    "analyst": 8,
+    "writer": 6,
+    "debrief": 1
+  },
+  "has_package": true
+}
