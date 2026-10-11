@@ -34,7 +34,7 @@ KEEPALIVE_AFTER_S = 35  # a finished thread gets a question this long after the 
 CLOCK_S = 60  # each thread's clock, from the supplier's reply
 MARGIN_S = 5  # reserved on every clock for building and delivering the message
 FIRST_SEND_S = 10  # what a send (the supplier's reply) takes until we have measured one
-CLOSE_TRIES = 3  # a 409 on the close: read what stands now and decide again
+CLOSE_TRIES = 3  # an expired standing offer: refresh and decide again
 RETRY_S = 5  # a crashed final case is resumed after this long ...
 RETRY_MARGIN_S = 120  # ... while its cap leaves at least this much to resume and close
 RETRY_MAX = 40  # and never more often than this (a wave without a known cap)
@@ -115,7 +115,9 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True,
             message = keepalive_message(threads[sid])
         else:
             sid = todo[0]
-            budget = writer_budget(sid, replied, [s for s in threads if live(s)], send_s, time.monotonic())
+            budget = writer_budget(
+                sid, replied, [s for s in threads if live(s) and not neg.sides[s].dominated], send_s, time.monotonic()
+            )
             try:
                 move = neg.move(sid, threads, budget)
             except Exception:  # a field the policy did not expect: the thread must not fall silent
@@ -189,16 +191,17 @@ def safe_briefs(case, pkg, complete):
 
 
 def close(table, case_id, neg, threads):
-    """Accept or walk away. A 409 (the sheet expired, the thread ended) means the arena state moved:
-    read what stands now and decide again with the same guards. Anything else raises, and the Live
-    Final loop resumes the case."""
+    """Refresh expired offers, including timeout replacements returned as a stale-offer 422.
+    Recheck the complete package before each bounded retry; other validation errors still raise.
+    """
     for _ in range(CLOSE_TRIES):
         decision = neg.close(threads)
         sid = decision["supplier_id"]
         try:
             return table.close(sid, decision["message"])
         except ArenaError as e:
-            if e.status != 409:
+            stale_offer = e.status == 422 and e.detail == "not a standing offer in this session"
+            if e.status != 409 and not stale_offer:
                 raise
             log.info("%s %s: close refused: %s", case_id, sid, e.detail)
             reply = table.missed(sid, e)

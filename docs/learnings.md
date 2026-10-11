@@ -343,3 +343,29 @@ and twelve supplier openings with real data, all positive prices and satisfied m
 
 - The arena serialises calls within a session (sandbox D02, 2 tests: alone 24 and 29 s, sent together 15 and 38 s), so with three bidders each thread waits for the others' replies. After an agreed or final sheet, bidders that cannot beat it now get no rounds and no keepalives: P05 closed 1 s after Dralveck agreed (`ea15b6e17847ec89`, 0.822, 87 s, no timeout) against 47 s of keepalives without the keepalive rule (`6a5c6e47de5c554b`) and a 204 s median before; same deals (0.828, 0.822, 0.822 in 3 runs). All 21 case files unchanged on the sim.
 - The close before a wave's cap now leaves room for the slowest round so far (the kit's rule, `max(90 s, slowest + 15 s)`); with slow replies the fixed 90 s closed after the cap in a scaled test (`tests/test_deadline.py`).
+
+## 11 October: stale offers and conservative bidder pruning
+
+On main `109fe87`, ten practice sessions produced nine autonomous completions. P05
+`3a126fb61220a5f3` failed accepting `offer:70210-2`: the Arena returned HTTP 422,
+"not a standing offer in this session". Timeout replies had replaced that ID;
+reloading message history alone still selected the obsolete offer. A separate
+recovery accepted `offer:70210-4` at unchanged terms. The recovered ten-case mean
+was 0.779599, not an autonomous-policy mean (previous main batch: 0.787269).
+
+The close now handles that specific 422 like an expired-offer 409: refresh the
+thread's timeout response and standing ID, rerun cost and feasibility checks, and
+retry at most three times. Other 422 validation errors still raise. A recorded-data
+replay fails on the baseline and closes on the current ID with the change; this
+establishes recovery behavior, not a new hosted score.
+
+Pruning now preserves a cheaper standing counter and skips relationship goals,
+where a higher price can reduce total cost. Six synthetic combinations across two
+goals and three relationship weights exposed four incorrect baseline prunes using
+unseen supplier IDs. Discarded bidders no longer consume the remaining bidders'
+writer budget. This does not establish that pruning remains optimal across every
+future non-price package; further score evaluation must retain that uncertainty.
+
+Validation: 106 tests passed, two skipped; lint and formatting passed. Nine new
+regression checks fail against baseline 109fe87 and pass with the changes. No
+anchors, concession rates, supplier IDs or historical best prices were tuned.

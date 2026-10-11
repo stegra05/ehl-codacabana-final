@@ -196,3 +196,77 @@ def test_a_document_that_cannot_be_read_never_costs_the_case():
     message = {"attachments": [{"attachment_id": "att:1", "name": "quote.pdf"}]}
     runner.fetch(Table(), "case:X", message)  # logged, not raised: the case goes on
     assert "text" not in message["attachments"][0]
+
+
+@pytest.mark.parametrize("price,expected", [(14.0, "accept"), (18.0, "walk_away")])
+def test_stale_422_refreshes_timeout_offer_and_rechecks_cost(price, expected):
+    case, terms = s01()
+    case["buyer"]["alternative"] = {"kind": "rfq", "terms": {**terms, "unit_price": 16}}
+    threads = {"sup:unseen": [offer("expired", terms)]}
+
+    def close(sid, message):
+        if message["action"].get("term_sheet_id") == "expired":
+            raise ArenaError(422, "not a standing offer in this session")
+        return {"deal": message["action"]["type"] == "accept"}
+
+    table = FakeTable(
+        case,
+        threads,
+        close=close,
+        missed=lambda sid, error: offer("timeout-replacement", {**terms, "unit_price": price}),
+    )
+    result = runner.close(table, case["case_id"], Negotiator(case), threads)
+    assert result["deal"] == (expected == "accept")
+    last = table.closed[-1][1]["action"]
+    assert last["type"] == expected
+    if expected == "accept":
+        assert last["term_sheet_id"] == "timeout-replacement"
+
+
+def test_unrelated_422_is_not_retried():
+    case, terms = s01()
+    threads = {"sup:x": [offer("ts", terms)]}
+
+    def close(sid, message):
+        raise ArenaError(422, "invalid action")
+
+    table = FakeTable(case, threads, close=close)
+    with pytest.raises(ArenaError, match="invalid action"):
+        runner.close(table, case["case_id"], Negotiator(case), threads)
+    assert len(table.closed) == 1
+
+
+def test_stale_offer_retries_are_bounded():
+    case, terms = s01()
+    threads = {"sup:x": [offer("ts", terms)]}
+
+    def close(sid, message):
+        raise ArenaError(422, "not a standing offer in this session")
+
+    table = FakeTable(case, threads, close=close, missed=lambda sid, err: offer("replacement", terms))
+    with pytest.raises(RuntimeError, match="no close"):
+        runner.close(table, case["case_id"], Negotiator(case), threads)
+    assert len(table.closed) == runner.CLOSE_TRIES
+
+
+def test_discarded_bidder_does_not_consume_active_writer_budget(tmp_path, monkeypatch):
+    case, terms = s01()
+    threads = {"sup:active": [offer("a", terms)], "sup:discarded": [offer("b", terms)]}
+    monkeypatch.setattr(runner, "RUNS", tmp_path)
+
+    def prune(neg, threads):
+        neg.sides["sup:discarded"].dominated = True
+        neg.sides["sup:discarded"].state = "done"
+
+    budgets = []
+    original = runner.writer_budget
+
+    def budget(sid, replied, live, send_s, now):
+        budgets.append(live)
+        return original(sid, replied, live, send_s, now)
+
+    monkeypatch.setattr(Negotiator, "prune", prune)
+    monkeypatch.setattr(runner, "writer_budget", budget)
+    table = FakeTable(case, threads, send=lambda sid, message: {"result": {"deal": True}})
+    runner.play_case(table, case["case_id"])
+    assert budgets == [["sup:active"]]

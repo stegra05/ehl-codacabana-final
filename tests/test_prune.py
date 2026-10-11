@@ -72,3 +72,37 @@ def test_no_frozen_or_no_acceptable_frozen_sheet_prunes_nothing(monkeypatch):
     monkeypatch.setattr("buyer.policy.eco.deal_cost", lambda *args: None)  # dearer than the alternative
     neg.prune(threads)
     assert neg.sides["sup:b"].state == "open"
+
+
+@pytest.mark.parametrize("goal", ["stabilise", "secure_supply"])
+@pytest.mark.parametrize("charge", [1000, 5000, 20000])
+def test_relationship_cost_is_not_bounded_by_our_lower_price(goal, charge):
+    from buyer import economics as eco
+
+    case, terms = case_and_terms()
+    case["buyer"].update(
+        category_goal=goal,
+        relationship_eur_per_point=charge,
+        sustainable_margin_pct=10,
+        alternative={"kind": "none"},
+    )
+    threads = {
+        "sup:unseen-a": [reply(terms, 16), ours(terms, 16), reply(terms, 16, "agreed")],
+        "sup:unseen-b": [reply(terms, 18), ours(terms, 14.5), reply(terms, 15.5)],
+    }
+    neg = negotiator(case, threads)
+    for sid, side in neg.sides.items():
+        side.est = eco.estimate(case, side.std, rate=0.1, full_cost=14 if sid.endswith("b") else 10)
+    neg.prune(threads)
+    assert not neg.sides["sup:unseen-b"].dominated
+    assert neg.sides["sup:unseen-b"].state == "open"
+
+
+def test_better_current_counter_is_not_discarded():
+    case, terms = case_and_terms()
+    threads = threads_with(terms, "agreed", [14.5])
+    threads["sup:b"][-1] = reply(terms, 13.5, oid="better-counter")
+    neg = negotiator(case, threads)
+    neg.prune(threads)
+    assert not neg.sides["sup:b"].dominated
+    assert neg.best_offer(threads)[2] == "better-counter"

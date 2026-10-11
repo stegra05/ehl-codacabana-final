@@ -921,6 +921,9 @@ class Negotiator:
         cheapest acceptable frozen sheet cannot improve the case. It is done: no more rounds on the
         session's shared clock (the arena answers one call per session at a time, so every round
         with it delays the others; P05 had timeouts in 24 of 46 practice sessions)."""
+        # A higher price can LOWER relationship cost. Our latest price is not a cost bound.
+        if self.case["buyer"].get("category_goal") in eco.RELATIONSHIP_GOALS:
+            return
         frozen = []
         for sid, events in threads.items():
             if latest(events).get("status") in DONE:
@@ -935,6 +938,10 @@ class Negotiator:
             s = self.sides.get(sid)
             if s is None or s.state != "open" or latest(events).get("status") in DONE | ENDED:
                 continue
+            oid, terms = standing(events)
+            current = safe(functools.partial(self.deal_cost, sid, events, terms)) if oid else None
+            if current is not None and current < best:
+                continue  # preserve a better counter even when it undercuts our last sheet
             ours = [m for m in events if m.get("from") == "buyer" and m.get("term_sheets")]
             if not ours:
                 continue
