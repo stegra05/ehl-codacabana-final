@@ -1,7 +1,8 @@
 """What the team learned, case after case: after a case closes, a debrief subagent reads how it
-went and writes one lesson; the lead researcher reads the lessons of similar cases before the
-next one. Lessons are keyed on features (goal, case type, owner type, traits), never on a case or
-supplier ID, and code writes every figure in them."""
+went and writes one lesson; the lead researcher reads what we did in similar cases and what came
+of it before the next one (the figures, not the lesson: one run is a data point). Rows are keyed on
+features (goal, case type, owner type, traits), never on a case or supplier ID, and code writes
+every figure in them."""
 
 import json
 import logging
@@ -84,7 +85,9 @@ def record(case, neg, result, complete):
 
 
 def recall(case, n=RECALL):
-    """The latest lessons of the most similar cases (same goal, then same case type), as lines."""
+    """The latest runs of the most similar cases (same goal, then same case type), as lines: what
+    we did and what came of it. The debrief's lesson stays in the file: it is one run's story, and
+    the lead would read it as a rule."""
     if not LESSONS.is_file():
         return []
     rows = []
@@ -103,6 +106,6 @@ def recall(case, n=RECALL):
         out.append(
             f"{r.get('goal')} {r.get('type')}, {r.get('bidders')} bidder(s), owner {'/'.join(r.get('owners') or [])}, "
             f"traits {r.get('signals')}: opened at {t.get('opened')} of the quote, offered trades "
-            f"{t.get('trades') or []}, its prices {t.get('theirs')}, score {r.get('score')}. {r.get('lesson') or ''}"
+            f"{t.get('trades') or []}, its prices {t.get('theirs')}, score {r.get('score')}."
         )
     return out

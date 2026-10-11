@@ -21,6 +21,7 @@ STAGE_S = 13.0  # the specialists; then the lead and the demo supplier; then the
 TRADES = 2  # terms the lead may put next to our main proposal
 NOISE = ("holiday", "iso ", "certificate", "contact person", "packaging", "trade fair")
 CLAIM_KINDS = ("should_cost", "order_history", "index", "notice", "rival", "forecast", "scorecard", "hedged")
+NO_DATA = "No data on this supplier: propose no trades, and take tone and notes from the case alone."
 CACHE = {}  # case_id -> briefs: a case resumed after a crash must not wait for the team again
 
 # group -> (the data it studies, what it should find out)
@@ -52,17 +53,10 @@ Return JSON only: {{"findings": [up to 4 short sentences, the most important fir
 "leverage": "ours" | "balanced" | "theirs"}}"""
 
 ARENA = """What we know about how these suppliers negotiate:
-- Their first counter is a cap plus the verified arguments they accept, not a reaction to how low we
-  open. Opening far below the quote buys nothing and costs patience.
-- After that they concede a shrinking step per round, only after a move from us, and stop after a
-  few counters with a final offer. They agree the moment our price reaches the counter they would make.
-- Typical: a foundry or family firm with rising wages drops about 3 % first and then small steps
-  over up to 5 counters; a raw-material distributor drops 8 to 10 % first and then almost nothing;
-  a small job shop with free machines drops 10 to 18 % and keeps moving; a supplier with frozen
-  list prices barely moves on price; a fully booked one or one selling near its cost ends after 1
-  or 2 counters.
-- Patience ends at a cumulative gap of about 0.4 between our prices and theirs, 0.15 to 0.2 for a
-  touchy supplier."""
+- Their first counter reflects the verified arguments they accept, not how low we open: the
+  arguments we lead with matter most in our first e-mail.
+- After that they concede in shrinking steps and stop after a few counters with a final offer, so
+  a term they value has to be on the table early."""
 
 LEAD = (
     """You are the lead researcher of the purchasing team of Hollerau Pumpenwerke. Your analysts
@@ -158,7 +152,6 @@ TABLES = {
             "sid",
             1,
         ),
-        ("NEWS", "SELECT date, headline, body FROM news WHERE supplier_id = ? ORDER BY date DESC", "sid", 5),
         (
             "HOW WE PAY ITS INVOICES",
             "SELECT round(avg(julianday(paid_date) - julianday(due_date)), 1) AS days_late, count(*) AS invoices "
@@ -247,18 +240,43 @@ def index_moves(pkg, part):
     return out
 
 
+def about(pkg, sid, prefix):
+    """[(id, row)] of this supplier under an ID prefix, latest first, from the ID index: the Sunday
+    release reaches it, the SQL tables do not."""
+    found = [(ref, pkg.lookup(ref) or {}) for ref in pkg.ids(prefix)]
+    return sorted((f for f in found if f[1].get("supplier") == sid), key=lambda f: str(f[1].get("date")), reverse=True)
+
+
 def letters(pkg, sid):
     """Its latest letters and our notes on it, without the routine mail."""
     out = []
-    sql = "SELECT id, date, kind, subject FROM documents WHERE supplier_id = ? ORDER BY date DESC"
-    for d in rows(pkg, sql, (sid,), 30):
-        if any(n in (d.get("subject") or "").lower() for n in NOISE) or len(out) >= 6:
+    for ref, d in safe_rows(about, pkg, sid, "doc:"):
+        if any(n in (d.get("title") or "").lower() for n in NOISE) or len(out) >= 6:
             continue
         try:
-            out.append(f"{d['date']} {d['kind']}: {pkg.document(d['id'])[:700]}")
+            out.append(f"{d.get('date')} {d.get('type')}: {pkg.document(ref)[:700]}")
         except Exception:  # noqa: BLE001 - a row without a readable file
-            out.append(f"{d['date']} {d['kind']}: {d.get('subject')}")
+            out.append(f"{d.get('date')} {d.get('type')}: {d.get('title')}")
     return out
+
+
+def news(pkg, sid, limit=5):
+    """The latest news about it, text included."""
+    out = []
+    for ref, d in safe_rows(about, pkg, sid, "news:")[:limit]:
+        try:
+            body = pkg.document(ref)[:500]
+        except Exception:  # noqa: BLE001 - a row without a readable text: its headline still counts
+            body = ""
+        out.append(f"{d.get('date')}: {d.get('headline')}. {body}".strip())
+    return out
+
+
+def safe_rows(fn, *args):
+    try:
+        return fn(*args)
+    except Exception:  # noqa: BLE001 - a package without an ID index: the analyst sees less
+        return []
 
 
 def digest(pkg, case, sid, group):
@@ -270,6 +288,7 @@ def digest(pkg, case, sid, group):
     if group == "economics":
         out.append(block("COST DRIVERS OF THE PART (weight, index change over 12 months in %)", index_moves(pkg, part)))
     if group == "persona":
+        out.append(block("NEWS", news(pkg, sid)))
         out.append(block("LETTERS AND NOTES", letters(pkg, sid)))
     return "\n".join(filter(None, out))
 
@@ -329,8 +348,8 @@ def briefs(case, pkg, complete, budget_s=BUDGET_S):
                 [
                     head,
                     f"SUPPLIER {sid}, one of {len(suppliers)} in this case",
-                    block("ANALYSTS", [report or "No data on this supplier: judge from the case alone."]),
-                    block("LESSONS FROM EARLIER NEGOTIATIONS OF THIS KIND", lessons),
+                    block("ANALYSTS", [report or NO_DATA]),
+                    block("EARLIER NEGOTIATIONS OF THIS KIND (one run each: observations, not rules)", lessons),
                 ],
             )
         )
@@ -349,8 +368,11 @@ def briefs(case, pkg, complete, budget_s=BUDGET_S):
     for sid, (findings, strategy, view, buyer) in third.items():
         if strategy is None:
             continue
+        checked = clamp(strategy, case)
+        if not any(findings.values()):
+            checked["trades"] = []  # a trade for a supplier we know nothing about is a guess
         out[sid] = {
-            **clamp(strategy, case),
+            **checked,
             "playbook": rehearsal.playbook(
                 view, llm.read_json(buyer, stage - time.monotonic()), any(findings.values())
             ),

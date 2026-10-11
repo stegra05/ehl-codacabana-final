@@ -23,9 +23,10 @@ SIGNALS = {
     "approval_2pct": r"above 2 ?% need the approval|pricing committee",
     "deprioritising_us": r"reviewing small accounts|not strategic|reorganising our range"
     r"|supply from stock only|sharpens its focus|focus on customers with volume",
-    "price_frozen": r"no room on price|not discounted|price list applies to all|discounts not possible"
-    r"|frozen all price reductions",
-    "hedged": r"bought (their|our) [\w ,]{1,40} forward|covered at fixed prices|material covered until"
+    "price_frozen": r"no room on price|not discounted|price list (\d{4} )?applies to all|discounts not possible"
+    r"|frozen all price reductions|(ruled out|no longer grant|cannot grant|no) individual price reductions"
+    r"|prices? (are|will be) set centrally",
+    "hedged": r"bought (their|our) [\w ,-]{1,60} forward|covered at fixed prices|material covered until"
     r"|secures power prices|hedged",
     "complains_late_pay": r"invoices are overdue",
 }
