@@ -38,18 +38,30 @@ def deal_cost(case, terms, std, est=None):
 
 def break_even(case, terms, std, est=None):
     """The highest price at `terms` still cheaper than the alternative (C below C_alt by a cent of
-    price), or None when the case has no alternative. No sheet of ours goes above it: a deal there
-    would be refused at the close, and an agreement freezes the supplier's price."""
+    price), or None when the case has no alternative or no price beats it. No sheet of ours goes
+    above it: a deal there would be refused at the close, and an agreement freezes the supplier's
+    price. C is convex in the price: the relationship charge falls as it rises (P01 at 0.0 cost
+    more than its alternative, and the cap sent a 0.0 sheet), so the search starts at C's minimum."""
     ceiling = c_alt(case)
     if math.isinf(ceiling):
         return None
-    lo, hi = 0.0, max(1.0, terms.get("unit_price") or 1.0) * 3
-    if not cost(case, at_price(terms, lo), std, est) < ceiling:
-        return 0.0
-    for _ in range(60):  # C rises with the price
+
+    def c(price):
+        return cost(case, at_price(terms, price), std, est)
+
+    lo, hi = 0.01, max(1.0, terms.get("unit_price") or 1.0) * 3
+    a, b = lo, hi
+    for _ in range(100):  # ternary search for the cheapest price
+        m1, m2 = a + (b - a) / 3, b - (b - a) / 3
+        a, b = (a, m2) if c(m1) <= c(m2) else (m1, b)
+    lo = (a + b) / 2
+    if not c(lo) < ceiling:
+        return None
+    for _ in range(60):  # above the minimum, C rises with the price
         mid = (lo + hi) / 2
-        lo, hi = (mid, hi) if cost(case, at_price(terms, mid), std, est) < ceiling else (lo, mid)
-    return round(math.floor(lo * 100) / 100 - 0.01, 2)
+        lo, hi = (mid, hi) if c(mid) < ceiling else (lo, mid)
+    cap = round(math.floor(lo * 100) / 100 - 0.01, 2)
+    return cap if cap > 0 else None
 
 
 def quoted_offer(case, terms, std=None):

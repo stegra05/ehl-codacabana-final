@@ -64,3 +64,18 @@ def test_a_final_above_the_alternative_gets_one_sheet_at_the_ceiling_then_stops(
     neg.commit(sid)
     events += [{"from": "buyer", "term_sheets": [{"terms": sheet}]}, reply(16.5, "final_offer")]
     assert neg.move(sid, {sid: events}) is None  # one sheet, then the close decides
+
+
+def test_a_relationship_charge_does_not_drive_the_ceiling_to_zero():
+    # below the supplier's full cost the relationship charge makes a lower price dearer (P01 sent a
+    # 0.0 sheet): the ceiling is the top of the prices that beat the alternative
+    case = case_with_alternative(16.0)
+    case["buyer"].update(category_goal="secure_supply", relationship_eur_per_point=1_000, sustainable_margin_pct=5)
+    sid = case["suppliers"][0]
+    s = Negotiator(case).setup(sid, [reply(18.0)])
+    est = {**s.est, "full_cost": 14.0}
+    assert eco.cost(case, eco.at_price(s.terms, 0.01), s.std, est) > eco.c_alt(case)
+    cap = eco.break_even(case, s.terms, s.std, est)
+    assert cap is not None and cap > 14.0
+    assert eco.deal_cost(case, eco.at_price(s.terms, cap), s.std, est) is not None
+    assert eco.deal_cost(case, eco.at_price(s.terms, cap + 0.02), s.std, est) is None
