@@ -43,10 +43,14 @@ def break_even(case, terms, std, est=None):
     ceiling = c_alt(case)
     if math.isinf(ceiling):
         return None
-    lo, hi = 0.0, max(1.0, terms.get("unit_price") or 1.0) * 3
+    lo, hi = 0.01, max(1.0, terms.get("unit_price") or 1.0) * 3
+    # Relationship cost is not monotone below its minimum; zero can divide by zero.
+    optimum = relationship_optimum(case, terms, std, est or {}, lo, hi)
+    if optimum is not None:
+        lo = optimum
     if not cost(case, at_price(terms, lo), std, est) < ceiling:
         return 0.0
-    for _ in range(60):  # C rises with the price
+    for _ in range(60):  # upper boundary of the feasible interval
         mid = (lo + hi) / 2
         lo, hi = (mid, hi) if cost(case, at_price(terms, mid), std, est) < ceiling else (lo, mid)
     return round(math.floor(lo * 100) / 100 - 0.01, 2)
