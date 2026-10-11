@@ -1,0 +1,286 @@
+{
+  "first_batch": {
+    "rows": [
+      {
+        "case_id": "case:P01",
+        "session_id": "3fcff1cfdb5da19f",
+        "score": 0.0,
+        "deal": false,
+        "must_haves_ok": null,
+        "cost": null,
+        "historical_score": 0.9085046053680266,
+        "historical_session_id": "a14cab4e0e1b9eba",
+        "delta": -0.9085046053680266
+      },
+      {
+        "case_id": "case:P02",
+        "session_id": "36ea827b33e4d839",
+        "score": 0.0,
+        "deal": false,
+        "must_haves_ok": null,
+        "cost": null,
+        "historical_score": 0.7347381731929096,
+        "historical_session_id": "8fe0f5f65f70e720",
+        "delta": -0.7347381731929096
+      },
+      {
+        "case_id": "case:P03",
+        "session_id": "8d51cb7081e1fe29",
+        "score": 0.9228331929713948,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 3935069.22,
+        "historical_score": 0.9276045204253003,
+        "historical_session_id": "93d8d17d03e1232a",
+        "delta": -0.004771327453905516
+      },
+      {
+        "case_id": "case:P04",
+        "session_id": "e855b1b452ef72bc",
+        "score": 0.0,
+        "deal": false,
+        "must_haves_ok": null,
+        "cost": null,
+        "historical_score": 0.8604451426623068,
+        "historical_session_id": "ae0ce07bdfe5cfe5",
+        "delta": -0.8604451426623068
+      },
+      {
+        "case_id": "case:P05",
+        "session_id": "6c4af10851f5515b",
+        "score": 0.8218454790802674,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 238054.36,
+        "historical_score": 0.8218454790802674,
+        "historical_session_id": "b022fe140a492f42",
+        "delta": 0.0
+      },
+      {
+        "case_id": "case:P07",
+        "session_id": "09ebc817c9e2a03b",
+        "score": 0.7509714726367044,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 322098.8,
+        "historical_score": 0.73129525000079,
+        "historical_session_id": "d117878330f1f530",
+        "delta": 0.019676222635914398
+      },
+      {
+        "case_id": "case:P08",
+        "session_id": "00c74ac9a1e35597",
+        "score": 0.6925552439813769,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 1014289.85,
+        "historical_score": 0.703622066438297,
+        "historical_session_id": "61c036708941ddeb",
+        "delta": -0.011066822456920034
+      },
+      {
+        "case_id": "case:P10",
+        "session_id": "e3eef55c8cf9d221",
+        "score": 0.6707108356081908,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 1527674.4,
+        "historical_score": 0.6785164534560958,
+        "historical_session_id": "d54ff9774e1e1ff8",
+        "delta": -0.007805617847905011
+      },
+      {
+        "case_id": "case:P11",
+        "session_id": "3223d322372db5b4",
+        "score": 0.7098962346486538,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 750082.5,
+        "historical_score": 0.7098962346486538,
+        "historical_session_id": "b464aca7986fa291",
+        "delta": 0.0
+      },
+      {
+        "case_id": "case:P18",
+        "session_id": "e8ecb1275a51ad8f",
+        "score": 0.6883119264840607,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 245255.5,
+        "historical_score": 0.6956757649682936,
+        "historical_session_id": "878e9e6b4f27c0ca",
+        "delta": -0.007363838484232943
+      }
+    ],
+    "mean": 0.5257124385410649,
+    "historical_mean": 0.777214369024094,
+    "delta": -0.2515019304830292,
+    "deals": 7,
+    "must_haves_ok": 7,
+    "model": "gpt-6-luna",
+    "metrics": {
+      "subagent.attempted": 113,
+      "subagent.success": 112,
+      "writer.attempted": 27,
+      "writer.success": 26,
+      "subagent.timeout": 1,
+      "writer.rejected": 1
+    },
+    "comparison_caveat": "Historical reference, not a simultaneous controlled experiment; reference runtime grouping not authenticated by process manifest. No held-out cases in this batch.",
+    "promotion_decision": "not promoted",
+    "interrupted_and_resumed": true,
+    "metrics_scope": "Recovery process only; initial process ended before metrics were saved.",
+    "interruption": "P01, P02 and P03 received HTTP 422 for zero prices. Process was paused with P04 active. P01, P02 and P04 ended on timeout; P03 resumed successfully. Exactly ten unique IDs, no replacements.",
+    "source_manifests": [
+      "manifest.json",
+      "recovery-manifest.json"
+    ]
+  },
+  "second_batch": {
+    "rows": [
+      {
+        "case_id": "case:P01",
+        "session_id": "b8a14c8b60758185",
+        "score": 0.9926309547299728,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 1097235.55,
+        "historical_score": 0.9085046053680266,
+        "historical_session_id": "a14cab4e0e1b9eba",
+        "delta": 0.08412634936194618
+      },
+      {
+        "case_id": "case:P02",
+        "session_id": "f6ff186b30163304",
+        "score": 0.7347381731929096,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 2248075.11,
+        "historical_score": 0.7347381731929096,
+        "historical_session_id": "8fe0f5f65f70e720",
+        "delta": 0.0
+      },
+      {
+        "case_id": "case:P03",
+        "session_id": "6d792d47bba5a54f",
+        "score": 0.9235528814639573,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 3934826.49,
+        "historical_score": 0.9276045204253003,
+        "historical_session_id": "93d8d17d03e1232a",
+        "delta": -0.004051638961342974
+      },
+      {
+        "case_id": "case:P04",
+        "session_id": "068f2fe1aa5c2e73",
+        "score": 0.8604451426623068,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 196852.67,
+        "historical_score": 0.8604451426623068,
+        "historical_session_id": "ae0ce07bdfe5cfe5",
+        "delta": 0.0
+      },
+      {
+        "case_id": "case:P05",
+        "session_id": "a5cab2f4ebf6bda7",
+        "score": 0.8218454790802674,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 238054.36,
+        "historical_score": 0.8218454790802674,
+        "historical_session_id": "b022fe140a492f42",
+        "delta": 0.0
+      },
+      {
+        "case_id": "case:P07",
+        "session_id": "0322232699b26fb7",
+        "score": 0.73129525000079,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 323904.8,
+        "historical_score": 0.73129525000079,
+        "historical_session_id": "d117878330f1f530",
+        "delta": 0.0
+      },
+      {
+        "case_id": "case:P08",
+        "session_id": "9f4233ac541453db",
+        "score": 0.6593548905201365,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 1020119.1,
+        "historical_score": 0.703622066438297,
+        "historical_session_id": "61c036708941ddeb",
+        "delta": -0.04426717591816043
+      },
+      {
+        "case_id": "case:P10",
+        "session_id": "1af57c316469184e",
+        "score": 0.6785164534560958,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 1522963.2,
+        "historical_score": 0.6785164534560958,
+        "historical_session_id": "d54ff9774e1e1ff8",
+        "delta": 0.0
+      },
+      {
+        "case_id": "case:P11",
+        "session_id": "f9d41e686789b481",
+        "score": 0.7098962346486538,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 750082.5,
+        "historical_score": 0.7098962346486538,
+        "historical_session_id": "b464aca7986fa291",
+        "delta": 0.0
+      },
+      {
+        "case_id": "case:P18",
+        "session_id": "2fa97788746c9df7",
+        "score": 0.6956757649682936,
+        "deal": true,
+        "must_haves_ok": true,
+        "cost": 244721.46,
+        "historical_score": 0.6956757649682936,
+        "historical_session_id": "878e9e6b4f27c0ca",
+        "delta": 0.0
+      }
+    ],
+    "mean": 0.7807951224723384,
+    "historical_mean": 0.777214369024094,
+    "delta": 0.0035807534482442784,
+    "deals": 10,
+    "must_haves_ok": 10,
+    "model": "gpt-6-luna",
+    "metrics": {
+      "subagent.attempted": 122,
+      "subagent.success": 122,
+      "writer.attempted": 29,
+      "writer.success": 28,
+      "writer.skipped_deadline": 11,
+      "writer.rejected": 1
+    },
+    "comparison_caveat": "Historical reference, not a simultaneous controlled experiment; reference runtime grouping not authenticated by process manifest. No held-out cases in this batch.",
+    "promotion_decision": "not promoted",
+    "interrupted_and_resumed": false
+  },
+  "unique_sessions": 20,
+  "candidate_commit": "f017bcc",
+  "validation": "73 tests; Ruff lint and format passed",
+  "per_case_observations": {
+    "P01": "Accepted 129.60 with 14-day payment, versus historical 131.27. Improvement is consistent with upstream relationship closing changes; memory effect is not isolated.",
+    "P02": "Supplier agreed on the first counter at 361.67 with 90-day payment and index deadband 5%. Historical score tied; no evidence that a lower feasible deal was attainable.",
+    "P03": "Supplier held 432.12 from round 2 through round 6, repeating the price freeze. Four later counters yielded no further price movement; review stopping when no new feasible trade or evidence remains.",
+    "P04": "Supplier held the same 4.94 / 90 days / 36 months from round 1 to final round 3. Additional rounds did not improve the package.",
+    "P05": "Dralveck won at 27.92, same historical score. One buyer timeout on sup:70210 round 3 before successful recovery. Multi-thread scheduling remains a concern.",
+    "P07": "Supplier explicitly said contract duration and volume were already reflected. Buyer continues restating the commitment; historical score tied at 5.38.",
+    "P08": "Supplier disclosed fixed-price material coverage. Buyer acknowledged it but kept sending fixed-price main packages after the supplier required indexation. Accepted 5.25 versus historical 5.21 with otherwise equal final terms. Policy-package selection is a hypothesis, not a proven counterfactual cause.",
+    "P10": "Supplier cited capacity constraints and verified forecast without changing its calculation. Accepted final 31.50; historical score tied. Verified evidence need not cause concessions.",
+    "P11": "Payment fixed at 60 days; supplier wanted faster payment. It held 45.50 from round 3 through final round 5. Repetition cannot unlock a prohibited payment concession.",
+    "P18": "Supplier repeatedly required indexation. Buyer eventually selected 5.10 with deadband 5% instead of 5.00 with deadband 0%; total cost is 534.04 lower. Historical score tied; repeated fixed-price proposals merit review."
+  },
+  "interpretation": "Second batch is only a historical comparison, not an ablation of session memory. No more hosted runs authorized in this task."
+}

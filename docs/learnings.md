@@ -293,3 +293,19 @@ plumbing and timing, not tactics.
 - `c_best` in a final case's close response, if the rules allow using it between waves.
 - Hedged, stale-costing and approval-ladder suppliers; the floor of those that sold below cost.
 - With four or more bidders, which threads to keep alive.
+
+### Session evidence experiment, 11 October
+
+Twenty unique hosted practice sessions, gpt-6-luna, are tracked in
+`analysis/session-evidence-evaluation.json`. The first ten averaged 0.525712: upstream
+zero-price proposals caused HTTP 422 on P01/P02/P03; stopping that process interrupted P04.
+P01/P02/P04 timed out and remain counted as zero, while P03 resumed successfully. This batch
+used two code snapshots and is not a clean memory evaluation.
+
+The second ten ran corrected f017bcc from the start: ten valid deals, mean 0.780795 versus
+the historical reference 0.777214. P01 improved by 0.084126, P08 fell by 0.044267, P03 fell by
+0.004052, and seven scores tied. This does not isolate memory from upstream economics or model
+variation. P05 still had one buyer timeout. P03, P04 and P11 repeated unchanged supplier packages;
+P08/P18 kept proposing fixed prices after suppliers requested indexation. Providing history to
+the model does not by itself change the deterministic package and stopping policy. No further
+hosted runs were performed beyond the two authorized batches.
