@@ -348,6 +348,20 @@ class Negotiator:
                 s.est["interest_rate"] = s.prof["rate"]
         self.note(s.sid, "signals", new=new)
 
+    def bound_full_cost(self, s, terms):
+        """A supplier does not offer below its cost floor (`docs/api.md`, What counts): every sheet
+        it sends, valued to it (its clause included), bounds our full-cost estimate from above. The
+        should-cost overshot the true full cost by 1 to 2 % on P01, P02 and P03 (the relationship
+        charge of 32 practice deals), and the relationship target built on it closed above the
+        supplier's own counter (P01: 131.27 in 8 sessions, 0.909, against 130.08, 0.978)."""
+        full_cost = s.est.get("full_cost")
+        if not full_cost:
+            return
+        offered = eco.value(self.case, terms, s.est)
+        if offered < full_cost:
+            s.est["full_cost"] = offered
+            self.note(s.sid, "full_cost_bound", offered=round(offered, 2), was=round(full_cost, 2))
+
     def listen(self, s, body):
         """The live analyst on its latest e-mail: the mood goes to the writer, the tactic paces our
         next price and our evidence, the argument it recognised picks our prepared answer, its
@@ -457,6 +471,7 @@ class Negotiator:
             self.adopt(s, sheets)
             s.term_change = any(sheets[0]["terms"].get(k, v) != v for k, v in terms_before.items() if k != "unit_price")
             s.theirs.append(self.their_price(s, sheets[0]["terms"]))
+            self.bound_full_cost(s, sheets[0]["terms"])
             s.last_sheet = sheets[0]["terms"]
             s.last_reply = last
             s.asks = asks(last.get("body"))
