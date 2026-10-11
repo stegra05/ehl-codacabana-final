@@ -36,7 +36,7 @@ wheels = [
 [[package]]
 name = "arena-kit"
 version = "0.1.0"
-source = { git = "https://github.com/tacto-ai/negotiation-arena-kit?subdirectory=starter-kit&rev=1b5516bb95ef28e37f69aa446dc62168864bca53#1b5516bb95ef28e37f69aa446dc62168864bca53" }
+source = { git = "https://github.com/tacto-ai/negotiation-arena-kit?subdirectory=starter-kit&rev=273a9bc528afdba5192479d3e2bc1cb0c3d67eaf#273a9bc528afdba5192479d3e2bc1cb0c3d67eaf" }
 dependencies = [
     { name = "httpx" },
     { name = "openpyxl" },
@@ -76,7 +76,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "arena-kit", extras = ["sim", "mcp"], git = "https://github.com/tacto-ai/negotiation-arena-kit?subdirectory=starter-kit&rev=1b5516bb95ef28e37f69aa446dc62168864bca53" }]
+requires-dist = [{ name = "arena-kit", extras = ["sim", "mcp"], git = "https://github.com/tacto-ai/negotiation-arena-kit?subdirectory=starter-kit&rev=273a9bc528afdba5192479d3e2bc1cb0c3d67eaf" }]
 
 [package.metadata.requires-dev]
 dev = [
