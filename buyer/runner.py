@@ -26,6 +26,9 @@ CLOCK_S = 60  # each thread's clock, from the supplier's reply
 MARGIN_S = 5  # reserved on every clock for building and delivering the message
 FIRST_SEND_S = 10  # what a send (the supplier's reply) takes until we have measured one
 CLOSE_TRIES = 3  # a 409 on the close: read what stands now and decide again
+RETRY_S = 5  # a crashed final case is resumed after this long ...
+RETRY_MARGIN_S = 120  # ... while its cap leaves at least this much to resume and close
+RETRY_MAX = 40  # and never more often than this (a wave without a known cap)
 
 
 def writer_budget(sid, replied, live, send_s, now):
@@ -224,19 +227,22 @@ class PracticeTable(RemoteTable):
 def play_waves(client, pkg=None, waves=5, parallel=10, poll=2.0, complete=None, team=True):
     """The Live Final: wait for each wave, play its cases in parallel within the wave's cap. No
     human may restart it, so nothing here raises: a failed poll is polled again, a crashed case is
-    resumed once (the arena names the running session on a second open). The final writes no
-    lessons: what the team knows was learned before it."""
+    resumed while its cap leaves time to close (the arena names the running session on a second
+    open). The final writes no lessons: what the team knows was learned before it."""
     started, closed, caps = {}, set(), {}
 
     def one(case, deadline):
-        for attempt in range(2):
+        attempt = 0
+        while True:
+            attempt += 1
             try:
                 return play_case(RemoteTable(client, case), case["case_id"], pkg, deadline, complete, team, False)
             except Exception as e:  # noqa: BLE001 - one broken case must not stop the others
-                log.exception("%s failed (attempt %d)", case["case_id"], attempt + 1)
+                log.exception("%s failed (attempt %d)", case["case_id"], attempt)
                 err = e
-                time.sleep(2)
-        return err
+            if attempt >= RETRY_MAX or deadline_near(deadline, RETRY_MARGIN_S):
+                return err
+            time.sleep(RETRY_S)
 
     with ThreadPoolExecutor(max_workers=parallel) as pool:
         while len(closed) < waves or not all(f.done() for f in started.values()):

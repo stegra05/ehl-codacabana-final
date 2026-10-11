@@ -58,22 +58,24 @@ class ClaimBank:
         self.pkg, self.case = pkg, case
         self.facts = case.get("facts") or {}
         self.refs = list(case.get("refs") or [])
-        # a case whose refs the package does not know (the sandbox's demo world)
-        self.foreign = bool(self.refs) and pkg is not None and not any(pkg.lookup(r) for r in self.refs)
 
     def fact(self, ref):
+        """The case's own fact, else the package's row (the Sunday release included), else None:
+        a ref neither knows (the sandbox's demo world, a hidden case's new IDs) is cited without
+        a figure by `demo_refs`. Every lookup is keyed by the case's part or supplier, so a known
+        part keeps its drivers, forecasts and should-cost whatever the case's refs are."""
         if ref in self.facts:
             return self.facts[ref]
-        return None if self.foreign or self.pkg is None else self.pkg.lookup(ref)
+        return None if self.pkg is None else self.pkg.lookup(ref)
 
     def ids(self, prefix):
-        out = set() if self.foreign or self.pkg is None else set(self.pkg.ids(prefix))
+        out = set() if self.pkg is None else set(self.pkg.ids(prefix))
         out |= {k for k in self.facts if k.startswith(prefix)}
         out |= {r for r in self.refs if r.startswith(prefix)}
         return sorted(out)
 
     def query(self, sql, params=()):
-        if self.foreign or self.pkg is None:
+        if self.pkg is None:
             return []
         try:
             return self.pkg.query(sql, params)
@@ -310,8 +312,7 @@ class ClaimBank:
         out += self.signal_notes(sid)
         if c := self.scorecard(sid, quality):
             out.append(c)
-        if self.foreign:
-            out += self.demo_refs()
+        out += self.demo_refs()
         seen, uniq = set(), []
         for c in sorted(out, key=lambda c: -c["strength"]):
             if tuple(c["ids"]) not in seen:
