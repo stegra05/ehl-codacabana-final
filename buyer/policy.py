@@ -916,11 +916,10 @@ class Negotiator:
 
     # -- close -------------------------------------------------------------------------------
     def prune(self, threads):
-        """Several bidders: an agreed or final sheet does not move again, and our sheets to any
-        other bidder only rise, so a bidder whose deal at our latest sheets would cost at least the
-        cheapest acceptable frozen sheet cannot improve the case. It is done: no more rounds on the
-        session's shared clock (the arena answers one call per session at a time, so every round
-        with it delays the others; P05 had timeouts in 24 of 46 practice sessions)."""
+        """Stop spending rounds on a more expensive bidder once another offer is frozen.
+        Keep better quoted packages, including alternatives we can mirror into a standing offer.
+        This uses the current outgoing packages as a bound, not unknown future supplier terms.
+        """
         # A higher price can LOWER relationship cost. Our latest price is not a cost bound.
         if self.case["buyer"].get("category_goal") in eco.RELATIONSHIP_GOALS:
             return
@@ -942,6 +941,17 @@ class Negotiator:
             current = safe(functools.partial(self.deal_cost, sid, events, terms)) if oid else None
             if current is not None and current < best:
                 continue  # preserve a better counter even when it undercuts our last sheet
+            alternatives = [
+                safe(functools.partial(eco.quoted_offer, self.case, sh.get("terms") or {}, s.std))
+                for sh in (latest(events).get("term_sheets") or [])[1:]
+            ]
+            if any(
+                terms is not None
+                and (c := safe(functools.partial(self.deal_cost, sid, events, terms))) is not None
+                and c < best
+                for terms in alternatives
+            ):
+                continue  # finish() can turn this quoted alternative into the standing sheet
             ours = [m for m in events if m.get("from") == "buyer" and m.get("term_sheets")]
             if not ours:
                 continue

@@ -313,5 +313,14 @@
   ],
   "pr_url": "https://github.com/stegra05/ehl-codacabana-final/pull/39",
   "promotion": "Review requested, not merged.",
-  "delta": -0.00578443337219825
+  "delta": -0.00578443337219825,
+  "post_hosted_followup": {
+    "change": "Preserve a cheaper feasible supplier-quoted alternative before pruning, so it can still be mirrored into a standing offer.",
+    "hosted_evaluation": "Not rerun after this follow-up; ten-case numbers above remain attributed to commit 529ab8b.",
+    "regression_tests_passed": 108,
+    "skipped": 2,
+    "paired_simulator_runs": 84,
+    "identical_to_baseline": 84,
+    "baseline_reproduction": "The new valid-alternative regression fails before the follow-up; invalid alternatives remain discardable."
+  }
 }

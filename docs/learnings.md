@@ -381,3 +381,11 @@ renamed-ID inputs, with zero errors or invalid deals. Keep the reliability claim
 separate from score optimization; investigate package selection in a separate change.
 Evidence: `out/reliability-candidate-practice/20261011-081702/final-report.json` in
 the experiment workspace; case sessions are recorded in that batch's manifest.
+
+Follow-up after that hosted batch: a synthetic regression showed that pruning
+checked only the standing sheet and could discard a cheaper feasible alternative
+already quoted by the supplier. The guard now checks those alternatives too, so
+`finish()` can mirror one into a standing offer. Invalid alternatives do not block
+pruning. Validation: 108 tests passed, two skipped; all 84 paired simulator outcomes
+still match. The ten hosted scores above belong to 529ab8b and do not evaluate this
+follow-up. No further hosted sessions were used.

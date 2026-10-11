@@ -106,3 +106,17 @@ def test_better_current_counter_is_not_discarded():
     neg.prune(threads)
     assert not neg.sides["sup:b"].dominated
     assert neg.best_offer(threads)[2] == "better-counter"
+
+
+@pytest.mark.parametrize("valid", [True, False])
+def test_quoted_alternative_is_checked_before_discarding_bidder(valid):
+    case, terms = case_and_terms()
+    threads = threads_with(terms, "agreed", [14.5])
+    alternative = {**terms, "unit_price": 13.5}
+    if not valid:
+        case["buyer"]["must_haves"].append({"field": "payment_days", "op": ">=", "value": 30})
+        alternative["payment_days"] = 14
+    threads["sup:b"][-1]["term_sheets"].append({"term_sheet_id": "quoted-alternative", "terms": alternative})
+    neg = negotiator(case, threads)
+    neg.prune(threads)
+    assert neg.sides["sup:b"].dominated is not valid
