@@ -31,6 +31,12 @@ RETRY_MARGIN_S = 120  # ... while its cap leaves at least this much to resume an
 RETRY_MAX = 40  # and never more often than this (a wave without a known cap)
 
 
+def keepalive_due(age, send_s, writer_s):
+    """Refresh a waiting offer before another model+send cycle can exhaust its supplier clock."""
+    projected = age + max(0, writer_s) + send_s
+    return age > KEEPALIVE_AFTER_S or projected >= CLOCK_S - MARGIN_S
+
+
 def writer_budget(sid, replied, live, send_s, now):
     """Seconds the model may take on the message to `sid`: its own clock must not run out, and
     every other live thread must still get a message once this send returns."""
@@ -84,7 +90,8 @@ def play_case(table, case_id, pkg=None, deadline=None, complete=None, team=True,
             if neg.sides[s].state == "done"
             and live(s)
             and todo
-            and time.monotonic() - replied[s] > KEEPALIVE_AFTER_S
+            and replied[s] < replied[todo[0]]
+            and keepalive_due(time.monotonic() - replied[s], send_s, llm.TIMEOUT_S)
             and moves_left(case, threads[s]) - neg.sides[s].late > 0
         ]
         if not todo:

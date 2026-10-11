@@ -520,6 +520,13 @@ class Negotiator:
             sheets += safe(lambda: self.trade_sheets(s, sheets[0]), [])[:2]
         elif s.ours:
             sheets += safe(lambda: self.need_trade_sheets(s, sheets[0]), [])[:2]
+        if not claims and len(sheets) == 1 and self.offer_stalled(events):
+            standing_sheets = latest(events).get("term_sheets") or []
+            if any(eco.deal_cost(self.case, sh.get("terms") or {}, s.std, s.est) is not None for sh in standing_sheets):
+                self.note(
+                    sid, "supplier_stalled", reason="two unchanged counters; no fresh claim or new feasible trade"
+                )
+                return self.finish(s, standing_sheets, events, theirs, left)
         switched_trade_keys = set()
         if self.same_offer(s.last_sent_terms, sheets[0]):
             if len(sheets) == 1:
@@ -628,6 +635,24 @@ class Negotiator:
             return set()
         periods = {month for ref in claim.get("ids", []) for month in re.findall(r"@(\d{4}-\d{2})", ref)}
         return {("forecast", month) for month in periods}
+
+    @staticmethod
+    def offer_stalled(events):
+        """Two delivered responses with unchanged complete packages, not merely unchanged price.
+
+        Any new alternative, omitted sheet or non-supplier event breaks the sequence. Offer IDs
+        can change on each reply, so only terms are compared. No text-based refusal inference.
+        """
+        replies = [e for e in events if e.get("from") != "buyer"][-3:]
+        if len(replies) < 3 or any(e.get("from") != "supplier" for e in replies):
+            return False
+        packages = []
+        for event in replies:
+            sheets = event.get("term_sheets") or []
+            if not sheets or any(not sh.get("terms", {}).get("unit_price") for sh in sheets):
+                return False
+            packages.append(sorted(json.dumps(sh["terms"], sort_keys=True) for sh in sheets))
+        return packages[0] == packages[1] == packages[2]
 
     @staticmethod
     def same_offer(previous, candidate):

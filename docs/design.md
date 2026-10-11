@@ -74,3 +74,16 @@ The ceiling search starts near the relationship-cost minimum when an estimate is
 then locates the upper feasible boundary. An infeasible ceiling ends concessions rather than
 emitting zero or raising a proposal above that ceiling. The final acceptance gate still checks
 the standing package independently.
+
+### Progress and waiting offers
+
+Three consecutive supplier replies with identical complete sets of terms form a stalled
+sequence. Any new alternative, changed non-price term, missing sheet or Arena timeout breaks
+that sequence. When there is no unused claim and no new feasible requested trade, a valid
+standing package goes to the existing finish/accept checks rather than another price-only
+concession. This is a stopping heuristic, not proof of the supplier's floor.
+
+A waiting offer is refreshed when it is older than the next active thread and the next model
+plus measured supplier-response latency could consume its remaining deadline, even before the
+usual 35-second trigger. A freshly refreshed thread cannot repeatedly preempt an older active
+thread. The 60-second clock and final economic acceptance checks remain authoritative.
