@@ -1,7 +1,7 @@
 # Agent design
 
 What the buyer does today. Observations behind it are in `learnings.md`; the module map with
-every file is `architecture.md`; the diagram is on page 1 of [how-it-works.pdf](how-it-works.pdf).
+every file is `architecture.md`; the diagram is on page 1 of [writeup.pdf](../writeup/writeup.pdf).
 
 ## Principle
 
