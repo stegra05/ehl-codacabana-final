@@ -30,6 +30,21 @@
 3. **Close and learn.** Code accepts the cheapest valid offer across all suppliers, or walks away,
    and the outcome is remembered for the next similar case.
 
+## Live Final
+
+Second of 22 teams, 4.6 points behind first. Five waves of hidden cases, 29 of 29 deals closed,
+€3,065,004 saved. Highest score of any team in waves 1 and 5.
+
+| # | Team | W1 | W2 | W3 | W4 | W5 | Points | Deals | € saved |
+|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | sellm | 78.0 | 58.8 | 73.6 | 70.7 | 70.5 | 351.6 | 29 | €3,070,255 |
+| **2** | **Codacabana** | **83.6** | **57.9** | **64.3** | **65.2** | **76.0** | **347.0** | **29** | **€3,065,004** |
+| 3 | Fake It Till You Make It | 76.3 | 53.9 | 68.8 | 71.3 | 71.2 | 341.5 | 29 | €3,126,249 |
+| 4 | NoIdea | 77.4 | 56.4 | 62.5 | 67.1 | 74.7 | 338.1 | 29 | €3,015,055 |
+| 5 | makeAnother.md | 76.8 | 47.6 | 70.6 | 59.4 | 71.0 | 325.4 | 29 | €2,904,669 |
+
+<sub>The final board on Sunday 11 October: 22 teams, 445 deals, €43,119,809 saved across all teams.</sub>
+
 ## Scorecard
 
 Share of the best possible saving each negotiation captured. 100 % is the cheapest deal any
