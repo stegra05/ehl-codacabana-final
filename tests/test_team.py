@@ -12,6 +12,7 @@ from test_buyer import reply
 
 from buyer import analyst, llm, memory, personas, rehearsal, research, runner
 from buyer import economics as eco
+from buyer.claims import ClaimBank
 from buyer.policy import Negotiator, Side
 
 QUOTE = {"unit_price": 15.88, "payment_days": 30}
@@ -293,3 +294,12 @@ def test_research_reads_the_release_through_the_id_index():
     assert research.news(Release(), "sup:S") == ["2026-10-06: Sold to a group. text of news:new"]
     persona = research.digest(Release(), {"parts": [], "trigger_doc": None}, "sup:S", "persona")
     assert "text of doc:new" in persona and "Sold to a group" in persona and "doc:other" not in persona
+
+
+def test_claims_cite_a_release_letter():
+    class Hedged(Release):
+        def document(self, ref):
+            return "we bought our bright and cold-drawn bar requirement forward at fixed prices"
+
+    notes = ClaimBank(Hedged(), {}).signal_notes("sup:S")
+    assert [(n["kind"], n["ids"]) for n in notes] == [("hedged", ["doc:new"])]  # latest first, one per kind
