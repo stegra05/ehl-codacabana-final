@@ -303,3 +303,21 @@ plumbing and timing, not tactics.
 - `c_best` in a final case's close response, if the rules allow using it between waves.
 - Hedged, stale-costing and approval-ladder suppliers; the floor of those that sold below cost.
 - With four or more bidders, which threads to keep alive.
+
+### Progress guards on current main and Sunday data, 11 October
+
+Candidate abcc51c on main 0fef4ee ran exactly ten new hosted practice sessions with gpt-6-luna
+and the freshly downloaded Sunday release. All ten agreements satisfy must-haves. Mean
+0.794930 versus the preceding tracked batch 0.780795: five scores improved, three fell, two tied.
+IDs and full comparison are in `analysis/progress-practice-evaluation.json`.
+
+No `supplier_stalled` decision fired. P05 had two buyer timeout events, versus one previously,
+although its accepted unit price improved from 27.92 to 27.86. P11 improved from 45.50 to 45.00
+with two more rounds; P08 improved from 5.25 to 5.19. P18 lost the 5% index deadband: its lower
+unit price of 5.00 cost 534.04 more overall than the previous 5.10 protected package. That
+protected package was not present in the final current offer.
+
+The score gain does not establish the value of either new guard: upstream code, data and
+model variation also changed. Keep the candidate in draft pending separate evaluation;
+no extra hosted runs or merge were performed. Local validation: 86 tests, Ruff lint/format,
+and twelve supplier openings with real data, all positive prices and satisfied must-haves.

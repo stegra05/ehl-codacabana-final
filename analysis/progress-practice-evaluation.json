@@ -1,0 +1,157 @@
+{
+  "rows": [
+    {
+      "case_id": "case:P01",
+      "session_id": "77531ab9e30adf5d",
+      "score": 0.9730067923648584,
+      "deal": true,
+      "must_haves_ok": true,
+      "cost": 1098353.42,
+      "historical_score": 0.9926309547299728,
+      "historical_session_id": "b8a14c8b60758185",
+      "delta": -0.019624162365114328
+    },
+    {
+      "case_id": "case:P02",
+      "session_id": "e8ec33a19a2a78b3",
+      "score": 0.7347381731929096,
+      "deal": true,
+      "must_haves_ok": true,
+      "cost": 2248075.11,
+      "historical_score": 0.7347381731929096,
+      "historical_session_id": "f6ff186b30163304",
+      "delta": 0.0
+    },
+    {
+      "case_id": "case:P03",
+      "session_id": "9d24e677a4712be0",
+      "score": 0.9316112103587233,
+      "deal": true,
+      "must_haves_ok": true,
+      "cost": 3932108.65,
+      "historical_score": 0.9235528814639573,
+      "historical_session_id": "6d792d47bba5a54f",
+      "delta": 0.008058328894765987
+    },
+    {
+      "case_id": "case:P04",
+      "session_id": "caa5fbdf8d669e0f",
+      "score": 0.8604451426623068,
+      "deal": true,
+      "must_haves_ok": true,
+      "cost": 196852.67,
+      "historical_score": 0.8604451426623068,
+      "historical_session_id": "068f2fe1aa5c2e73",
+      "delta": 0.0
+    },
+    {
+      "case_id": "case:P05",
+      "session_id": "12b141fbeda91000",
+      "score": 0.8280454924995244,
+      "deal": true,
+      "must_haves_ok": true,
+      "cost": 237545.21,
+      "historical_score": 0.8218454790802674,
+      "historical_session_id": "a5cab2f4ebf6bda7",
+      "delta": 0.006200013419257022
+    },
+    {
+      "case_id": "case:P07",
+      "session_id": "5a3cc505824750c0",
+      "score": 0.7509714726367044,
+      "deal": true,
+      "must_haves_ok": true,
+      "cost": 322098.8,
+      "historical_score": 0.73129525000079,
+      "historical_session_id": "0322232699b26fb7",
+      "delta": 0.019676222635914398
+    },
+    {
+      "case_id": "case:P08",
+      "session_id": "42eccf1e34a19d06",
+      "score": 0.7257555974426174,
+      "deal": true,
+      "must_haves_ok": true,
+      "cost": 1008460.6,
+      "historical_score": 0.6593548905201365,
+      "historical_session_id": "9f4233ac541453db",
+      "delta": 0.0664007069224809
+    },
+    {
+      "case_id": "case:P10",
+      "session_id": "14be5c4561c05fea",
+      "score": 0.6629052177602854,
+      "deal": true,
+      "must_haves_ok": true,
+      "cost": 1532385.6,
+      "historical_score": 0.6785164534560958,
+      "historical_session_id": "1af57c316469184e",
+      "delta": -0.015611235695810355
+    },
+    {
+      "case_id": "case:P11",
+      "session_id": "acb62a0dadbfc61d",
+      "score": 0.7935118099900735,
+      "deal": true,
+      "must_haves_ok": true,
+      "cost": 742132.5,
+      "historical_score": 0.7098962346486538,
+      "historical_session_id": "f9d41e686789b481",
+      "delta": 0.08361557534141972
+    },
+    {
+      "case_id": "case:P18",
+      "session_id": "6172421527285e5b",
+      "score": 0.6883119264840607,
+      "deal": true,
+      "must_haves_ok": true,
+      "cost": 245255.5,
+      "historical_score": 0.6956757649682936,
+      "historical_session_id": "2fa97788746c9df7",
+      "delta": -0.007363838484232943
+    }
+  ],
+  "mean": 0.7949302835392064,
+  "historical_mean": 0.7807951224723384,
+  "delta": 0.014135161066868041,
+  "deals": 10,
+  "must_haves_ok": 10,
+  "model": "gpt-6-luna",
+  "metrics": {
+    "subagent.attempted": 131,
+    "subagent.success": 126,
+    "writer.attempted": 38,
+    "writer.success": 35,
+    "writer.rejected": 3,
+    "subagent.timeout": 5,
+    "writer.skipped_deadline": 4
+  },
+  "comparison_caveat": "Both batches have process manifests. Latest main, Sunday data, new guards and model variation changed together; this is not a controlled ablation. No held-out cases.",
+  "promotion_decision": "not promoted",
+  "interrupted_and_resumed": false,
+  "candidate_commit": "abcc51c1f91809ecbdbeb406d7ba8cbcc25f8d0f",
+  "base_commit": "0fef4ee",
+  "sunday_release_loaded": true,
+  "supplier_stalled_decisions": 0,
+  "timeout_events": [
+    {
+      "case_id": "case:P05",
+      "session_id": "12b141fbeda91000",
+      "round": 2,
+      "supplier_id": "sup:70210"
+    },
+    {
+      "case_id": "case:P05",
+      "session_id": "12b141fbeda91000",
+      "round": 3,
+      "supplier_id": "sup:70210"
+    }
+  ],
+  "validation": {
+    "tests_passed": 86,
+    "lint": "passed",
+    "format": "passed",
+    "real_data_supplier_openings_checked": 12
+  },
+  "assessment": "Mean improved, but no stall guard fired and P05 had two timeouts versus one previously. New rules are not demonstrated improvements. Draft only; no merge or further sessions."
+}
