@@ -52,6 +52,7 @@ uv run buyer play case:P01 -v                    # practice, 1 of 200
 uv run buyer run --set practice --parallel 10    # all hosted practice cases
 uv run buyer pull --set practice                 # finished sessions into logs/sessions/
 uv run arena-sim serve --no-clock --data data/package
+cd pitch && npm install && npm run dev           # pitch monitor: replays one session, → steps
 ```
 
 Sunday: 08:00 `uv run arena data`; check `DataPackage("data/package").release` is set, list the

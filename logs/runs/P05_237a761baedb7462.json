@@ -1,0 +1,472 @@
+{
+ "case": "case:P05",
+ "session": "237a761baedb7462",
+ "notes": [
+  {
+   "t": 1791676637.3,
+   "supplier": "sup:70210",
+   "what": "research",
+   "default": 0.78,
+   "ratio": 0.78,
+   "fraction": 0.3,
+   "proposal": [
+    0.0,
+    0.3
+   ],
+   "reason": "The evidence supports a firm, factual approach, but limited demonstrated price room and modest historical concessions do not justify opening closer to the quote or departing from the usual move size.",
+   "playbook": {
+    "floor": 0.975,
+    "first_drop": 0.015,
+    "step": 0.004,
+    "counters": 3,
+    "patience": 0.3,
+    "eager": false
+   },
+   "demo": [
+    [
+     0.78,
+     0.2,
+     0.981,
+     "final_offer"
+    ],
+    [
+     0.78,
+     0.3,
+     0.981,
+     "final_offer"
+    ],
+    [
+     0.79,
+     0.2,
+     0.981,
+     "final_offer"
+    ]
+   ],
+   "findings": {
+    "economics": [
+     "The current price (\u20ac36.39) is \u20ac0.48 per unit (1.3%) below the should-cost estimate (\u20ac36.87), so the estimate does not show price above cost or clear price-reduction room.",
+     "The listed cost-driver weights total 76%; their weighted 12-month contribution is about +4.1%, but the missing 24% and lack of price history prevent judging whether they justify the supplier\u2019s price.",
+     "The supplier letter gives no price, and the data gives no lead time or competing quotes to quantify further price room."
+    ],
+    "persona": [
+     "The owner appears influential, but the office manager handles costing; final approval authority is not stated.",
+     "Capacity may be available: sales said they could take extra parts at short notice, and the second shift is on hold.",
+     "Hollerau is an important reference customer to Dralveck, giving the relationship potential value to them.",
+     "Dr alveck complained of overdue invoices, though our records show we pay 8.4 days early on average; no evidence identifies price freezes."
+    ],
+    "history": [
+     "Across six comparable negotiations, Dralveck settled an average 2.1 percentage points below its ask; settlements averaged a 1.6% price decrease.",
+     "The contract fixes prices by calendar year and requires 90 days\u2019 written notice for changes; it specifies 30-day payment (with 2% discount within 10 days) and a 28-day standard lead time.",
+     "The RFQ names three suppliers, but gives no supplier-specific sourcing or capacity data; without a deal, demand is bought at the fallback price, so relative dependence cannot be established."
+    ],
+    "leverage": [
+     "On-time delivery fell from 85.7% in 2025Q4 to 80.8% in 2026Q3, supporting a push for better terms.",
+     "Defects were high in every reported quarter (1,214\u20131,997 ppm), another basis to seek improved terms.",
+     "The next-12-month forecast rose from 450 units in 2026-03 to 2,390 in 2026-09, giving the supplier a larger potential opportunity."
+    ]
+   }
+  },
+  {
+   "t": 1791676637.3,
+   "supplier": "sup:70210",
+   "what": "setup",
+   "quote": {
+    "unit_price": 36.0
+   },
+   "std": {
+    "payment_days": 30,
+    "lead_time_days": 28,
+    "ppm_commitment": 1200,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": "founder",
+    "country": "DE",
+    "category": "machined parts",
+    "signals": [
+     "complains_late_pay",
+     "reference_customer",
+     "spare_capacity",
+     "stale_costing"
+    ],
+    "rate": 0.18,
+    "warm": false
+   },
+   "full_cost": 36.87,
+   "near_cost": false,
+   "terms": {
+    "unit_price": 27.86,
+    "payment_days": 14,
+    "lead_time_days": 35
+   },
+   "quote_at_terms": 35.71,
+   "anchor": 27.86,
+   "target": null,
+   "budget": 1.0,
+   "fraction": 0.3,
+   "claims": [
+    "Your on-time delivery was 80.8% in 2026Q3 (sc:70210@2026Q3).",
+    "Electricity producer prices changed -6.1% from 2025-11 to 2026-08 (idx:PPI-D351@2025-11, idx:PPI-D351@2026-08).",
+    "The 1.4404 alloy surcharge changed -5.5% from 2026-06 to 2026-09 (idx:AS-14404@2026-06, idx:AS-14404@2026-09).",
+    "Producer prices for cold-drawn bars changed -2.3% from 2026-06 to 2026-08 (idx:PPI-C2431@2026-06, idx:PPI-C2431@2026-08)."
+   ]
+  },
+  {
+   "t": 1791676637.3,
+   "supplier": "sup:70240",
+   "what": "research",
+   "default": 0.93,
+   "ratio": 0.93,
+   "fraction": 0.3,
+   "proposal": [
+    0.01,
+    0.3
+   ],
+   "reason": "A modestly less aggressive opening reflects the supplier\u2019s full order book and uncertain cost-down room, while a standard move size suits a supplier likely to make few counters.",
+   "playbook": {
+    "floor": 0.985,
+    "first_drop": 0.01,
+    "step": 0.003,
+    "counters": 2,
+    "patience": 0.18,
+    "eager": false
+   },
+   "demo": [],
+   "findings": {
+    "economics": [
+     "The current price (\u20ac36.39) is \u20ac0.48, or about 1.3%, below the should-cost estimate (\u20ac36.87); this indicates no clear price-down room on the cost estimate alone, whose confidence is only 10%.",
+     "The listed cost drivers contribute a weighted increase of about 4.1 percentage points over 12 months, but their weights total only 76%; the data therefore do not establish whether the price is justified overall.",
+     "No useful price-history or supplier-quotation comparison is provided."
+    ],
+    "persona": [
+     "Hrvelec\u2019s order book is full beyond six months and it will confirm extra volume only with a binding 12-month commitment, so capacity and commitment are key decision factors.",
+     "The 12-month commitment could secure capacity, but conflicts with your two-year horizon and limits flexibility."
+    ],
+    "history": [
+     "In the last three negotiations, two supplier price increases were settled at 0%; in the latest, the settlement was 2.1 percentage points below the supplier\u2019s ask.",
+     "The recorded contract sets 45-day payment and 42-day standard lead time, with annual fixed prices and 90 days\u2019 notice for price changes.",
+     "The contract scope is for a machined flange, not a pump shaft, so its terms may not apply to this RFQ.",
+     "The data does not establish either side\u2019s sourcing dependence; three suppliers are named for the RFQ, but no competing offers or sourcing shares are provided."
+    ],
+    "leverage": [
+     "Latest on-time delivery was only 62.5%, and defects were 980 ppm, supporting a lower price or stronger delivery and quality terms.",
+     "Performance has improved from 80.0% on-time delivery and 2,260 ppm defects in 2025Q4, which supports the supplier\u2019s case.",
+     "The 12-month forecast rose from 450 units in March 2026 to 2,390 in September 2026, indicating growing potential demand for the supplier.",
+     "No rival quotes or lead-time data are provided. "
+    ]
+   }
+  },
+  {
+   "t": 1791676637.3,
+   "supplier": "sup:70240",
+   "what": "setup",
+   "quote": {
+    "unit_price": 31.5,
+    "lead_time_days": 52
+   },
+   "std": {
+    "payment_days": 45,
+    "ppm_commitment": 1400,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": "founder",
+    "country": "CZ",
+    "category": "machined parts",
+    "signals": [
+     "capacity_full"
+    ],
+    "rate": 0.12,
+    "warm": false
+   },
+   "full_cost": 36.87,
+   "near_cost": false,
+   "terms": {
+    "unit_price": 30.51,
+    "payment_days": 14,
+    "lead_time_days": 42
+   },
+   "quote_at_terms": 32.8,
+   "anchor": 30.51,
+   "target": null,
+   "budget": 0.16,
+   "fraction": 0.3,
+   "claims": [
+    "Your on-time delivery was 62.5% in 2026Q3 (sc:70240@2026Q3).",
+    "Electricity producer prices changed -6.1% from 2025-11 to 2026-08 (idx:PPI-D351@2025-11, idx:PPI-D351@2026-08).",
+    "The 1.4404 alloy surcharge changed -5.5% from 2026-06 to 2026-09 (idx:AS-14404@2026-06, idx:AS-14404@2026-09).",
+    "Producer prices for cold-drawn bars changed -2.3% from 2026-06 to 2026-08 (idx:PPI-C2431@2026-06, idx:PPI-C2431@2026-08)."
+   ]
+  },
+  {
+   "t": 1791676637.3,
+   "supplier": "sup:70250",
+   "what": "research",
+   "default": 0.78,
+   "ratio": 0.8,
+   "fraction": 0.3,
+   "proposal": [
+    0.0,
+    0.3
+   ],
+   "reason": "Use a standard measured opening and concession pace: spare capacity and past settlements offer some leverage, but the cost evidence is weak, the contract history is not directly comparable, and no competing quotes quantify further price room.",
+   "playbook": {
+    "floor": 0.97,
+    "first_drop": 0.015,
+    "step": 0.005,
+    "counters": 3,
+    "patience": 0.2,
+    "eager": false
+   },
+   "demo": [
+    [
+     0.8,
+     0.2,
+     0.98,
+     "final_offer"
+    ],
+    [
+     0.8,
+     0.3,
+     0.98,
+     "final_offer"
+    ],
+    [
+     0.78,
+     0.2,
+     0.985,
+     "final_offer"
+    ]
+   ],
+   "findings": {
+    "economics": [
+     "At \u20ac36.39, the price is \u20ac0.48 (1.3%) below the \u20ac36.87 should-cost estimate; that estimate has only 10% confidence.",
+     "Available cost drivers point upward: their weighted contributions total +4.1 percentage points, but they cover only 76% of the stated weights, so they do not establish a specific justified price increase.",
+     "The data shows little cost-based room to push below the current price; no supplier price history or comparable competing quotes are provided to quantify further room."
+    ],
+    "persona": [
+     "No specific decision-maker or approval process is identified; the company is founder-owned.",
+     "Cash matters: they asked for payment within 10 days in exchange for a discount and warned that repeated late payment could lead them to review conditions.",
+     "They have free capacity, have paused hiring and a second shift, and say they can take additional parts at short notice.",
+     "Hollerau is an important reference customer to them; no frozen-price position is mentioned."
+    ],
+    "history": [
+     "Across three renewals, settlements were 1.3 percentage points more favorable to Hollerau than the supplier\u2019s ask each time.",
+     "The contract fixes annual prices; changes require 90 days\u2019 written notice before year-end. It also sets 30-day payment and a 28-day standard lead time.",
+     "The contract scope is a spacer sleeve, not a pump shaft, so its terms may not apply to this RFQ."
+    ],
+    "leverage": [
+     "On-time delivery fell from 95.8% in 2026Q1 to 88.0% in 2026Q3, supporting a request for better delivery terms.",
+     "Defects improved from 496 ppm in 2026Q1 to 318 ppm in 2026Q3, supporting the supplier\u2019s case.",
+     "The forecast rose from 450 to 2,390 units over the next 12 months, supporting the supplier\u2019s case for the business opportunity."
+    ]
+   }
+  },
+  {
+   "t": 1791676637.3,
+   "supplier": "sup:70250",
+   "what": "setup",
+   "quote": {
+    "unit_price": 38.5
+   },
+   "std": {
+    "payment_days": 30,
+    "lead_time_days": 28,
+    "ppm_commitment": 600,
+    "chargeback_eur_per_complaint": 0.0
+   },
+   "profile": {
+    "owner_type": "founder",
+    "country": "DE",
+    "category": "machined parts",
+    "signals": [
+     "cash_need",
+     "complains_late_pay",
+     "reference_customer",
+     "spare_capacity"
+    ],
+    "rate": 0.17,
+    "warm": true
+   },
+   "full_cost": 36.87,
+   "near_cost": false,
+   "terms": {
+    "unit_price": 30.57,
+    "payment_days": 14,
+    "lead_time_days": 35
+   },
+   "quote_at_terms": 38.21,
+   "anchor": 30.57,
+   "target": null,
+   "budget": 1.0,
+   "fraction": 0.3,
+   "claims": [
+    "Your on-time delivery was 88.0% in 2026Q3 (sc:70250@2026Q3).",
+    "Our bottom-up should-cost estimate for this part is EUR 36.87 per unit (cost:320070).",
+    "Electricity producer prices changed -6.1% from 2025-11 to 2026-08 (idx:PPI-D351@2025-11, idx:PPI-D351@2026-08).",
+    "The 1.4404 alloy surcharge changed -5.5% from 2026-06 to 2026-09 (idx:AS-14404@2026-06, idx:AS-14404@2026-09).",
+    "Producer prices for cold-drawn bars changed -2.3% from 2026-06 to 2026-08 (idx:PPI-C2431@2026-06, idx:PPI-C2431@2026-08)."
+   ]
+  },
+  {
+   "t": 1791676641.3,
+   "supplier": "sup:70240",
+   "what": "analyst",
+   "seconds": 4.0,
+   "asks": [],
+   "mood": "open",
+   "notes": "Jana Proch\u00e1zkov\u00e1, Export Manager at Stroj\u00edrna Hrvelec, has made an opening offer and signals room to move. She values a long-term partnership; respond warmly and invite her to improve the offer."
+  },
+  {
+   "t": 1791676645.5,
+   "supplier": "sup:70240",
+   "what": "send",
+   "state": "open",
+   "theirs": 32.8,
+   "ours": 30.51,
+   "claims": [
+    "scorecard",
+    "index",
+    "index"
+   ],
+   "asks": [],
+   "attached": []
+  },
+  {
+   "t": 1791676667.9,
+   "supplier": "sup:70210",
+   "what": "send",
+   "state": "open",
+   "theirs": 36.0,
+   "ours": 27.86,
+   "claims": [
+    "rival",
+    "scorecard",
+    "index"
+   ],
+   "asks": [],
+   "attached": []
+  },
+  {
+   "t": 1791676671.7,
+   "supplier": "sup:70250",
+   "what": "analyst",
+   "seconds": 3.7,
+   "asks": [],
+   "mood": "firm",
+   "notes": "Claudia Fuchsreiter, the owner, has made the opening offer and is asking whether it works for us. She emphasizes simplicity and clear communication; reply directly with our position and, if it does not work, a clear target."
+  },
+  {
+   "t": 1791676673.3,
+   "supplier": "sup:70250",
+   "what": "send",
+   "state": "open",
+   "theirs": 38.5,
+   "ours": 30.57,
+   "claims": [
+    "rival",
+    "scorecard",
+    "should_cost"
+   ],
+   "asks": [],
+   "attached": []
+  },
+  {
+   "t": 1791676700.0,
+   "supplier": "sup:70240",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.0,
+   "ours": 30.66,
+   "claims": [
+    "rival"
+   ],
+   "asks": [
+    "volume"
+   ],
+   "attached": []
+  },
+  {
+   "t": 1791676723.7,
+   "supplier": "sup:70210",
+   "what": "send",
+   "state": "open",
+   "theirs": 30.0,
+   "ours": 27.92,
+   "claims": [],
+   "asks": [
+    "payment"
+   ],
+   "attached": []
+  },
+  {
+   "t": 1791676728.0,
+   "supplier": "sup:70250",
+   "what": "analyst",
+   "seconds": 4.1,
+   "asks": [
+    "volume",
+    "payment"
+   ],
+   "mood": "open",
+   "notes": "Claudia Fuchsreiter, the supplier\u2019s owner, says the current offer stands while she clarifies internally and will return on price. She values fixed or higher volume and faster payment; respond with any volume commitment and payment flexibility you can offer."
+  },
+  {
+   "t": 1791676730.3,
+   "supplier": "sup:70250",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.0,
+   "ours": 30.63,
+   "claims": [
+    "rival"
+   ],
+   "asks": [
+    "volume",
+    "payment"
+   ],
+   "attached": []
+  },
+  {
+   "t": 1791676756.9,
+   "supplier": "sup:70240",
+   "what": "send",
+   "state": "open",
+   "theirs": 31.0,
+   "ours": 30.76,
+   "claims": [
+    "rival"
+   ],
+   "asks": [],
+   "attached": []
+  },
+  {
+   "t": 1791676779.5,
+   "supplier": "sup:70210",
+   "what": "accept",
+   "c": 238054.36,
+   "offer": "offer:70210-3"
+  }
+ ],
+ "result": {
+  "deal": true,
+  "supplier_id": "sup:70210",
+  "terms": {
+   "payment_days": 14,
+   "lead_time_days": 35,
+   "volume_per_year": 4200,
+   "contract_months": 24,
+   "effective_date": "2027-01-01",
+   "index_clause": null,
+   "incoterm": "DAP",
+   "tooling_eur": 0.0,
+   "ppm_commitment": 1200,
+   "chargeback_eur_per_complaint": 0.0,
+   "unit_price": 27.92
+  },
+  "c_open": 305544.96,
+  "c_deal": 238054.36,
+  "c_best": 223424.17,
+  "score": 0.8218454790802674
+ }
+}
