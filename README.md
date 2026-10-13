@@ -30,10 +30,13 @@
 3. **Close and learn.** Code accepts the cheapest valid offer across all suppliers, or walks away,
    and the outcome is remembered for the next similar case.
 
-## Live Final
+## Result
 
-Second of 22 teams, 4.6 points behind first. Five waves of hidden cases, 29 of 29 deals closed,
-€3,065,004 saved. Highest score of any team in waves 1 and 5.
+**Winner of the European Hackathon League Grand Finale 2026 and 1st place in the Tacto
+challenge**, decided by the jury: €11,500 in prize money and €5,000 in OpenAI credits.
+
+On the live leaderboard we finished second of 22 teams, 4.6 points behind first. Five waves of
+hidden cases, 29 of 29 deals closed, €3,065,004 saved. Highest score of any team in waves 1 and 5.
 
 | # | Team | W1 | W2 | W3 | W4 | W5 | Points | Deals | € saved |
 |---:|---|---:|---:|---:|---:|---:|---:|---:|---:|
